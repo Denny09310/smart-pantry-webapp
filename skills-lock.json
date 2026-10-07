@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "skills": {
+    "author-component": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/author-component/SKILL.md",
+      "computedHash": "ca586b712c7b1559a0b15982eae855bca6cdf261f2f357357b1f5c61512fbcd0"
+    },
+    "collect-user-input": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/collect-user-input/SKILL.md",
+      "computedHash": "6161812c5425459dd9d079241bcdab965e1534967ec07050d47d5d906bf4686e"
+    },
+    "configure-auth": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/configure-auth/SKILL.md",
+      "computedHash": "bc0edbff266b1ce7a0b6c12b18c6d83b7ec04adfe76abc9560e8b0251379585b"
+    },
+    "coordinate-components": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/coordinate-components/SKILL.md",
+      "computedHash": "d56d9ae5a959c9b2003b496892b103c7c38d240d59a035e8872dedf6286f7718"
+    },
+    "create-blazor-project": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/create-blazor-project/SKILL.md",
+      "computedHash": "e307489077e9982c4806f3de58f0ac823ec5013f139e076355d305c587f586b1"
+    },
+    "create-datadriven-aspnetcore": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-data/skills/create-datadriven-aspnetcore/SKILL.md",
+      "computedHash": "f0361dc87f87fec319cc1c33d18896c6c5a98ea0bcc8c3ac055d6be2791dafb8"
+    },
+    "dotnet-webapi": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-aspnetcore/skills/dotnet-webapi/SKILL.md",
+      "computedHash": "9f9ca386ddefb34ebeaf269c6a7dac0bd0a8e9ea901ad5c489cd4d5e7c61fb22"
+    },
+    "fetch-and-send-data": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/fetch-and-send-data/SKILL.md",
+      "computedHash": "026c233ed047a40bf47fc424f9cb89bf482250b83ea9c8e1ffe796e11387a84b"
+    },
+    "optimizing-ef-core-queries": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-data/skills/optimizing-ef-core-queries/SKILL.md",
+      "computedHash": "98eb6bb1ab357806cf068908b5b00c3992b898b9428b587a7f357adb3387c8aa"
+    },
+    "plan-ui-change": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/plan-ui-change/SKILL.md",
+      "computedHash": "028b3684f6423c2bede4a3eae0fec4bacb6d5e5d6510339378912608218e1a33"
+    },
+    "use-js-interop": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-blazor/skills/use-js-interop/SKILL.md",
+      "computedHash": "f9722ef75b3166fb9248d69d62886613b5d7bdbf07fd6141c7d9f116f6dea37a"
+    }
+  }
+}
