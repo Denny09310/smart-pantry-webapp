@@ -1,7 +1,16 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@inject ServerApi Api
 
-<h1>Hello, world!</h1>
+<p>@_message</p>
 
-Welcome to your new app.
+@code
+{
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var response = await Api.Greetings.GetAsync();
+        _message = response.Content;
+    }
+}

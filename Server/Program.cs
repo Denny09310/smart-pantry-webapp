@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointHandlers();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
@@ -18,6 +20,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapEndpointHandlers();
 
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
