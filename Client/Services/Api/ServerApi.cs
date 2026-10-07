@@ -1,18 +1,21 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Refit;
+using Shared.Models;
 
 namespace Client.Services;
 
 internal sealed class ServerApi(IServiceProvider services)
 {
-    public IGreetingsApi Greetings => services.GetRequiredService<IGreetingsApi>();
+    public IPantryEndpoints Pantry => services.GetRequiredService<IPantryEndpoints>();
 }
 
-[PathPrefix("/api/greetings")]
-internal interface IGreetingsApi
+[PathPrefix("/api/pantry")]
+internal interface IPantryEndpoints
 {
     [Get("/")]
-    Task<ApiResponse<string>> GetAsync();
+    Task<ApiResponse<GetPantryItemsResponse>> GetAsync(
+        GetPantryItemsRequest? request = null,
+        CancellationToken ct = default);
 }
 
 internal static class ServerApiExtensions
@@ -25,7 +28,7 @@ internal static class ServerApiExtensions
             client.BaseAddress = new(env.BaseAddress);
         });
 
-        services.AddRefitGeneratedClient<IGreetingsApi>(
+        services.AddRefitGeneratedClient<IPantryEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 

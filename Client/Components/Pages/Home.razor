@@ -2,15 +2,45 @@
 
 @inject ServerApi Api
 
-<p>@_message</p>
+@if (_items is null)
+{
+    <em>Loading...</em>
+}
+else if (_items.Count == 0)
+{
+    <p>No items in the pantry yet</p>
+    <button type="button" @onclick="CreateItemAsync">Create one</button>
+}
+else
+{
+    <ul>
+        @foreach (var item in _items)
+        {
+            <li @key="item.Id">@item.Name</li>
+        }
+    </ul>
+}
 
 @code
 {
-    private string? _message;
+    private List<PantryItemDto>? _items;
+    private int _totalItems;
 
     protected override async Task OnInitializedAsync()
     {
-        using var response = await Api.Greetings.GetAsync();
-        _message = response.Content;
+        using var response = await Api.Pantry.GetAsync();
+
+        if (!response.IsSuccessfulWithContent)
+            return;
+
+        var content = response.Content;
+
+        _items = new(content.Items);
+        _totalItems = content.TotalItems;
+    }
+
+    private void CreateItemAsync()
+    {
+        
     }
 }
