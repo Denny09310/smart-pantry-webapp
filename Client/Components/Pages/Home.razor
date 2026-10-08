@@ -2,6 +2,30 @@
 
 @inject ServerApi Api
 
+<header class="flex items-center justify-between gap-2">
+    <h1 class="text-xl font-semibold">Smart Pantry</h1>
+    <div class="inline-flex items-center gap-2">
+        <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16">
+            Add
+        </BbButton>
+    </div>
+</header>
+
+<BbInputGroup>
+    <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+        <LucideIcon Name="search" Size="16" />
+    </BbInputGroupAddon>
+    <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
+</BbInputGroup>
+
+<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Class="flex-nowrap overflow-x-auto scrollbar-none">
+    <BbChip Value="@("all")" Class="text-nowrap">All locations</BbChip>
+    <BbChip Value="@("fridge")" Class="text-nowrap">Fridge</BbChip>
+    <BbChip Value="@("pantry")" Class="text-nowrap">Pantry</BbChip>
+    <BbChip Value="@("freezer")" Class="text-nowrap">Freezer</BbChip>
+    <BbChip Value="@("cabinet")" Class="text-nowrap">Cabinet</BbChip>
+</BbChipSet>
+
 @if (_items is null)
 {
     <em>Loading...</em>
@@ -26,9 +50,17 @@ else
     private List<PantryItemDto>? _items;
     private int _totalItems;
 
+    private string? _location = "all", _name;
+
     protected override async Task OnInitializedAsync()
     {
-        using var response = await Api.Pantry.GetAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var request = new GetPantryItemsRequest(_location, _name);
+        using var response = await Api.Pantry.GetAsync(request);
 
         if (!response.IsSuccessfulWithContent)
             return;

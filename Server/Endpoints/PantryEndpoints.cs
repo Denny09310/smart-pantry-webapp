@@ -18,11 +18,11 @@ internal class PantryEndpoints(ApplicationDbContext db)
     {
         var query = db.Items.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(request.Location))
+        if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not "all")
             query = query.Where(x => x.Location.Contains(request.Location));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
-            query = query.Where(x => x.Name.Contains(request.Name));
+            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
 
         var items = await query
             .Skip(request.Skip)
