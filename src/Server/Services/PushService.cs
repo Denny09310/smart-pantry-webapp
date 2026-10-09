@@ -1,7 +1,10 @@
 using System.Net;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
 using Server.Data;
+
 using WebPush;
 
 namespace Server.Services;

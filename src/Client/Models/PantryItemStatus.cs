@@ -1,5 +1,7 @@
 using System.Globalization;
+
 using BlazorBlueprint.Components;
+
 using Shared.Models;
 
 namespace Client.Models;

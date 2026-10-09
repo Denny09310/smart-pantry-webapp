@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
 using Refit;
+
 using Shared.Models;
 
 namespace Client.Services;

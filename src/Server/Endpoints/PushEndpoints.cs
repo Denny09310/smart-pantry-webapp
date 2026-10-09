@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
 using Server.Data;
 using Server.Data.Entities;
 using Server.Services;
+
 using Shared.Models;
 
 namespace Server.Endpoints;
