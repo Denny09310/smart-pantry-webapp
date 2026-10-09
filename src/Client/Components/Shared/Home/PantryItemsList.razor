@@ -14,7 +14,7 @@
                             <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
                         </div>
                         <p class="truncate text-xs text-muted-foreground">@item.FormatQuantity() •
-                            @item.GetDisplayLocation()</p>
+                            @item.GetDisplayLocation()@if (item.CreatedByName is not null) { <text>• Added by @item.CreatedByName</text> }</p>
                             <div class="mt-1 flex items-center justify-between gap-2">
                                 <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                     <LucideIcon Name="calendar-days" Size="12" />

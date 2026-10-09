@@ -80,7 +80,7 @@ member sees and manages the same pantry.
 - [x] Add a first-run create-member dialog when zero members exist.
 - [x] Add a member picker/switcher in the app header, persisted in
   `localStorage` (Bit.Butil `Storage`).
-- [ ] Show attribution in the pantry UI where useful.
+- [x] Show attribution in the pantry UI where useful.
 - [x] Add tests: member CRUD + name validation, write attribution,
   delete-member-keeps-items.
 
