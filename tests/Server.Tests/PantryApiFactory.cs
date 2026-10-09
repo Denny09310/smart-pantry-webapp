@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -28,6 +30,8 @@ public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContex
             new Dictionary<string, string?>
             {
                 ["ConnectionStrings:Default"] = "Server=localhost;Database=smart_pantry_tests;Uid=postgres;Pwd=mypassword123",
+                ["Vapid:PublicKey"] = TestVapidKeys.PublicKey,
+                ["Vapid:PrivateKey"] = TestVapidKeys.PrivateKey,
             }));
         builder.ConfigureTestServices(services =>
         {

@@ -164,20 +164,20 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 - [x] Test duplicate-notification prevention.
 - [x] Test expiration-date boundary conditions.
 - [x] Test the background worker when no items qualify.
-- [ ] Test recovery from transient push-provider errors.
-- [ ] Test invalid or expired push subscriptions.
-- [ ] Test behavior when push permission is denied or later revoked.
+- [x] Test recovery from transient push-provider errors.
+- [x] Test invalid or expired push subscriptions.
+- [ ] Test behavior when push permission is denied or later revoked. (manual: browser)
 - [ ] Test notification delivery in the deployed environment, not only localhost.
 - [ ] Test database migration and backup/restore procedures.
-- [ ] Verify logs do not expose invitation tokens (n/a), VAPID private keys,
-  or push subscription secrets.
+- [x] Verify logs do not expose invitation tokens (n/a), VAPID private keys,
+  or push subscription secrets. (reviewed: only endpoint URLs, barcodes, counts)
 - [ ] Test desktop Chrome or Edge and Android Chrome.
 - [ ] Test iPhone/iPad Home Screen installation and Web Push if iOS support is in scope.
 
 ### Acceptance criteria
 
-- [ ] The background worker can encounter a delivery failure and continue processing.
-- [ ] Notifications are not duplicated during normal scheduled runs.
+- [x] The background worker can encounter a delivery failure and continue processing.
+- [x] Notifications are not duplicated during normal scheduled runs.
 - [ ] The app remains usable if push is unsupported or disabled.
 - [ ] The production deployment supports the intended devices and browsers.
 - [ ] A tested backup can be restored.
