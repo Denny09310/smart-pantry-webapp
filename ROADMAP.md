@@ -67,12 +67,12 @@ member sees and manages the same pantry.
 
 ### Tasks
 
-- [ ] Add a `Member` entity in `Server.Data.Entities` (`Id` string GUIDv7
+- [x] Add a `Member` entity in `Server.Data.Entities` (`Id` string GUIDv7
   like the other entities, `Name` required ≤ 30 chars, optional `Color`,
   `CreatedAt`).
-- [ ] Add an optional `CreatedByMemberId` FK on `PantryItem`
+- [x] Add an optional `CreatedByMemberId` FK on `PantryItem`
   (`SetNull` on member delete — items survive, attribution clears).
-- [ ] Add the EF Core migration (new table + nullable column, no backfill).
+- [x] Add the EF Core migration (new table + nullable column, no backfill).
 - [ ] Add member endpoints: `GET /api/members`, `POST /api/members`
   (validated name), `DELETE /api/members/{id}`.
 - [ ] Send the current member as `X-Member-Id` on pantry writes; resolve
