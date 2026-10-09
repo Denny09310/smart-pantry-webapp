@@ -1,3 +1,20 @@
+## [0.4.3] - 2026-10-09
+
+### 🐛 Bug Fixes
+
+- Review batch one, server hardening and validation
+- Drop ignored update header, align quantity range
+- Resolve config lazily for test host compatibility
+- Review batch two, client correctness, a11y and cleanup
+
+### 📚 Documentation
+
+- Add readme with setup and workflow
+- Rewrite readme as product pitch
+
+### 💼 Other
+
+- Bugfix/review-batch into develop
 ## [0.4.2] - 2026-10-09
 
 ### 🐛 Bug Fixes
@@ -8,6 +25,10 @@
 ### 🚜 Refactor
 
 - Rename IdOf to KeySelector on infinite scroll list
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Version 0.4.2
 
 ### 💼 Other
 

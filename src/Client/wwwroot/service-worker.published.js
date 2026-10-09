@@ -1,5 +1,5 @@
 // bit version: 10.6.2
-// app version: 0.4.2 (keep in sync with the git tag and Server.csproj <Version>)
+// app version: 0.4.3 (keep in sync with the git tag and Server.csproj <Version>)
 
 // Offline support is owned by the Bswup engine (see bit-bswup.sw.js): the
 // default Blazor template handlers below are superseded by it. Keep this
@@ -7,7 +7,7 @@
 // is what deployed builds actually ship.
 
 // Cache bucket version: bumps once per release instead of on every rebuild.
-self.cacheVersion = '0.4.2';
+self.cacheVersion = '0.4.3';
 
 self.importScripts('_content/Bit.Bswup/bit-bswup.sw.js');
 
