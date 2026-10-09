@@ -15,6 +15,8 @@ internal sealed class ServerApi(IServiceProvider services)
     public IPushEndpoints Push => services.GetRequiredService<IPushEndpoints>();
 
     public IMemberEndpoints Members => services.GetRequiredService<IMemberEndpoints>();
+
+    public IProductEndpoints Products => services.GetRequiredService<IProductEndpoints>();
 }
 
 [PathPrefix("/api/pantry")]
@@ -97,6 +99,15 @@ internal interface IMemberEndpoints
         CancellationToken ct = default);
 }
 
+[PathPrefix("/api/products")]
+internal interface IProductEndpoints
+{
+    [Get("/lookup")]
+    Task<ApiResponse<ProductLookupDto>> LookupAsync(
+        [Query] string barcode,
+        CancellationToken ct = default);
+}
+
 internal static class ServerApiExtensions
 {
     public static IServiceCollection AddServerApi(this IServiceCollection services)
@@ -120,6 +131,10 @@ internal static class ServerApiExtensions
             httpClientName: "Server.API");
 
         services.AddRefitGeneratedClient<IMemberEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IProductEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 
