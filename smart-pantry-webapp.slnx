@@ -2,4 +2,5 @@
   <Project Path="src/Client/Client.csproj" />
   <Project Path="src/Server/Server.csproj" />
   <Project Path="src/Shared/Shared.csproj" />
+  <Project Path="tests/Server.Tests/Server.Tests.csproj" />
 </Solution>
