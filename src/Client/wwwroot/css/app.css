@@ -44,3 +44,10 @@ h1:focus {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+/* Boot-phase progress text, driven by Blazor itself: it sets
+   --blazor-load-percentage-text on :root while downloading boot resources.
+   Falls back to a static label before boot starts. */
+.bswup-boot-text:after {
+    content: var(--blazor-load-percentage-text, "Loading…");
+}
