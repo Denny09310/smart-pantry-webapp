@@ -13,7 +13,7 @@
                         <p class="truncate text-sm font-semibold">@item.Name</p>
                         <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
                     </div>
-                    <p class="truncate text-xs text-muted-foreground">@item.FormatQuantity() • @item.Location</p>
+                    <p class="truncate text-xs text-muted-foreground">@item.FormatQuantity() • @item.GetDisplayLocation()</p>
                     <div class="mt-1 flex items-center justify-between gap-2">
                         <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <LucideIcon Name="calendar-days" Size="12" />

@@ -32,7 +32,7 @@
                 </BbDataGridTemplateColumn>
                 <BbDataGridTemplateColumn TData="PantryItemDto" Title="Location">
                     <ChildContent Context="item">
-                        <BbBadge Variant="BadgeVariant.Outline">@item.Location</BbBadge>
+                        <BbBadge Variant="BadgeVariant.Outline">@item.GetDisplayLocation()</BbBadge>
                     </ChildContent>
                 </BbDataGridTemplateColumn>
                 <BbDataGridTemplateColumn TData="PantryItemDto" Title="Expiration" Sortable="true"

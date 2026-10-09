@@ -1,0 +1,85 @@
+@namespace Client.Components.Shared.Pantry
+
+<BbCard>
+    <BbCardContent Class="px-0">
+        <BbDataGrid TData="PantryItemDto"
+                    Items="Items"
+                    ShowPagination="false"
+                    TableContainerClass="overflow-x-auto"
+                    AriaLabel="Pantry inventory">
+            <Columns>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item Name">
+                    <ChildContent Context="item">
+                        <span class="font-medium">@item.Name</span>
+                        @if (!string.IsNullOrWhiteSpace(item.Notes))
+                        {
+                            <span class="block truncate text-xs text-muted-foreground">@item.Notes</span>
+                        }
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Quantity">
+                    <ChildContent Context="item">
+                        <span class="text-muted-foreground">@item.FormatQuantity()</span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Location">
+                    <ChildContent Context="item">
+                        <BbBadge Variant="BadgeVariant.Outline">@item.GetDisplayLocation()</BbBadge>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto"
+                                          Title="Expiration Date"
+                                          Sortable="true"
+                                          SortBy="@(i => i.ExpirationDate)">
+                    <ChildContent Context="item">
+                        <span class="text-muted-foreground">@item.FormatExpiration()</span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Status">
+                    <ChildContent Context="item">
+                        <BbBadge Variant="@item.GetBadgeVariant()">@item.GetLabel()</BbBadge>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Actions">
+                    <ChildContent Context="item">
+                        <span class="inline-flex items-center gap-1">
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                      Size="ButtonSize.Small"
+                                      AriaLabel="@($"Edit {item.Name}")"
+                                      Loading="@IsBusy(item)"
+                                      OnClick="@(() => OnEdit.InvokeAsync(item))">
+                                <LucideIcon Name="pencil" Size="14" />
+                                Edit
+                            </BbButton>
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                      Size="ButtonSize.Small"
+                                      Class="text-destructive"
+                                      AriaLabel="@($"Delete {item.Name}")"
+                                      Loading="@IsBusy(item)"
+                                      OnClick="@(() => OnDelete.InvokeAsync(item))">
+                                <LucideIcon Name="trash-2" Size="14" />
+                                Delete
+                            </BbButton>
+                        </span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+            </Columns>
+        </BbDataGrid>
+    </BbCardContent>
+</BbCard>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnDelete { get; set; }
+
+    [Parameter]
+    public IReadOnlyCollection<string> BusyIds { get; set; } = [];
+
+    private bool IsBusy(PantryItemDto item) => BusyIds.Contains(item.Id);
+}

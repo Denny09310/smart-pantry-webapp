@@ -3,6 +3,7 @@
 
 @inject ServerApi Api
 @inject ToastService Toast
+@inject DialogService Dialog
 @inject BottomSheetService BottomSheet
 
 <div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
@@ -101,12 +102,6 @@
         </div>
     }
 
-    <footer class="fixed inset-x-0 bottom-0 hidden border-t bg-card md:block">
-        <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2 text-xs text-muted-foreground">
-            <p>Smart Pantry — Household Inventory Management</p>
-            <p>System Status: Local Storage Synchronized</p>
-        </div>
-    </footer>
 </div>
 
 @code

@@ -1,0 +1,62 @@
+@namespace Client.Components.Shared.Pantry
+
+<div class="space-y-2">
+    @foreach (var item in Items)
+    {
+        <BbCard @key="item.Id">
+            <BbCardContent Class="flex items-center gap-3 p-3">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center justify-between gap-2">
+                        <p class="truncate text-sm font-semibold">@item.Name</p>
+                        <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
+                    </div>
+                    <p class="truncate text-xs text-muted-foreground">
+                        @item.FormatQuantity()@(!string.IsNullOrWhiteSpace(item.Notes) ? $" • {item.Notes}" : null)
+                    </p>
+                    <div class="mt-1 flex items-center justify-between gap-2">
+                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <LucideIcon Name="package" Size="12" />
+                            @item.GetDisplayLocation()
+                        </span>
+                        <span class="text-xs @(IsUrgent(item) ? "font-medium text-destructive" : "text-muted-foreground")">
+                            @ExpiryText(item)
+                        </span>
+                    </div>
+                </div>
+                <BbButton Variant="ButtonVariant.Outline"
+                          Size="ButtonSize.IconSmall"
+                          Class="shrink-0 rounded-full"
+                          AriaLabel="@($"Mark {item.Name} as used")"
+                          Loading="@IsBusy(item)"
+                          OnClick="@(() => OnCheck.InvokeAsync(item))">
+                    <LucideIcon Name="check" Size="16" />
+                </BbButton>
+            </BbCardContent>
+        </BbCard>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnCheck { get; set; }
+
+    [Parameter]
+    public IReadOnlyCollection<string> BusyIds { get; set; } = [];
+
+    private bool IsBusy(PantryItemDto item) => BusyIds.Contains(item.Id);
+
+    private static bool IsUrgent(PantryItemDto item)
+        => item.GetStatus() is PantryItemStatus.Expired or PantryItemStatus.Today;
+
+    private static string ExpiryText(PantryItemDto item) => item.GetStatus() switch
+    {
+        PantryItemStatus.Expired => item.DaysRemaining() == -1
+            ? "Expired yesterday"
+            : $"Expired {-item.DaysRemaining()} days ago",
+        PantryItemStatus.Today => "Use by 11:59 PM",
+        _ => item.ExpirationDate.ToString("MMM dd", System.Globalization.CultureInfo.InvariantCulture),
+    };
+}

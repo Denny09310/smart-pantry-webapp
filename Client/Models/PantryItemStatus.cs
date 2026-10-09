@@ -18,6 +18,7 @@ public enum PantryStatusFilter
     Soon,
     Today,
     Expired,
+    Fresh,
 }
 
 public static class PantryItemStatusExtensions
@@ -37,6 +38,20 @@ public static class PantryItemStatusExtensions
         };
     }
 
+    public static int CountByStatus(this IEnumerable<PantryItemDto> items, PantryItemStatus status)
+        => items.Count(i => i.GetStatus() == status);
+
+    public static IReadOnlyList<string> DistinctLocations(this IEnumerable<PantryItemDto> items)
+        => items
+            .Select(i => i.Location)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    public static IReadOnlyDictionary<string, int> CountByLocation(this IEnumerable<PantryItemDto> items)
+        => items
+            .GroupBy(i => i.Location, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
     public static int DaysRemaining(this PantryItemDto item)
         => item.ExpirationDate.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
 
@@ -75,6 +90,11 @@ public static class PantryItemStatusExtensions
             PantryItemStatus.Soon => BadgeVariant.SoftInfo,
             _ => BadgeVariant.SoftSuccess,
         };
+
+    public static string GetDisplayLocation(this PantryItemDto item)
+        => string.IsNullOrEmpty(item.Location)
+            ? item.Location
+            : char.ToUpperInvariant(item.Location[0]) + item.Location[1..];
 
     public static string FormatExpiration(this PantryItemDto item)
         => item.GetStatus() is PantryItemStatus.Today

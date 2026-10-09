@@ -1,0 +1,56 @@
+@namespace Client.Components.Shared.Pantry
+
+@* Desktop summary pills *@
+<div class="hidden items-center gap-2 md:flex">
+    <BbBadge Variant="BadgeVariant.Secondary" Class="gap-1.5 px-3 py-1.5">
+        Total Items
+        <b>@TotalItems</b>
+    </BbBadge>
+    <BbBadge Variant="BadgeVariant.SoftDestructive" Class="gap-1.5 px-3 py-1.5">
+        Critical (≤ Today)
+        <b>@CriticalCount</b>
+    </BbBadge>
+    <BbBadge Variant="BadgeVariant.SoftWarning" Class="gap-1.5 px-3 py-1.5">
+        Expiring 7d
+        <b>@SoonCount</b>
+    </BbBadge>
+</div>
+
+@* Mobile mini-cards *@
+<div class="grid grid-cols-3 gap-2 md:hidden">
+    <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
+        <LucideIcon Name="package" Size="18" Class="shrink-0 text-muted-foreground" />
+        <div class="leading-tight">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tracked</p>
+            <p class="text-base font-semibold">@TotalItems <span class="text-xs font-normal text-muted-foreground">items</span></p>
+        </div>
+    </div>
+    <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
+        <LucideIcon Name="triangle-alert" Size="18" Class="shrink-0 text-amber-600" />
+        <div class="leading-tight">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Urgent</p>
+            <p class="text-base font-semibold">@SoonCount <span class="text-xs font-normal text-muted-foreground">soon</span></p>
+        </div>
+    </div>
+    <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
+        <LucideIcon Name="calendar-days" Size="18" Class="shrink-0 text-destructive" />
+        <div class="leading-tight">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Past Due</p>
+            <p class="text-base font-semibold">@ExpiredCount <span class="text-xs font-normal text-muted-foreground">items</span></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int TotalItems { get; set; }
+
+    [Parameter]
+    public int CriticalCount { get; set; }
+
+    [Parameter]
+    public int SoonCount { get; set; }
+
+    [Parameter]
+    public int ExpiredCount { get; set; }
+}

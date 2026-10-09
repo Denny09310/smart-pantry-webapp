@@ -1,0 +1,94 @@
+@namespace Client.Components.Shared.Pantry
+
+<div class="space-y-2">
+    <div class="flex gap-2">
+        <BbInputGroup Class="flex-1">
+            <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+                <LucideIcon Name="search" Size="16" />
+            </BbInputGroupAddon>
+            <BbInputGroupInput Value="@Search"
+                               ValueChanged="@OnSearchValueChanged"
+                               UpdateTiming="UpdateTiming.Immediate"
+                               DebounceInterval="250"
+                               Placeholder="Search items by name or notes..." />
+        </BbInputGroup>
+        <BbButton OnClick="@(() => OnAdd.InvokeAsync())" Class="shrink-0" AriaLabel="Add item">
+            <LucideIcon Name="plus" Size="14" />
+            <span class="hidden md:inline">Add Item</span>
+        </BbButton>
+    </div>
+
+    <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false" Class="scrollbar-none">
+        <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Expired">Expired (@ExpiredCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Fresh">Fresh (@FreshCount)</BbChip>
+    </BbChipSet>
+
+    <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false" Class="scrollbar-none">
+        <BbChip Value="@("all")">All (@TotalCount)</BbChip>
+        @foreach (var location in Locations)
+        {
+            <BbChip Value="@location">@DisplayName(location) (@LocationCount(location))</BbChip>
+        }
+    </BbChipSet>
+</div>
+
+@code {
+    [Parameter]
+    public string? Search { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SearchChanged { get; set; }
+
+    [Parameter]
+    public string? Location { get; set; } = "all";
+
+    [Parameter]
+    public EventCallback<string?> LocationChanged { get; set; }
+
+    [Parameter]
+    public PantryStatusFilter Status { get; set; } = PantryStatusFilter.All;
+
+    [Parameter]
+    public EventCallback<PantryStatusFilter> StatusChanged { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<string> Locations { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyDictionary<string, int> LocationCounts { get; set; } = new Dictionary<string, int>();
+
+    [Parameter]
+    public int TotalCount { get; set; }
+
+    [Parameter]
+    public int SoonCount { get; set; }
+
+    [Parameter]
+    public int TodayCount { get; set; }
+
+    [Parameter]
+    public int ExpiredCount { get; set; }
+
+    [Parameter]
+    public int FreshCount { get; set; }
+
+    [Parameter]
+    public EventCallback OnAdd { get; set; }
+
+    private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
+
+    private Task OnLocationValueChanged(string? value) => LocationChanged.InvokeAsync(value ?? "all");
+
+    private Task OnStatusValueChanged(PantryStatusFilter value) => StatusChanged.InvokeAsync(value);
+
+    private int LocationCount(string location)
+        => LocationCounts.TryGetValue(location, out var count) ? count : 0;
+
+    private static string DisplayName(string location)
+        => string.IsNullOrEmpty(location)
+            ? location
+            : char.ToUpperInvariant(location[0]) + location[1..];
+}
