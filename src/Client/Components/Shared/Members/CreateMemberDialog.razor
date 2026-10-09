@@ -1,0 +1,101 @@
+@namespace Client.Components.Shared.Members
+@using System.ComponentModel.DataAnnotations
+@inject MemberService Members
+@inject ToastService Toast
+
+<EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="space-y-4">
+    <DataAnnotationsValidator />
+
+    <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
+        <BbFieldLabel For="member-name" Class="text-sm font-medium">Name *</BbFieldLabel>
+        <BbFieldContent>
+            <BbInputGroup Class="bg-card">
+                <BbInputGroupInput Id="member-name" @bind-Value="Input.Name"
+                                   Placeholder="e.g. Alex" UpdateTiming="UpdateTiming.Immediate" />
+            </BbInputGroup>
+            <BbFieldError Errors="@context.GetValidationMessages(() => Input.Name)" />
+        </BbFieldContent>
+    </BbField>
+
+    <div class="space-y-2">
+        <BbLabel Class="text-sm font-medium">Color</BbLabel>
+        <div class="flex flex-wrap gap-2">
+            @foreach (var color in Palette)
+            {
+                <button type="button" aria-label="@($"Pick color {color}")"
+                        @onclick="@(() => Input.Color = color)"
+                        class="@ColorClass(color)" style="background-color: @color">
+                    @if (Input.Color == color)
+                    {
+                        <LucideIcon Name="check" Size="14" class="text-white" />
+                    }
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="shrink-0 space-y-1 border-t pt-3">
+        <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving">
+            <ChildContent>Save member</ChildContent>
+        </BbButton>
+        @if (AllowCancel)
+        {
+            <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
+                Cancel
+            </BbButton>
+        }
+    </div>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    public IDialogReference Reference { get; set; } = default!;
+
+    [Parameter]
+    public bool AllowCancel { get; set; } = true;
+
+    private bool _saving;
+    private InputModel Input { get; set; } = new();
+
+    private static readonly string[] Palette =
+    [
+        "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7",
+    ];
+
+    private string ColorClass(string color)
+        => Input.Color == color
+            ? "flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-offset-2 ring-ring"
+            : "flex h-8 w-8 items-center justify-center rounded-full";
+
+    private async Task HandleSubmitAsync()
+    {
+        _saving = true;
+        try
+        {
+            var created = await Members.CreateMemberAsync(Input.Name.Trim(), Input.Color);
+
+            if (created is null)
+            {
+                Toast.Error("Can't create member.");
+                return;
+            }
+
+            await Reference.CloseAsync(DialogResult.Ok(created));
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private Task CancelAsync() => Reference.CancelAsync();
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Give the member a name.")]
+        [StringLength(30)]
+        public string Name { get; set; } = string.Empty;
+
+        public string? Color { get; set; }
+    }
+}

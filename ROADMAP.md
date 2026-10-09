@@ -77,8 +77,8 @@ member sees and manages the same pantry.
   (validated name), `DELETE /api/members/{id}`.
 - [x] Send the current member as `X-Member-Id` on pantry writes; resolve
   and validate it server-side for attribution only.
-- [ ] Add a first-run create-member dialog when zero members exist.
-- [ ] Add a member picker/switcher in the app header, persisted in
+- [x] Add a first-run create-member dialog when zero members exist.
+- [x] Add a member picker/switcher in the app header, persisted in
   `localStorage` (Bit.Butil `Storage`).
 - [ ] Show attribution in the pantry UI where useful.
 - [x] Add tests: member CRUD + name validation, write attribution,
