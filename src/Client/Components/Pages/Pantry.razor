@@ -262,7 +262,7 @@
 
         try
         {
-            using var response = await Api.Pantry.UpdateAsync(item.Id, update, Members.CurrentMemberId);
+            using var response = await Api.Pantry.UpdateAsync(item.Id, update);
 
             if (!response.IsSuccessfulWithContent)
             {
