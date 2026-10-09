@@ -1,368 +1,222 @@
-# Smart Pantry — MVP Implementation Roadmap
+# Smart Pantry — Development Roadmap
 
 ## Goal
 
-Build the smallest useful version of Smart Pantry:
+A local-first pantry app for a single household. One install serves one
+household on its trusted local network: everyone shares the same pantry,
+picks their name from a member list (no passwords, no sign-in), and gets
+expiry reminders in-app and via push notifications on opted-in devices.
 
-> A user can record pantry items, where they are stored, when they expire, and see which items need attention soon.
+There is intentionally **no authentication or authorization**. Anyone who
+can reach the server on the network can read and change everything. This
+is acceptable on a trusted LAN, but the app must never be exposed to the
+internet as-is — that would require real auth first.
 
-The MVP is complete when a user can add, view, edit, delete, and filter pantry items, and receives an in-app notification when an item approaches its expiration date.
-
----
-
-## Phase 1 — Solution foundation
-
-Create the three projects:
-
-- `SmartPantry.Server`
-- `SmartPantry.Client`
-- `SmartPantry.Shared`
-
-Set up:
-
-- ASP.NET Core server
-- Blazor WebAssembly standalone client
-- Shared project referenced by both
-- HTTP communication between client and server
-- EF Core
-- Development database
-
-Keep the solution otherwise minimal.
-
-Do not introduce CQRS, MediatR, repository abstractions, domain frameworks, messaging infrastructure, or additional projects.
-
-### Done when
-
-The Blazor client can call a test endpoint on the ASP.NET Core server and receive a response using a shared DTO.
-
----
-
-## Phase 2 — Pantry data model
-
-Create the `PantryItem` entity.
-
-Required properties:
+The roadmap preserves the current solution shape:
 
 ```text
-Id
-Name
-Quantity
-Unit
-Location
-ExpirationDate
-Notes
-CreatedAt
-UpdatedAt
+src/
+├── Server/
+│   ├── Data/          # ApplicationDbContext, entities, migrations
+│   ├── Endpoints/     # Minimal API endpoint groups (GeneratedEndpoints)
+│   ├── Services/      # NotificationService, PushService
+│   ├── Workers/       # ExpirationCheckWorker
+│   └── Extensions/
+├── Client/
+│   ├── Components/    # Pages, shared components
+│   ├── Services/      # Refit API clients
+│   └── wwwroot/       # PWA assets, service workers, css
+├── Shared/            # HTTP contracts and DTOs
+tests/
+└── Server.Tests/
 ```
 
-Create:
-
-- `AppDbContext`
-- EF Core configuration
-- Initial migration
-- Database creation/update
-
-Use a relational database.
-
-Keep the entity simple and EF Core-friendly.
-
-### Done when
-
-A pantry item can be persisted and retrieved from the database.
-
----
-
-## Phase 3 — Shared HTTP contracts
-
-Create the DTOs and request models in `SmartPantry.Shared`.
-
-Minimum contracts:
-
-```text
-PantryItemDto
-CreatePantryItemRequest
-UpdatePantryItemRequest
-NotificationDto
-```
-
-The client should know only about these transport models, not server/domain entities.
-
-Include the calculated expiry status in the response DTO:
-
-```text
-Fresh
-ExpiringSoon
-ExpiresToday
-Expired
-```
-
-Do not expose EF Core entities directly over HTTP.
-
-### Done when
-
-The API can return a complete pantry item without leaking server implementation details.
-
----
-
-## Phase 4 — Pantry API
-
-Implement the minimal pantry endpoints:
-
-```text
-GET    /api/pantry
-GET    /api/pantry/{id}
-POST   /api/pantry
-PUT    /api/pantry/{id}
-DELETE /api/pantry/{id}
-```
-
-Support simple query/filter parameters where useful:
-
-```text
-search
-location
-status
-```
-
-Return validation errors using normal HTTP responses.
-
-Do not build a generic API framework or abstraction layer.
-
-### Done when
-
-The complete pantry CRUD workflow works through HTTP.
-
----
-
-## Phase 5 — Pantry UI
-
-Build the minimum client screens.
-
-### Dashboard
-
-Show:
-
-- Total items
-- Expiring soon
-- Expired
-- Upcoming expirations
-
-Include an **Add item** action.
-
-### Pantry
-
-Show all items with:
-
-- Name
-- Quantity
-- Unit
-- Location
-- Expiration date
-- Status
-
-Add:
-
-- Search
-- Location filter
-- Expiration filter
-- Edit
-- Delete
-- Add item
-
-### Item form
-
-Fields:
-
-- Name
-- Quantity
-- Unit
-- Location
-- Expiration date
-- Notes
-
-The same form can be used for both creating and editing.
-
-### Done when
-
-A user can perform the entire CRUD workflow from the browser without touching the API manually.
-
----
-
-## Phase 6 — Expiration logic
-
-Implement one simple rule:
-
-```text
-Expired
-    expiration date < today
-
-Expires today
-    expiration date == today
-
-Expiring soon
-    expiration date <= today + 7 days
-
-Fresh
-    otherwise
-```
-
-Do not store `ExpiryStatus` in the database.
-
-Calculate it when presenting the item.
-
-Make the calculation independent of the UI.
-
-### Done when
-
-An item automatically moves between statuses as the current date changes.
-
----
-
-## Phase 7 — Notifications
-
-Add the minimal notification model:
-
-```text
-Notification
-------------
-Id
-PantryItemId
-Message
-CreatedAt
-ReadAt
-```
-
-Implement:
-
-```text
-GET  /api/notifications
-POST /api/notifications/{id}/read
-POST /api/notifications/read-all
-```
-
-Add a simple in-app notification area in the client.
-
-For the MVP, notifications only need to communicate:
-
-```text
-"Milk expires tomorrow."
-
-"Tomato sauce expires in 5 days."
-```
-
-Do not implement email, push notifications, SMS, browser notification APIs, or notification preferences.
-
-### Done when
-
-A user can see upcoming-expiration notifications and mark them as read.
-
----
-
-## Phase 8 — Daily expiration check
-
-Add a simple server-side background worker.
-
-Once per day:
-
-1. Load pantry items that are entering the warning period.
-2. Determine whether a notification has already been generated.
-3. Create a notification when necessary.
-4. Avoid duplicates.
-
-The worker should call a small application-level service rather than placing the entire process directly inside the background worker.
-
-Conceptually:
-
-```text
-Background Worker
-       ↓
-NotificationService
-       ↓
-AppDbContext
-```
-
-No queues, event buses, schedulers, or external infrastructure are required for the MVP.
-
-### Done when
-
-A pantry item approaching expiration automatically generates an in-app notification without the client needing to be open.
-
----
-
-## Phase 9 — MVP polish
-
-Only after all functionality works, add basic quality improvements:
-
-- Empty states
-- Loading indicators
-- Form validation messages
-- Error handling
-- Confirmation before delete
-- Responsive mobile layout
-- Clear expiration-status styling
-- Reasonable sorting by expiration date
-
-Do not add new product functionality during this phase.
-
----
-
-# MVP Definition of Done
-
-The MVP is finished when all of the following are true:
-
-### Pantry
-
-- User can add an item.
-- User can edit an item.
-- User can delete an item.
-- User can see all items.
-- User can search items.
-- User can filter by location.
-- User can filter by expiration status.
-- Items are sorted by expiration date.
-
-### Expiration
-
-- Expiry status is calculated automatically.
-- Expired items are clearly identified.
-- Items expiring within 7 days are clearly identified.
-
-### Notifications
-
-- Upcoming expirations generate in-app notifications.
-- Duplicate notifications are prevented.
-- Notifications can be marked as read.
-
-### Architecture
-
-- Client contains only UI and HTTP client logic.
-- Shared contains HTTP contracts.
-- Server contains domain, application, infrastructure, endpoints, and background processing.
-- EF Core is used directly for persistence.
-- No repository abstraction is required.
-- No CQRS/use-case/handler architecture is introduced.
-
-### Out of scope
-
-Do not implement:
-
-- Authentication
-- Multiple users
-- Households
-- Recipes
-- Shopping lists
-- Barcode scanning
-- OCR
-- AI
-- Nutrition data
-- Product databases
-- External grocery integrations
-- Email notifications
-- Push notifications
-- Analytics
-- Consumption history
-- Inventory transaction history
-- Advanced permissions
-- Mobile apps
-
-These can be considered only after the MVP has been used and the next product requirement is known.
+Keep the architecture deliberately simple:
+
+- ASP.NET Core Minimal APIs for HTTP endpoints.
+- Blazor WebAssembly Standalone (hosted, same origin) for the client.
+- EF Core and `ApplicationDbContext` for persistence (Postgres).
+- `Shared` for HTTP request/response contracts and DTOs.
+- Application services only where they keep business logic out of endpoints or background workers.
+- No CQRS, MediatR, repository interfaces, separate Domain/Application/Infrastructure projects, or unnecessary abstractions.
+
+## Shipped
+
+These roadmap items are already implemented and verified — they are not
+planned work:
+
+- **Installable PWA:** web manifest, RealFaviconGenerator icons,
+  Bswup service-worker engine (`service-worker.published.js`), network-only
+  dev stub, branded splash + progress UI, `UpdateNotifier` toast flow.
+- **Push subscription management:** `PushSubscription` entity + migration,
+  `/api/push` endpoints (public key, idempotent subscribe/unsubscribe),
+  `NotificationsPanel` enable/disable UI via Bit.Butil `Push`, minimal
+  `push` / `notificationclick` / `pushsubscriptionchange` handlers in
+  `service-worker.shared.js`, VAPID keys via user secrets (private key never
+  in source control).
+- **Expiration push notifications:** daily `ExpirationCheckWorker` →
+  `NotificationService` → `PushService` fan-out (per-subscription error
+  isolation, 404/410 pruning), in-app notification list as history,
+  best-effort push that never deletes in-app records.
+
+## Phase 1 — Local members (current work)
+
+**Goal:** Each person in the household picks their name so activity can be
+attributed ("added by…"). No passwords, no PINs, no data isolation — every
+member sees and manages the same pantry.
+
+### Tasks
+
+- [ ] Add a `Member` entity in `Server.Data.Entities` (`Id` string GUIDv7
+  like the other entities, `Name` required ≤ 30 chars, optional `Color`,
+  `CreatedAt`).
+- [ ] Add an optional `CreatedByMemberId` FK on `PantryItem`
+  (`SetNull` on member delete — items survive, attribution clears).
+- [ ] Add the EF Core migration (new table + nullable column, no backfill).
+- [ ] Add member endpoints: `GET /api/members`, `POST /api/members`
+  (validated name), `DELETE /api/members/{id}`.
+- [ ] Send the current member as `X-Member-Id` on pantry writes; resolve
+  and validate it server-side for attribution only.
+- [ ] Add a first-run create-member dialog when zero members exist.
+- [ ] Add a member picker/switcher in the app header, persisted in
+  `localStorage` (Bit.Butil `Storage`).
+- [ ] Show attribution in the pantry UI where useful.
+- [ ] Add tests: member CRUD + name validation, write attribution,
+  delete-member-keeps-items.
+
+### Design notes
+
+Members are UX, not security. Never treat `X-Member-Id` as proof of
+identity or use it to gate access — the server accepts it as a label and
+nothing more. There is exactly one household per install, so no
+`Household` / `HouseholdMember` entities, no membership checks, no query
+scoping.
+
+`Notification.ReadAt` stays global for now: one member marking a
+notification read clears it for everyone. Per-member reads would need a
+`NotificationRead` join table — deferred, see below.
+
+### Acceptance criteria
+
+- [ ] A household can create, switch between, and remove members without
+  sign-in.
+- [ ] All members see and manage the same pantry and notifications.
+- [ ] New items record who added them; deleting a member keeps the items.
+- [ ] A fresh install with no members prompts to create the first one.
+
+## Phase 2 — Barcode-assisted item creation
+
+**Goal:** Point the camera at a product barcode (or type it in) and have
+the creation dialog pre-fill name/brand/quantity from Open Food Facts.
+
+### Tasks
+
+- [ ] Add a server-side product lookup proxied through
+  `GET /api/products/lookup?barcode=…` (validates EAN-8/12/13/UPC digits,
+  calls Open Food Facts API v2 with a proper `User-Agent`, maps to
+  `{ barcode, name, brand, quantity, imageUrl }`, 404 when OFF reports
+  `status != 1`, tolerant timeout ~8s — lookup failure never blocks manual
+  creation).
+- [ ] Cache lookups in a small `BarcodeProduct` table (barcode PK) so
+  repeat scans resolve locally and survive offline stretches.
+- [ ] Add a `BarcodeScanner` dialog: `<video>` + Bit.Butil
+  `MediaDevices.GetUserMedia` (`facingMode: environment`) +
+  `BarcodeDetector.StartScan`, checking `IsSupported` /
+  `GetSupportedFormats` first and debouncing repeat detections; dispose
+  stops the scan and the stream (camera light off).
+- [ ] Fall back to manual barcode entry + "Look up" everywhere the native
+  decoder is missing (Safari/iOS — `BarcodeDetector` is Chromium-only).
+- [ ] On lookup success, pre-fill `CreatePantryItemDialog` (name, brand
+  into notes, OFF quantity string into notes, unit defaults to `pcs`);
+  expiry stays manual — OFF has no expiry data.
+- [ ] Add tests: barcode validation, OFF mapping + 404 path (stubbed HTTP
+  handler, no live network in tests), cache-hit behavior.
+
+### Design notes
+
+The lookup goes through the server rather than calling OFF from WASM:
+OFF requires a meaningful `User-Agent` (browsers can't set it), the proxy
+avoids CORS issues, and the cache table is what makes the "shipped
+locally" part real — the full OFF dump is far too large to bundle, but a
+cache of products this household actually buys stays tiny and works
+offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
+`quantity` ("330 ml", "500 g") goes into notes, unit defaults to `pcs`.
+
+### Acceptance criteria
+
+- [ ] On desktop Chrome/Edge and Android Chrome, scanning a known barcode
+  pre-fills the dialog.
+- [ ] On Safari/iOS, manual barcode entry + lookup works; camera button is
+  hidden with an explanation instead of a dead scanner.
+- [ ] Unknown barcodes and OFF outages degrade to "not found, fill
+  manually" without breaking the dialog.
+- [ ] A previously scanned product resolves from local cache with no
+  network.
+
+## Phase 3 — Reliability and release testing
+
+**Goal:** Verify that shared-pantry usage and push delivery are safe to rely on.
+
+### Tasks
+
+- [ ] Test member edge cases (duplicate names, delete current member,
+  write with unknown member ID).
+- [ ] Test duplicate-notification prevention.
+- [ ] Test expiration-date boundary conditions.
+- [ ] Test the background worker when no items qualify.
+- [ ] Test recovery from transient push-provider errors.
+- [ ] Test invalid or expired push subscriptions.
+- [ ] Test behavior when push permission is denied or later revoked.
+- [ ] Test notification delivery in the deployed environment, not only localhost.
+- [ ] Test database migration and backup/restore procedures.
+- [ ] Verify logs do not expose invitation tokens (n/a), VAPID private keys,
+  or push subscription secrets.
+- [ ] Test desktop Chrome or Edge and Android Chrome.
+- [ ] Test iPhone/iPad Home Screen installation and Web Push if iOS support is in scope.
+
+### Acceptance criteria
+
+- [ ] The background worker can encounter a delivery failure and continue processing.
+- [ ] Notifications are not duplicated during normal scheduled runs.
+- [ ] The app remains usable if push is unsupported or disabled.
+- [ ] The production deployment supports the intended devices and browsers.
+- [ ] A tested backup can be restored.
+
+## Release definition of done
+
+The release is complete when:
+
+- [x] The client is installable as a PWA in supported browsers.
+- [x] Users can enable push notifications on supported devices.
+- [x] A daily server-side check creates in-app notifications for approaching expiration dates.
+- [x] Push notifications are delivered to opted-in devices where supported.
+- [ ] A household can manage local members without sign-in.
+- [ ] Household members share and manage one pantry.
+- [ ] Scanning a barcode pre-fills item creation where supported.
+- [ ] Duplicate reminders are prevented.
+- [ ] Core workflows and backup/restore have been tested.
+
+## Explicitly out of scope
+
+Do not implement these as part of this release:
+
+- Real authentication or authorization (ASP.NET Core Identity, OIDC, passwords, PINs).
+- Multiple households per install, household creation, or invitations.
+- Per-member notification read state (`NotificationRead` join — reconsider only if shared reads prove annoying).
+- Email invitations or email reminders.
+- Native Android or iOS applications.
+- Offline editing or background synchronization.
+- Shopping lists, recipes, or meal planning.
+- Barcode scanning, OCR, or AI features.
+- Grocery-store integrations.
+- Consumption history or inventory ledgers.
+- Advanced role-based permissions.
+- Multiple reminder schedules or complex notification preferences.
+- Analytics dashboards.
+- Message queues, event buses, or a separate job-processing platform unless real operational needs require them.
+
+## Recommended implementation order
+
+1. Local members (attribution only).
+2. Barcode-assisted item creation.
+3. Reliability, security, and release testing.
