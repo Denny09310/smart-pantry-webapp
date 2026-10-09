@@ -13,6 +13,8 @@ internal sealed class ServerApi(IServiceProvider services)
     public INotificationEndpoints Notifications => services.GetRequiredService<INotificationEndpoints>();
 
     public IPushEndpoints Push => services.GetRequiredService<IPushEndpoints>();
+
+    public IMemberEndpoints Members => services.GetRequiredService<IMemberEndpoints>();
 }
 
 [PathPrefix("/api/pantry")]
@@ -75,6 +77,24 @@ internal interface IPushEndpoints
         CancellationToken ct = default);
 }
 
+[PathPrefix("/api/members")]
+internal interface IMemberEndpoints
+{
+    [Get("/")]
+    Task<ApiResponse<List<MemberDto>>> GetAsync(
+        CancellationToken ct = default);
+
+    [Post("/")]
+    Task<ApiResponse<MemberDto>> CreateAsync(
+        CreateMemberRequest request,
+        CancellationToken ct = default);
+
+    [Delete("/{id}")]
+    Task<IApiResponse> DeleteAsync(
+        string id,
+        CancellationToken ct = default);
+}
+
 internal static class ServerApiExtensions
 {
     public static IServiceCollection AddServerApi(this IServiceCollection services)
@@ -94,6 +114,10 @@ internal static class ServerApiExtensions
             httpClientName: "Server.API");
 
         services.AddRefitGeneratedClient<IPushEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IMemberEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 

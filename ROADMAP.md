@@ -73,7 +73,7 @@ member sees and manages the same pantry.
 - [x] Add an optional `CreatedByMemberId` FK on `PantryItem`
   (`SetNull` on member delete — items survive, attribution clears).
 - [x] Add the EF Core migration (new table + nullable column, no backfill).
-- [ ] Add member endpoints: `GET /api/members`, `POST /api/members`
+- [x] Add member endpoints: `GET /api/members`, `POST /api/members`
   (validated name), `DELETE /api/members/{id}`.
 - [ ] Send the current member as `X-Member-Id` on pantry writes; resolve
   and validate it server-side for attribution only.
