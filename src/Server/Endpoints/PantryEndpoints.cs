@@ -40,12 +40,15 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         var totalItems = await query.CountAsync(ct);
 
+        var skip = Math.Max(0, request.Skip);
+        var take = Math.Clamp(request.Take, 1, 100);
+
         // Status is calculated in memory: the shared rule is not translatable to SQL.
         var items = (await query
             .OrderBy(x => x.ExpirationDate)
             .ThenBy(x => x.Id)
-            .Skip(request.Skip)
-            .Take(request.Take)
+            .Skip(skip)
+            .Take(take)
             .ToListAsync(ct))
             .Select(ToDto)
             .ToList();

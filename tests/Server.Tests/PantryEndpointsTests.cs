@@ -109,6 +109,42 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
     }
 
     [Fact]
+    public async Task List_Clamps_Paging()
+    {
+        // Negative skip is clamped instead of blowing up; take is capped.
+        using var negative = await _client.GetAsync("/api/pantry?skip=-5&take=10");
+        Assert.Equal(HttpStatusCode.OK, negative.StatusCode);
+
+        using var huge = await _client.GetAsync("/api/pantry?take=1000000");
+        Assert.Equal(HttpStatusCode.OK, huge.StatusCode);
+        var page = await huge.Content.ReadFromJsonAsync<GetPantryItemsResponse>();
+        Assert.NotNull(page);
+        Assert.True(page.Items.Count() <= 100);
+    }
+
+    [Fact]
+    public async Task Search_Matches_Substring()
+    {
+        var match = await CreateItemAsync($"{UniqueName("oat")}milk");
+        var other = await CreateItemAsync(UniqueName("juice"));
+        try
+        {
+            using var response = await _client.GetAsync("/api/pantry?name=oat&take=500");
+            response.EnsureSuccessStatusCode();
+            var page = await response.Content.ReadFromJsonAsync<GetPantryItemsResponse>();
+            Assert.NotNull(page);
+
+            var ids = page.Items.Select(i => i.Id).ToList();
+            Assert.Contains(match.Id, ids);
+            Assert.DoesNotContain(other.Id, ids);
+        }
+        finally
+        {
+            await DeleteItemAsync(match.Id);
+            await DeleteItemAsync(other.Id);
+        }
+    }
+    [Fact]
     public async Task List_Supports_Status_Filter()
     {
         var soon = await CreateItemAsync(expires: InDays(2));
