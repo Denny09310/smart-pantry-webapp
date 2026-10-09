@@ -1,8 +1,26 @@
+## [0.4.2] - 2026-10-09
+
+### 🐛 Bug Fixes
+
+- Live sheet drag follow plus scroll to newly created items
+- Replace mobile virtualization with infinite scroll list
+
+### 🚜 Refactor
+
+- Rename IdOf to KeySelector on infinite scroll list
+
+### 💼 Other
+
+- Bugfix/mobile-list-and-sheet into develop
 ## [0.4.1] - 2026-10-09
 
 ### 🐛 Bug Fixes
 
 - Never let update reload die silently, fall back to plain reload
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Version 0.4.1
 
 ### 💼 Other
 
