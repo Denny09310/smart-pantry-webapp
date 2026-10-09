@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Server.Data;
@@ -92,6 +93,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
     [MapPost("/")]
     public async Task<Results<Ok<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
+        [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
     {
         var entry = new PantryItem
@@ -101,7 +103,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
             Unit = request.Unit,
             Location = request.Location,
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
-            ExpirationDate = request.ExpirationDate
+            ExpirationDate = request.ExpirationDate,
+            CreatedByMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
         db.Items.Add(entry);
@@ -116,6 +119,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         UpdatePantryItemRequest request,
         CancellationToken ct)
     {
+        // Attribution intentionally untouched: it records who added the item.
         var entry = await db.Items.FindAsync([id], ct);
 
         if (entry is null)
@@ -170,5 +174,18 @@ internal class PantryEndpoints(ApplicationDbContext db)
                 .AsNoTracking()
                 .Where(m => m.Id == memberId)
                 .Select(m => m.Name)
+                .FirstOrDefaultAsync(ct);
+
+    /// <summary>
+    /// Attribution is a label, never access control: unknown or missing
+    /// members resolve to null instead of failing the write.
+    /// </summary>
+    private async Task<string?> ResolveMemberIdAsync(string? memberId, CancellationToken ct)
+        => string.IsNullOrWhiteSpace(memberId)
+            ? null
+            : await db.Members
+                .AsNoTracking()
+                .Where(m => m.Id == memberId)
+                .Select(m => m.Id)
                 .FirstOrDefaultAsync(ct);
 }
