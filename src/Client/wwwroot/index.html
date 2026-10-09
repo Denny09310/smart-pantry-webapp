@@ -4,12 +4,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Client</title>
+    <title>Smart Pantry</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="css/tailwind.min.css" />
     <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
+    <link rel="stylesheet" href="_content/Bit.Bswup/bit-bswup.progress.css" />
     <link rel="stylesheet" href="Client.styles.css" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
@@ -20,11 +21,37 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="flex min-h-screen flex-col items-center justify-center gap-3">
+            <img src="icon-192.png" alt="" class="h-16 w-16 rounded-2xl" />
+            <p class="text-sm font-medium">Smart Pantry</p>
+            <p class="text-xs text-muted-foreground">Loading&hellip;</p>
+        </div>
+    </div>
+
+    <div id="bit-bswup"
+         data-bit-bswup-config="true"
+         data-bit-bswup-auto-reload="false"
+         data-bit-bswup-show-on-update="false"
+         data-bit-bswup-hide-app="true"
+         data-bit-bswup-auto-hide="true"
+         data-bit-bswup-handler="smartPantryBswupHandler"
+         style="background-color: var(--background);">
+        <div class="bit-bswup-container mx-auto flex max-w-sm flex-col items-center rounded-2xl border bg-card p-8 shadow-xl">
+            <img src="icon-192.png" alt="Smart Pantry" class="h-16 w-16 rounded-2xl" />
+            <p class="bit-bswup-title mt-4 text-xl font-semibold">Smart Pantry</p>
+            <p class="bit-bswup-description mt-1 text-sm text-muted-foreground">Installing the app&hellip;</p>
+            <div class="bit-bswup-progress mt-6 w-full">
+                <div id="bit-bswup-progress-bar" role="progressbar" aria-label="Install download progress"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width: 0%"></div>
+            </div>
+            <p id="bit-bswup-percent">0%</p>
+            <div id="bit-bswup-error" class="bit-bswup-error" style="display: none;" role="alert">
+                <p class="bit-bswup-error-title">Update failed to install</p>
+                <p id="bit-bswup-error-message" class="bit-bswup-error-message"></p>
+                <pre id="bit-bswup-error-details" class="bit-bswup-error-details"></pre>
+                <button id="bit-bswup-error-retry" type="button">Retry</button>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
@@ -38,8 +65,8 @@
     <script src="_content/Bit.Bswup/bit-bswup.js"
             scope="/"
             sw="service-worker.js"
-            handler="smartPantryBswupHandler"
             updateOnVisibility="true"></script>
+    <script src="_content/Bit.Bswup/bit-bswup.progress.js"></script>
 </body>
 
 </html>
