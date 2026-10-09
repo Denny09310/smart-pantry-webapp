@@ -1,9 +1,15 @@
 @using System.ComponentModel.DataAnnotations
+@using Client.Components.Shared.Pantry
+@inject BottomSheetService BottomSheet
 
 <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex flex-col overflow-hidden">
     <DataAnnotationsValidator />
 
     <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-none pr-1">
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="ScanBarcodeAsync">
+            <LucideIcon Name="barcode" Size="16" />
+            Scan barcode
+        </BbButton>
         @* Item name *@
         <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
             <div class="flex items-center justify-between">
@@ -208,6 +214,33 @@
 
     private void SetExpiry(int daysFromToday) =>
         Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
+
+    private static readonly DialogOpenOptions ScanOptions = new()
+    {
+        Title = "Scan barcode",
+        Description = "Point the camera at the product",
+        Size = DialogSize.Small,
+    };
+
+    private async Task ScanBarcodeAsync()
+    {
+        var result = await BottomSheet.OpenAsync<BarcodeScannerDialog>(ScanOptions);
+
+        if (result.Cancelled)
+            return;
+
+        if (result.GetData<ProductLookupDto>() is not { } product)
+            return;
+
+        Input.Name = product.Name;
+
+        var details = string.Join(
+            " • ",
+            new[] { product.Brand, product.Quantity }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        if (!string.IsNullOrWhiteSpace(details))
+            Input.Notes = string.IsNullOrWhiteSpace(Input.Notes) ? details : $"{Input.Notes}\n{details}";
+    }
 
     private async Task HandleSubmitAsync()
     {

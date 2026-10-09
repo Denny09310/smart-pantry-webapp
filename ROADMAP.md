@@ -119,14 +119,14 @@ the creation dialog pre-fill name/brand/quantity from Open Food Facts.
   creation).
 - [x] Cache lookups in a small `BarcodeProduct` table (barcode PK) so
   repeat scans resolve locally and survive offline stretches.
-- [ ] Add a `BarcodeScanner` dialog: `<video>` + Bit.Butil
+- [x] Add a `BarcodeScanner` dialog: `<video>` + Bit.Butil
   `MediaDevices.GetUserMedia` (`facingMode: environment`) +
   `BarcodeDetector.StartScan`, checking `IsSupported` /
   `GetSupportedFormats` first and debouncing repeat detections; dispose
   stops the scan and the stream (camera light off).
-- [ ] Fall back to manual barcode entry + "Look up" everywhere the native
+- [x] Fall back to manual barcode entry + "Look up" everywhere the native
   decoder is missing (Safari/iOS — `BarcodeDetector` is Chromium-only).
-- [ ] On lookup success, pre-fill `CreatePantryItemDialog` (name, brand
+- [x] On lookup success, pre-fill `CreatePantryItemDialog` (name, brand
   into notes, OFF quantity string into notes, unit defaults to `pcs`);
   expiry stays manual — OFF has no expiry data.
 - [x] Add tests: barcode validation, OFF mapping + 404 path (stubbed HTTP
