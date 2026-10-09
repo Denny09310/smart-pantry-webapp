@@ -2,8 +2,9 @@
 
 @inject BottomSheetService BottomSheet
 
-<Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="104" OverscanCount="4" @ref="_virtualize">
-    <ItemContent Context="item">
+<InfiniteScrollList T="PantryItemDto" Items="@Items" KeySelector="@(i => i.Id)" EnsureVisibleId="@HighlightId">
+    <ItemTemplate Context="item">
+        <div id="@($"pantry-item-{item.Id}")" class="@(item.Id == HighlightId ? "rounded-xl bg-muted" : "")">
         <LongPressSurface T="PantryItemDto" Value="item" OnLongPress="OpenActionsAsync">
             <BbCard Class="mb-2">
                 <BbCardContent Class="flex items-center gap-3 p-3">
@@ -34,13 +35,9 @@
                 </BbCardContent>
             </BbCard>
         </LongPressSurface>
-    </ItemContent>
-    <Placeholder>
-        <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
-        <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
-        <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
-    </Placeholder>
-</Virtualize>
+        </div>
+    </ItemTemplate>
+</InfiniteScrollList>
 
 @code
 {
@@ -59,39 +56,14 @@
     [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
 
+    [Parameter]
+    public string? HighlightId { get; set; }
+
     private static readonly DialogOpenOptions Options = new()
     {
         Title = "Pantry item actions",
         Description = "Select what you want to do with this item"
     };
-
-    private Virtualize<PantryItemDto>? _virtualize;
-    private IReadOnlyList<PantryItemDto>? _renderedItems;
-    private bool _refreshPending;
-
-    protected override void OnParametersSet()
-    {
-        if (!ReferenceEquals(_renderedItems, Items))
-        {
-            _renderedItems = Items;
-            _refreshPending = true;
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_refreshPending && !firstRender && _virtualize is not null)
-        {
-            _refreshPending = false;
-            await _virtualize.RefreshDataAsync();
-        }
-    }
-
-    private ValueTask<ItemsProviderResult<PantryItemDto>> ProvideItemsAsync(ItemsProviderRequest request)
-    {
-        var page = Items.Skip(request.StartIndex).Take(request.Count).ToList();
-        return ValueTask.FromResult(new ItemsProviderResult<PantryItemDto>(page, Items.Count));
-    }
 
     private bool IsBusy(PantryItemDto item) => BusyIds.Contains(item.Id);
 

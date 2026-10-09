@@ -105,18 +105,8 @@
         }
 
         <div class="md:hidden">
-            @if (AttentionItems.Count > 0)
-            {
-                <PantryItemsList Items="@AttentionItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync" />
-            }
-            else
-            {
-                <BbEmpty Title="All fresh" Description="Nothing needs attention right now." Size="EmptySize.Small">
-                    <Icon>
-                        <LucideIcon Name="badge-check" Size="28" />
-                    </Icon>
-                </BbEmpty>
-            }
+            <PantryItemsList Items="@VisibleItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
+                             HighlightId="@_highlightId" />
         </div>
 
         <div class="flex flex-col gap-2 md:hidden">
@@ -149,6 +139,7 @@
 
     private List<PantryItemDto>? _items;
     private readonly HashSet<string> _deletingIds = [];
+    private string? _highlightId;
 
     private string? _location = "all", _name;
     private PantryStatusFilter _status = PantryStatusFilter.All;
@@ -210,6 +201,8 @@
 
     private async Task LoadAsync()
     {
+        _highlightId = null;
+
         using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
 
         if (!response.IsSuccessfulWithContent)
@@ -266,8 +259,11 @@
             return;
         }
 
+        var createdId = response.Content?.Id;
+
         Toast.Success("Item added to the pantry.");
         await LoadAsync();
+        _highlightId = createdId;
     }
 
     private async Task DeleteItemAsync(PantryItemDto item)

@@ -2,9 +2,9 @@
 
 <BbCard>
     <BbCardContent Class="p-0">
-        <Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="84" OverscanCount="4" @ref="_virtualize">
-            <ItemContent Context="item">
-                <div class="flex items-center gap-3 border-b p-3 last:border-0">
+        <InfiniteScrollList T="PantryItemDto" Items="@Items" KeySelector="@(i => i.Id)" EnsureVisibleId="@HighlightId">
+            <ItemTemplate Context="item">
+                <div id="@($"pantry-item-{item.Id}")" class="flex items-center gap-3 border-b p-3 last:border-0 @(item.Id == HighlightId ? "bg-muted" : "")">
                     <BbAvatar>
                         <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
                     </BbAvatar>
@@ -28,17 +28,10 @@
                             </div>
                         </div>
                     </div>
-                </ItemContent>
-                <Placeholder>
-                    <div class="space-y-2 p-3">
-                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
-                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
-                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
-                    </div>
-                </Placeholder>
-            </Virtualize>
-        </BbCardContent>
-    </BbCard>
+            </ItemTemplate>
+        </InfiniteScrollList>
+    </BbCardContent>
+</BbCard>
 
 @code
 {
@@ -51,33 +44,8 @@
     [Parameter]
     public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
 
-    private Virtualize<PantryItemDto>? _virtualize;
-    private IReadOnlyList<PantryItemDto>? _renderedItems;
-    private bool _refreshPending;
-
-    protected override void OnParametersSet()
-    {
-        if (!ReferenceEquals(_renderedItems, Items))
-        {
-            _renderedItems = Items;
-            _refreshPending = true;
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_refreshPending && !firstRender && _virtualize is not null)
-        {
-            _refreshPending = false;
-            await _virtualize.RefreshDataAsync();
-        }
-    }
-
-    private ValueTask<ItemsProviderResult<PantryItemDto>> ProvideItemsAsync(ItemsProviderRequest request)
-    {
-        var page = Items.Skip(request.StartIndex).Take(request.Count).ToList();
-        return ValueTask.FromResult(new ItemsProviderResult<PantryItemDto>(page, Items.Count));
-    }
+    [Parameter]
+    public string? HighlightId { get; set; }
 
     private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
 }
