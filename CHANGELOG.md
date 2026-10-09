@@ -1,3 +1,12 @@
+## [0.4.1] - 2026-10-09
+
+### 🐛 Bug Fixes
+
+- Never let update reload die silently, fall back to plain reload
+
+### 💼 Other
+
+- Bugfix/update-reload-fallback into develop
 ## [0.4.0] - 2026-10-09
 
 ### 🚀 Features
@@ -12,6 +21,10 @@
 ### 🚜 Refactor
 
 - Move OpenFoodFacts client registration to extension
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Version 0.4.0
 
 ### 💼 Other
 
