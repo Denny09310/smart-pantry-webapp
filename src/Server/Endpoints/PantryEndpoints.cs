@@ -77,7 +77,9 @@ internal class PantryEndpoints(ApplicationDbContext db)
         string id,
         CancellationToken ct)
     {
-        var entry = await db.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        var entry = await db.Items
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
 
         if (entry is null)
             return TypedResults.NotFound();
