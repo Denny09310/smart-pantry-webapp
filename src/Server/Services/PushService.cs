@@ -46,6 +46,7 @@ internal sealed class PushService(
 
         var messages = await db.Notifications.AsNoTracking()
             .Where(n => n.ReadAt == null)
+            .OrderBy(n => n.CreatedAt)
             .Select(n => n.Message)
             .Distinct()
             .ToListAsync(ct);
@@ -83,7 +84,7 @@ internal sealed class PushService(
             {
                 dead.Add(subscription.Id);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 failed++;
                 log.LogWarning(ex, "Push to {Endpoint} failed.", subscription.Endpoint);

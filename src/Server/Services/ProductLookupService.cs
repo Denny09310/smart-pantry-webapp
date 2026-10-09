@@ -35,7 +35,7 @@ internal sealed class ProductLookupService(
         {
             fresh = await FetchAsync(barcode, ct);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             log.LogWarning(ex, "Product lookup for {Barcode} failed.", barcode);
         }
@@ -51,14 +51,23 @@ internal sealed class ProductLookupService(
             Quantity = fresh.Quantity,
             ImageUrl = fresh.ImageUrl,
         });
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Lost a concurrent first-scan race: the winner's row is canonical.
+            db.ChangeTracker.Clear();
+        }
 
         return fresh;
     }
 
     private async Task<ProductLookupDto?> FetchAsync(string barcode, CancellationToken ct)
     {
-        using var client = http.CreateClient("OpenFoodFacts");
+        var client = http.CreateClient("OpenFoodFacts");
 
         using var response = await client.GetAsync(
             $"api/v2/product/{barcode}.json?fields=code,product_name,brands,quantity,image_url",

@@ -13,12 +13,19 @@ public static class ServiceWorkerCacheExtensions
     {
         app.Use(async (context, next) =>
         {
-            var path = context.Request.Path.Value;
-            if (path is "/service-worker.js" or "/service-worker.published.js"
-                || (path is not null && path.StartsWith("/_content/Bit.Bswup/", StringComparison.Ordinal)))
+            // Set on the way out: static-assets middleware sets its own
+            // Cache-Control and would otherwise win.
+            context.Response.OnStarting(() =>
             {
-                context.Response.Headers.CacheControl = "no-cache";
-            }
+                var path = context.Request.Path.Value;
+                if (path is "/service-worker.js" or "/service-worker.published.js"
+                    || (path is not null && path.StartsWith("/_content/Bit.Bswup/", StringComparison.Ordinal)))
+                {
+                    context.Response.Headers.CacheControl = "no-cache";
+                }
+
+                return Task.CompletedTask;
+            });
 
             await next(context);
         });

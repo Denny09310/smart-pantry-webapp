@@ -10,7 +10,7 @@
     {
         <div class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
             <BbAvatar>
-                <BbAvatarFallback style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}")">
+                <BbAvatarFallback style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
                     @MemberDisplay.Initials(member.Name)
                 </BbAvatarFallback>
             </BbAvatar>
@@ -54,7 +54,17 @@
 
     public void Dispose() => Members.Changed -= OnChanged;
 
-    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // Member switched during navigation/dispose; nothing to render.
+        }
+    }
 
     private async Task SelectAsync(string id)
     {

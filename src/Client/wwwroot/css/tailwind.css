@@ -5,9 +5,7 @@
 @import './theme.css';
 
 /* Configure source paths for scanning Razor files
-   (paths are relative to this file at wwwroot/css/app-input.css) */
-@source "../../Pages";
-@source "../../Shared";
+   (paths are relative to this file at wwwroot/css/tailwind.css) */
 @source "../../Components";
 
 /* Class-based dark mode (matches theme toggle behavior) */

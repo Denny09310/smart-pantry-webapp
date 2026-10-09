@@ -20,9 +20,11 @@
             _instance = DotNetObjectReference.Create(this);
             await _interop.RegisterAsync(_instance);
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex)
         {
-            // Prerendering / circuit gone; nothing to register.
+            // Missing module, cancelled import, or dead circuit: updates fall
+            // back to the built-in Bswup UI instead of breaking the page.
+            Log.LogWarning(ex, "Update handler registration failed.");
         }
     }
 

@@ -32,6 +32,11 @@
                               OnClick="@(() => OnCheck.InvokeAsync(item))">
                         <LucideIcon Name="check" Size="16" />
                     </BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Class="shrink-0 rounded-full"
+                              AriaLabel="@($"Actions for {item.Name}")"
+                              OnClick="@(() => OpenActionsAsync(item))">
+                        <LucideIcon Name="ellipsis" Size="16" />
+                    </BbButton>
                 </BbCardContent>
             </BbCard>
         </LongPressSurface>
@@ -76,7 +81,7 @@
             ? "Expired yesterday"
             : $"Expired {-item.DaysRemaining()} days ago",
         PantryItemStatus.Today => "Use by 11:59 PM",
-        _ => item.ExpirationDate.ToString("MMM dd", System.Globalization.CultureInfo.InvariantCulture),
+        _ => item.FormatExpiration(),
     };
 
     private async Task OpenActionsAsync(PantryItemDto item)

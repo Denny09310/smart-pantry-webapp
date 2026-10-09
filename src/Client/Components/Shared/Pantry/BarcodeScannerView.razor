@@ -15,7 +15,7 @@
 else if (_camera)
 {
     <div class="space-y-3">
-        <video @ref="_video" autoplay playsinline muted class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
+        <video @ref="_video" autoplay playsinline muted aria-label="Barcode scanner preview" class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
         <p class="text-center text-xs text-muted-foreground">Point the camera at the barcode</p>
         @if (_lookingUp)
         {
@@ -43,7 +43,8 @@ else
         <p class="text-sm text-muted-foreground">Camera scanning isn't supported in this browser. Enter the barcode instead.</p>
         <BbInputGroup Class="bg-card">
             <BbInputGroupInput @bind-Value="_manualCode" Placeholder="e.g. 5449000000996"
-                               UpdateTiming="UpdateTiming.Immediate" inputmode="numeric" />
+                               UpdateTiming="UpdateTiming.Immediate" inputmode="numeric"
+                               AriaLabel="Barcode" />
         </BbInputGroup>
         <BbButton Class="w-full" Loading="@_lookingUp" OnClick="LookupManualAsync">
             Look up
@@ -74,6 +75,7 @@ else
     private Bit.Butil.MediaStreamHandle? _stream;
     private Bit.Butil.ButilSubscription? _scan;
     private bool _started;
+    private bool _starting;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -107,34 +109,46 @@ else
 
     private async Task StartCameraAsync()
     {
-        await StopCameraAsync();
-        _notFound = false;
+        if (_starting)
+            return;
+
+        _starting = true;
 
         try
         {
-            _stream = await MediaDevices.GetUserMedia(
-                audio: false,
-                video: true,
-                videoConstraints: new { facingMode = "environment" });
+            await StopCameraAsync();
+            _notFound = false;
 
-            if (_stream is null)
+            try
             {
-                _camera = false;
-                return;
+                _stream = await MediaDevices.GetUserMedia(
+                    audio: false,
+                    video: true,
+                    videoConstraints: new { facingMode = "environment" });
+
+                if (_stream is null)
+                {
+                    _camera = false;
+                    return;
+                }
+
+                await _stream.AttachTo(_video);
+
+                _scan = await BarcodeDetector.StartScan(
+                    _video,
+                    onDetected: codes => InvokeAsync(() => HandleDetectedAsync(codes)),
+                    formats: _formats,
+                    intervalMs: 250);
             }
-
-            await _stream.AttachTo(_video);
-
-            _scan = await BarcodeDetector.StartScan(
-                _video,
-                onDetected: codes => InvokeAsync(() => HandleDetectedAsync(codes)),
-                formats: _formats,
-                intervalMs: 250);
+            catch (Exception ex)
+            {
+                Log.LogWarning(ex, "Camera start failed.");
+                _camera = false;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            Log.LogWarning(ex, "Camera start failed.");
-            _camera = false;
+            _starting = false;
         }
     }
 
@@ -201,13 +215,21 @@ else
 
     private async Task StopCameraAsync()
     {
-        if (_scan is not null)
-            await _scan.DisposeAsync();
-        _scan = null;
+        try
+        {
+            if (_scan is not null)
+                await _scan.DisposeAsync();
+            _scan = null;
 
-        if (_stream is not null)
-            await _stream.DisposeAsync();
-        _stream = null;
+            if (_stream is not null)
+                await _stream.DisposeAsync();
+            _stream = null;
+        }
+        catch (JSDisconnectedException)
+        {
+            _scan = null;
+            _stream = null;
+        }
     }
 
     public async ValueTask DisposeAsync() => await StopCameraAsync();

@@ -22,7 +22,7 @@ internal class PushEndpoints(ApplicationDbContext db, IOptions<PushOptions> opti
             : TypedResults.Ok(new PushPublicKeyResponse(options.Value.PublicKey));
 
     [MapPost("/subscriptions")]
-    public async Task<Results<Ok<PushSubscriptionDto>, ValidationProblem>> SubscribeAsync(
+    public async Task<Results<Ok<PushSubscriptionDto>, Created<PushSubscriptionDto>, ValidationProblem>> SubscribeAsync(
         PushSubscriptionRequest request,
         CancellationToken ct)
     {
@@ -45,9 +45,31 @@ internal class PushEndpoints(ApplicationDbContext db, IOptions<PushOptions> opti
         };
 
         db.PushSubscriptions.Add(entry);
-        await db.SaveChangesAsync(ct);
 
-        return TypedResults.Ok(ToDto(entry));
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Lost a concurrent subscribe race on the unique endpoint:
+            // the winner's row is canonical, refresh keys on it.
+            db.ChangeTracker.Clear();
+
+            var winner = await db.PushSubscriptions
+                .FirstOrDefaultAsync(s => s.Endpoint == request.Endpoint, ct);
+
+            if (winner is null)
+                throw;
+
+            winner.P256dh = request.P256dh;
+            winner.Auth = request.Auth;
+            await db.SaveChangesAsync(ct);
+
+            return TypedResults.Ok(ToDto(winner));
+        }
+
+        return TypedResults.Created($"/api/push/subscriptions?endpoint={Uri.EscapeDataString(entry.Endpoint)}", ToDto(entry));
     }
 
     [MapDelete("/subscriptions")]

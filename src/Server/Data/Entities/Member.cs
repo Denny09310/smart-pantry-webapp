@@ -6,5 +6,5 @@ public class Member
     public string Name { get; set; } = default!;
     public string? Color { get; set; }
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

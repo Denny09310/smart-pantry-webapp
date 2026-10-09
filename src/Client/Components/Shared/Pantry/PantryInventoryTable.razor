@@ -89,7 +89,9 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_refreshPending && !firstRender)
+        // No first-render skip: the grid mounts its own initial query, and a
+        // skipped flag would fire spuriously on the next unrelated render.
+        if (_refreshPending)
         {
             _refreshPending = false;
             if (_grid is not null)

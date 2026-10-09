@@ -1,5 +1,7 @@
 using System.Diagnostics;
 
+using Microsoft.Extensions.Options;
+
 using Server.Services;
 
 namespace Server.Workers;
@@ -33,11 +35,20 @@ internal sealed class ExpirationCheckWorker(IServiceProvider services, ILogger<E
             var notifications = scope.ServiceProvider.GetRequiredService<NotificationService>();
             var generated = await notifications.GenerateExpirationNotificationsAsync(ct);
 
+            // Always fan out: pre-existing unread notifications and devices
+            // subscribed after they were created still need waking.
+            // Unconfigured push is a normal state, not an error.
             var pushed = new PushService.PushResult(0, 0, 0);
-            if (generated.Created > 0)
+            var pushOptions = scope.ServiceProvider.GetRequiredService<IOptions<PushOptions>>().Value;
+
+            if (pushOptions.IsConfigured)
             {
                 var push = scope.ServiceProvider.GetRequiredService<PushService>();
                 pushed = await push.SendUnreadAsync(ct);
+            }
+            else
+            {
+                log.LogDebug("Push skipped: VAPID keys are not configured.");
             }
 
             log.LogInformation(
