@@ -1,5 +1,6 @@
 @namespace Client.Components.Shared
 @inject ToastService Toast
+@inject BottomSheetService BottomSheet
 
 <BbResponsiveNavProvider>
     <header class="hidden border-b bg-card md:block">
@@ -29,9 +30,12 @@
         new() { Text = "Pantry", Href = "/pantry" },
     ];
 
-    private Task NotifyAsync()
+    private static readonly DialogOpenOptions NotificationsOptions = new()
     {
-        Toast.Info("You're all caught up.");
-        return Task.CompletedTask;
-    }
+        Title = "Notifications",
+        Description = "Items approaching expiration",
+        Size = DialogSize.Default,
+    };
+
+    private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
 }

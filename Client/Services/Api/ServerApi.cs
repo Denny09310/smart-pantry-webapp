@@ -7,6 +7,8 @@ namespace Client.Services;
 internal sealed class ServerApi(IServiceProvider services)
 {
     public IPantryEndpoints Pantry => services.GetRequiredService<IPantryEndpoints>();
+
+    public INotificationEndpoints Notifications => services.GetRequiredService<INotificationEndpoints>();
 }
 
 [PathPrefix("/api/pantry")]
@@ -34,6 +36,23 @@ internal interface IPantryEndpoints
         CancellationToken ct = default);
 }
 
+[PathPrefix("/api/notifications")]
+internal interface INotificationEndpoints
+{
+    [Get("/")]
+    Task<ApiResponse<GetNotificationsResponse>> GetAsync(
+        CancellationToken ct = default);
+
+    [Post("/{id}/read")]
+    Task<ApiResponse<NotificationDto>> MarkReadAsync(
+        string id,
+        CancellationToken ct = default);
+
+    [Post("/read-all")]
+    Task<ApiResponse<int>> MarkAllReadAsync(
+        CancellationToken ct = default);
+}
+
 internal static class ServerApiExtensions
 {
     public static IServiceCollection AddServerApi(this IServiceCollection services)
@@ -45,6 +64,10 @@ internal static class ServerApiExtensions
         });
 
         services.AddRefitGeneratedClient<IPantryEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<INotificationEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 

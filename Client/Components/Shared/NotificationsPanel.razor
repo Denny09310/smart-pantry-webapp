@@ -1,0 +1,61 @@
+@namespace Client.Components.Shared
+@implements IAsyncDisposable
+@inject ServerApi Api
+@inject ToastService Toast
+
+<div class="space-y-3">
+    @if (_loading)
+    {
+        <div class="flex justify-center py-8">
+            <BbSpinner Size="SpinnerSize.Large" />
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <BbEmpty Title="All caught up"
+                 Description="Items approaching expiration will show up here."
+                 Size="EmptySize.Small">
+            <Icon>
+                <LucideIcon Name="bell" Size="28" />
+            </Icon>
+        </BbEmpty>
+    }
+    else
+    {
+        <div class="flex items-center justify-between gap-2">
+            <p class="text-sm text-muted-foreground">
+                @(UnreadCount == 0 ? "No unread notifications" : $"{UnreadCount} unread")
+            </p>
+            @if (UnreadCount > 0)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Loading="@_markingAll" OnClick="MarkAllReadAsync">
+                    Mark all read
+                </BbButton>
+            }
+        </div>
+        <div class="space-y-2">
+            @foreach (var notification in _items)
+            {
+                <div @key="notification.Id" class="flex items-start gap-2 rounded-lg border bg-card p-3">
+                    @if (notification.ReadAt is null)
+                    {
+                        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true"></span>
+                    }
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm">@notification.Message</p>
+                        <p class="text-xs text-muted-foreground">@FormatWhen(notification.CreatedAt)</p>
+                    </div>
+                    @if (notification.ReadAt is null)
+                    {
+                        <BbButton Variant="ButtonVariant.Ghost"
+                                  Size="ButtonSize.Small"
+                                  Loading="@IsBusy(notification)"
+                                  OnClick="@(() => MarkReadAsync(notification))">
+                            Mark read
+                        </BbButton>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

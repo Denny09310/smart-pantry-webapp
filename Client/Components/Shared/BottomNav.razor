@@ -1,5 +1,5 @@
 @namespace Client.Components.Shared
-@inject ToastService Toast
+@inject BottomSheetService BottomSheet
 
 <div class="fixed inset-x-4 bottom-4 z-50 md:hidden">
     <BbCard Class="rounded-2xl">
@@ -23,9 +23,12 @@
 @code {
     private const string LinkClass = "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[10px] font-medium text-muted-foreground";
 
-    private Task NotifyAsync()
+    private static readonly DialogOpenOptions NotificationsOptions = new()
     {
-        Toast.Info("You're all caught up.");
-        return Task.CompletedTask;
-    }
+        Title = "Notifications",
+        Description = "Items approaching expiration",
+        Size = DialogSize.Default,
+    };
+
+    private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
 }
