@@ -143,7 +143,7 @@
 @code
 {
     [CascadingParameter]
-    public IDialogReference DialogRef { get; set; } = default!;
+    public IDialogReference Reference { get; set; } = default!;
 
     /// <summary>When set, the form edits this item instead of creating a new one.</summary>
     [Parameter]
@@ -225,7 +225,7 @@
                 string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
                 DateOnly.FromDateTime(Input.ExpirationDate.Value));
 
-            await DialogRef.CloseAsync(DialogResult.Ok(request));
+            await Reference.CloseAsync(DialogResult.Ok(request));
         }
         finally
         {
@@ -233,7 +233,7 @@
         }
     }
 
-    private Task CancelAsync() => DialogRef.CancelAsync();
+    private Task CancelAsync() => Reference.CancelAsync();
 
     private sealed class InputModel
     {

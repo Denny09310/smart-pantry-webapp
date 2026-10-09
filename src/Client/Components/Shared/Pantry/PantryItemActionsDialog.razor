@@ -1,0 +1,37 @@
+<div class="flex flex-col gap-2">
+    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Secondary" AriaLabel="@($"Edit {Item.Name}")"
+              @onclick="SelectEditAsync">
+        <LucideIcon Name="pencil" Size="14" />
+        Edit
+    </BbButton>
+    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Destructive" AriaLabel="@($"Delete {Item.Name}")"
+              @onclick="SelectDeleteAsync">
+        <LucideIcon Name="trash-2" Size="14" />
+        Delete
+    </BbButton>
+</div>
+
+@code
+{
+    [CascadingParameter]
+    public IDialogReference Reference { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public PantryItemDto Item { get; set; }
+
+    private async Task SelectEditAsync()
+    {
+        await Reference.CloseAsync(DialogResult.Ok(Result.Edit));
+    }
+
+    private async Task SelectDeleteAsync()
+    {
+        await Reference.CloseAsync(DialogResult.Ok(Result.Delete));
+    }
+
+    public enum Result
+    {
+        Edit,
+        Delete
+    }
+}

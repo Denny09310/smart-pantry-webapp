@@ -1,35 +1,39 @@
 @namespace Client.Components.Shared.Pantry
 
+@inject BottomSheetService BottomSheet
+
 <Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="104" OverscanCount="4" @ref="_virtualize">
     <ItemContent Context="item">
-        <BbCard Class="mb-2">
-            <BbCardContent Class="flex items-center gap-3 p-3">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center justify-between gap-2">
-                        <p class="truncate text-sm font-semibold">@item.Name</p>
-                        <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
+        <LongPressSurface T="PantryItemDto" Value="item" OnLongPress="OpenActionsAsync">
+            <BbCard Class="mb-2">
+                <BbCardContent Class="flex items-center gap-3 p-3">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="truncate text-sm font-semibold">@item.Name</p>
+                            <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
+                        </div>
+                        <p class="truncate text-xs text-muted-foreground">
+                            @item.FormatQuantity()@(!string.IsNullOrWhiteSpace(item.Notes) ? $" • {item.Notes}" : null)
+                        </p>
+                        <div class="mt-1 flex items-center justify-between gap-2">
+                            <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <LucideIcon Name="package" Size="12" />
+                                @item.GetDisplayLocation()
+                            </span>
+                            <span
+                                class="text-xs @(IsUrgent(item) ? "font-medium text-destructive" : "text-muted-foreground")">
+                                @ExpiryText(item)
+                            </span>
+                        </div>
                     </div>
-                    <p class="truncate text-xs text-muted-foreground">
-                        @item.FormatQuantity()@(!string.IsNullOrWhiteSpace(item.Notes) ? $" • {item.Notes}" : null)
-                    </p>
-                    <div class="mt-1 flex items-center justify-between gap-2">
-                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <LucideIcon Name="package" Size="12" />
-                            @item.GetDisplayLocation()
-                        </span>
-                        <span
-                            class="text-xs @(IsUrgent(item) ? "font-medium text-destructive" : "text-muted-foreground")">
-                            @ExpiryText(item)
-                        </span>
-                    </div>
-                </div>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Class="shrink-0 rounded-full"
-                          AriaLabel="@($"Mark {item.Name} as used")" Loading="@IsBusy(item)"
-                          OnClick="@(() => OnCheck.InvokeAsync(item))">
-                    <LucideIcon Name="check" Size="16" />
-                </BbButton>
-            </BbCardContent>
-        </BbCard>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Class="shrink-0 rounded-full"
+                              AriaLabel="@($"Mark {item.Name} as used")" Loading="@IsBusy(item)"
+                              OnClick="@(() => OnCheck.InvokeAsync(item))">
+                        <LucideIcon Name="check" Size="16" />
+                    </BbButton>
+                </BbCardContent>
+            </BbCard>
+        </LongPressSurface>
     </ItemContent>
     <Placeholder>
         <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
@@ -47,7 +51,19 @@
     public EventCallback<PantryItemDto> OnCheck { get; set; }
 
     [Parameter]
+    public EventCallback<PantryItemDto> OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnDelete { get; set; }
+
+    [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
+
+    private static readonly DialogOpenOptions Options = new()
+    {
+        Title = "Pantry item actions",
+        Description = "Select what you want to do with this item"
+    };
 
     private Virtualize<PantryItemDto>? _virtualize;
     private IReadOnlyList<PantryItemDto>? _renderedItems;
@@ -90,4 +106,30 @@
         PantryItemStatus.Today => "Use by 11:59 PM",
         _ => item.ExpirationDate.ToString("MMM dd", System.Globalization.CultureInfo.InvariantCulture),
     };
+
+    private async Task OpenActionsAsync(PantryItemDto item)
+    {
+        var result = await BottomSheet.OpenAsync<PantryItemActionsDialog>(
+            parameters: new Dictionary<string, object?>
+            {
+                [nameof(PantryItemActionsDialog.Item)] = item
+            },
+            Options);
+
+        if (result.Cancelled)
+            return;
+
+        var action = result.GetData<PantryItemActionsDialog.Result>();
+
+        switch (action)
+        {
+            case PantryItemActionsDialog.Result.Edit:
+                await OnEdit.InvokeAsync(item);
+                break;
+
+            case PantryItemActionsDialog.Result.Delete:
+                await OnDelete.InvokeAsync(item);
+                break;
+        }
+    }
 }
