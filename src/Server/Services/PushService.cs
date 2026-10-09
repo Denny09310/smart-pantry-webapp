@@ -32,13 +32,14 @@ internal sealed class PushService(
 {
     private readonly PushOptions _options = options.Value;
 
+    public sealed record PushResult(int Sent, int Failed, int Pruned);
+
     /// <summary>
     /// Sends every unread notification to every stored subscription.
     /// One failing subscription never blocks the rest; subscriptions the
     /// push service reports as gone (404/410) are removed.
-    /// Returns how many pushes were accepted.
     /// </summary>
-    public async Task<int> SendUnreadAsync(CancellationToken ct = default)
+    public async Task<PushResult> SendUnreadAsync(CancellationToken ct = default)
     {
         if (!_options.IsConfigured)
             throw new InvalidOperationException("VAPID keys are not configured (Vapid section).");
@@ -50,12 +51,12 @@ internal sealed class PushService(
             .ToListAsync(ct);
 
         if (messages.Count == 0)
-            return 0;
+            return new PushResult(0, 0, 0);
 
         var subscriptions = await db.PushSubscriptions.AsNoTracking().ToListAsync(ct);
 
         if (subscriptions.Count == 0)
-            return 0;
+            return new PushResult(0, 0, 0);
 
         var vapid = new VapidDetails(_options.Subject, _options.PublicKey, _options.PrivateKey);
         using var client = new WebPushClient();
@@ -64,6 +65,7 @@ internal sealed class PushService(
         // the panel lists every unread notification.
         var message = messages[0];
         var sent = 0;
+        var failed = 0;
         var dead = new List<string>();
 
         foreach (var subscription in subscriptions)
@@ -83,6 +85,7 @@ internal sealed class PushService(
             }
             catch (Exception ex)
             {
+                failed++;
                 log.LogWarning(ex, "Push to {Endpoint} failed.", subscription.Endpoint);
             }
         }
@@ -94,6 +97,6 @@ internal sealed class PushService(
                 .ExecuteDeleteAsync(ct);
         }
 
-        return sent;
+        return new PushResult(sent, failed, dead.Count);
     }
 }

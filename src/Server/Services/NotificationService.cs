@@ -6,16 +6,18 @@ using Server.Data.Entities;
 namespace Server.Services;
 
 /// <summary>
-/// Application-level service behind the expiration worker (roadmap Phase 8):
+/// Application-level service behind the expiration worker:
 /// worker → service → DbContext. No queues or schedulers involved.
 /// </summary>
 internal sealed class NotificationService(ApplicationDbContext db)
 {
+    public sealed record GenerationResult(int Created, int Evaluated);
+
     /// <summary>
     /// Creates one notification per item expiring within 7 days (or already
-    /// expired) that has no unread notification yet. Returns how many were created.
+    /// expired) that has no unread notification yet.
     /// </summary>
-    public async Task<int> GenerateExpirationNotificationsAsync(CancellationToken ct = default)
+    public async Task<GenerationResult> GenerateExpirationNotificationsAsync(CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         var horizon = today.AddDays(7);
@@ -26,7 +28,7 @@ internal sealed class NotificationService(ApplicationDbContext db)
             .ToListAsync(ct);
 
         if (candidates.Count == 0)
-            return 0;
+            return new GenerationResult(0, 0);
 
         var alreadyNotified = new HashSet<string>(await db.Notifications.AsNoTracking()
             .Where(n => n.ReadAt == null)
@@ -56,7 +58,7 @@ internal sealed class NotificationService(ApplicationDbContext db)
         if (created > 0)
             await db.SaveChangesAsync(ct);
 
-        return created;
+        return new GenerationResult(created, candidates.Count);
     }
 
     internal static string BuildMessage(string name, DateOnly expirationDate, DateOnly today)
