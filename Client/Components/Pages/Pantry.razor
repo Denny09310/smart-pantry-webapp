@@ -292,6 +292,14 @@
 
     private async Task DeleteItemAsync(PantryItemDto item)
     {
+        var confirm = await Dialog.ConfirmAsync(
+            $"Delete {item.Name}?",
+            "This action cannot be undone.",
+            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
+
+        if (!confirm.Confirmed)
+            return;
+
         if (!_busyIds.Add(item.Id))
             return;
 
@@ -316,6 +324,14 @@
 
     private async Task MarkUsedAsync(PantryItemDto item)
     {
+        var confirm = await Dialog.ConfirmAsync(
+            $"Mark {item.Name} as used?",
+            $"{item.Name} will be removed from the pantry.",
+            new ConfirmDialogOptions { ConfirmText = "Mark used" });
+
+        if (!confirm.Confirmed)
+            return;
+
         if (!_busyIds.Add(item.Id))
             return;
 

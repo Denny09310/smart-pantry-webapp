@@ -229,6 +229,14 @@
 
     private async Task DeleteItemAsync(PantryItemDto item)
     {
+        var confirm = await Dialog.ConfirmAsync(
+            $"Delete {item.Name}?",
+            "This action cannot be undone.",
+            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
+
+        if (!confirm.Confirmed)
+            return;
+
         if (!_deletingIds.Add(item.Id))
             return;
 
