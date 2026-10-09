@@ -1,10 +1,11 @@
 @namespace Client.Components.Shared.Home
+@inject IJSRuntime JS
 
 <BbCard>
     <BbCardContent Class="p-0">
         <Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="84" OverscanCount="4" @ref="_virtualize">
             <ItemContent Context="item">
-                <div class="flex items-center gap-3 border-b p-3 last:border-0">
+                <div id="@($"pantry-item-{item.Id}")" class="flex items-center gap-3 border-b p-3 last:border-0 @(item.Id == HighlightId ? "bg-muted" : "")">
                     <BbAvatar>
                         <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
                     </BbAvatar>
@@ -51,9 +52,13 @@
     [Parameter]
     public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
 
+    [Parameter]
+    public string? HighlightId { get; set; }
+
     private Virtualize<PantryItemDto>? _virtualize;
     private IReadOnlyList<PantryItemDto>? _renderedItems;
     private bool _refreshPending;
+    private string? _scrolledFor;
 
     protected override void OnParametersSet()
     {
@@ -70,6 +75,12 @@
         {
             _refreshPending = false;
             await _virtualize.RefreshDataAsync();
+            StateHasChanged();
+        }
+        else if (HighlightId is not null && HighlightId != _scrolledFor)
+        {
+            _scrolledFor = HighlightId;
+            await PantryScroll.ScrollToAsync(JS, HighlightId);
         }
     }
 

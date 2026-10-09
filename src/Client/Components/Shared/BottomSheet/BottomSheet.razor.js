@@ -169,12 +169,19 @@ class BottomSheetController {
         this.#velocity = 0.8 * this.#velocity + 0.2 * (dy / dt);
 
         const base = this.#snapPx[this.#snapIndex];
-        const maxSnap = this.#snapPx[this.#snapPx.length - 1];
-        const minOffset = base - maxSnap - 60;
-        const maxOffset = base + 40;
-        this.#offset = Math.min(maxOffset, Math.max(minOffset, this.#offset + dy));
+        const vh = viewportHeight();
+        this.#offset = Math.min(base + 40, Math.max(-(vh - base), this.#offset + dy));
 
-        this.#sheet.style.transform = `translateY(${this.#offset}px)`;
+        if (this.#offset <= 0) {
+            // Dragging up grows the sheet so its top edge follows the
+            // finger; it settles on a snap point when released.
+            this.#sheet.style.height = `${Math.min(vh, base - this.#offset)}px`;
+            this.#sheet.style.transform = 'translateY(0px)';
+        } else {
+            // Dragging down pulls the whole sheet for pull-to-dismiss.
+            this.#sheet.style.transform = `translateY(${this.#offset}px)`;
+        }
+
         this.#lastY = e.clientY;
         this.#lastTime = e.timeStamp;
         e.preventDefault();

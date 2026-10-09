@@ -1,9 +1,11 @@
 @namespace Client.Components.Shared.Pantry
 
 @inject BottomSheetService BottomSheet
+@inject IJSRuntime JS
 
 <Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="104" OverscanCount="4" @ref="_virtualize">
     <ItemContent Context="item">
+        <div id="@($"pantry-item-{item.Id}")" class="@(item.Id == HighlightId ? "rounded-xl bg-muted" : "")">
         <LongPressSurface T="PantryItemDto" Value="item" OnLongPress="OpenActionsAsync">
             <BbCard Class="mb-2">
                 <BbCardContent Class="flex items-center gap-3 p-3">
@@ -34,6 +36,7 @@
                 </BbCardContent>
             </BbCard>
         </LongPressSurface>
+        </div>
     </ItemContent>
     <Placeholder>
         <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
@@ -59,6 +62,9 @@
     [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
 
+    [Parameter]
+    public string? HighlightId { get; set; }
+
     private static readonly DialogOpenOptions Options = new()
     {
         Title = "Pantry item actions",
@@ -68,6 +74,7 @@
     private Virtualize<PantryItemDto>? _virtualize;
     private IReadOnlyList<PantryItemDto>? _renderedItems;
     private bool _refreshPending;
+    private string? _scrolledFor;
 
     protected override void OnParametersSet()
     {
@@ -84,6 +91,12 @@
         {
             _refreshPending = false;
             await _virtualize.RefreshDataAsync();
+            StateHasChanged();
+        }
+        else if (HighlightId is not null && HighlightId != _scrolledFor)
+        {
+            _scrolledFor = HighlightId;
+            await PantryScroll.ScrollToAsync(JS, HighlightId);
         }
     }
 
