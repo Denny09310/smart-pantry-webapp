@@ -75,13 +75,13 @@ member sees and manages the same pantry.
 - [x] Add the EF Core migration (new table + nullable column, no backfill).
 - [x] Add member endpoints: `GET /api/members`, `POST /api/members`
   (validated name), `DELETE /api/members/{id}`.
-- [ ] Send the current member as `X-Member-Id` on pantry writes; resolve
+- [x] Send the current member as `X-Member-Id` on pantry writes; resolve
   and validate it server-side for attribution only.
 - [ ] Add a first-run create-member dialog when zero members exist.
 - [ ] Add a member picker/switcher in the app header, persisted in
   `localStorage` (Bit.Butil `Storage`).
 - [ ] Show attribution in the pantry UI where useful.
-- [ ] Add tests: member CRUD + name validation, write attribution,
+- [x] Add tests: member CRUD + name validation, write attribution,
   delete-member-keeps-items.
 
 ### Design notes
