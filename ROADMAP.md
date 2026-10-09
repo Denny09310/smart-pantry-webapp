@@ -111,13 +111,13 @@ the creation dialog pre-fill name/brand/quantity from Open Food Facts.
 
 ### Tasks
 
-- [ ] Add a server-side product lookup proxied through
+- [x] Add a server-side product lookup proxied through
   `GET /api/products/lookup?barcode=…` (validates EAN-8/12/13/UPC digits,
   calls Open Food Facts API v2 with a proper `User-Agent`, maps to
   `{ barcode, name, brand, quantity, imageUrl }`, 404 when OFF reports
   `status != 1`, tolerant timeout ~8s — lookup failure never blocks manual
   creation).
-- [ ] Cache lookups in a small `BarcodeProduct` table (barcode PK) so
+- [x] Cache lookups in a small `BarcodeProduct` table (barcode PK) so
   repeat scans resolve locally and survive offline stretches.
 - [ ] Add a `BarcodeScanner` dialog: `<video>` + Bit.Butil
   `MediaDevices.GetUserMedia` (`facingMode: environment`) +
@@ -129,7 +129,7 @@ the creation dialog pre-fill name/brand/quantity from Open Food Facts.
 - [ ] On lookup success, pre-fill `CreatePantryItemDialog` (name, brand
   into notes, OFF quantity string into notes, unit defaults to `pcs`);
   expiry stays manual — OFF has no expiry data.
-- [ ] Add tests: barcode validation, OFF mapping + 404 path (stubbed HTTP
+- [x] Add tests: barcode validation, OFF mapping + 404 path (stubbed HTTP
   handler, no live network in tests), cache-hit behavior.
 
 ### Design notes
