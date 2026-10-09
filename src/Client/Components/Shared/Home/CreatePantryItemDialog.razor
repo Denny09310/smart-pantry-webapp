@@ -1,9 +1,20 @@
 @using System.ComponentModel.DataAnnotations
+@using Client.Components.Shared.Pantry
 
+@if (_scanning)
+{
+    <BarcodeScannerView OnScanned="ApplyScanAsync" OnCancelled="CancelScan" />
+}
+else
+{
 <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex flex-col overflow-hidden">
     <DataAnnotationsValidator />
 
     <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-none pr-1">
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartScan">
+            <LucideIcon Name="barcode" Size="16" />
+            Scan barcode
+        </BbButton>
         @* Item name *@
         <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
             <div class="flex items-center justify-between">
@@ -139,6 +150,7 @@
         </BbButton>
     </div>
 </EditForm>
+}
 
 @code
 {
@@ -150,6 +162,7 @@
     public PantryItemDto? Item { get; set; }
 
     private bool _saving;
+    private bool _scanning;
     private InputModel Input { get; set; } = new();
     private string? _editingId;
 
@@ -208,6 +221,24 @@
 
     private void SetExpiry(int daysFromToday) =>
         Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
+
+    private void StartScan() => _scanning = true;
+
+    private void CancelScan() => _scanning = false;
+
+    private void ApplyScanAsync(ProductLookupDto product)
+    {
+        Input.Name = product.Name;
+
+        var details = string.Join(
+            " • ",
+            new[] { product.Brand, product.Quantity }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        if (!string.IsNullOrWhiteSpace(details))
+            Input.Notes = string.IsNullOrWhiteSpace(Input.Notes) ? details : $"{Input.Notes}\n{details}";
+
+        _scanning = false;
+    }
 
     private async Task HandleSubmitAsync()
     {

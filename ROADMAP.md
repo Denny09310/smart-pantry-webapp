@@ -111,25 +111,25 @@ the creation dialog pre-fill name/brand/quantity from Open Food Facts.
 
 ### Tasks
 
-- [ ] Add a server-side product lookup proxied through
+- [x] Add a server-side product lookup proxied through
   `GET /api/products/lookup?barcode=…` (validates EAN-8/12/13/UPC digits,
   calls Open Food Facts API v2 with a proper `User-Agent`, maps to
   `{ barcode, name, brand, quantity, imageUrl }`, 404 when OFF reports
   `status != 1`, tolerant timeout ~8s — lookup failure never blocks manual
   creation).
-- [ ] Cache lookups in a small `BarcodeProduct` table (barcode PK) so
+- [x] Cache lookups in a small `BarcodeProduct` table (barcode PK) so
   repeat scans resolve locally and survive offline stretches.
-- [ ] Add a `BarcodeScanner` dialog: `<video>` + Bit.Butil
+- [x] Add a `BarcodeScanner` dialog: `<video>` + Bit.Butil
   `MediaDevices.GetUserMedia` (`facingMode: environment`) +
   `BarcodeDetector.StartScan`, checking `IsSupported` /
   `GetSupportedFormats` first and debouncing repeat detections; dispose
   stops the scan and the stream (camera light off).
-- [ ] Fall back to manual barcode entry + "Look up" everywhere the native
+- [x] Fall back to manual barcode entry + "Look up" everywhere the native
   decoder is missing (Safari/iOS — `BarcodeDetector` is Chromium-only).
-- [ ] On lookup success, pre-fill `CreatePantryItemDialog` (name, brand
+- [x] On lookup success, pre-fill `CreatePantryItemDialog` (name, brand
   into notes, OFF quantity string into notes, unit defaults to `pcs`);
   expiry stays manual — OFF has no expiry data.
-- [ ] Add tests: barcode validation, OFF mapping + 404 path (stubbed HTTP
+- [x] Add tests: barcode validation, OFF mapping + 404 path (stubbed HTTP
   handler, no live network in tests), cache-hit behavior.
 
 ### Design notes
@@ -159,25 +159,25 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 
 ### Tasks
 
-- [ ] Test member edge cases (duplicate names, delete current member,
+- [x] Test member edge cases (duplicate names, delete current member,
   write with unknown member ID).
-- [ ] Test duplicate-notification prevention.
-- [ ] Test expiration-date boundary conditions.
-- [ ] Test the background worker when no items qualify.
-- [ ] Test recovery from transient push-provider errors.
-- [ ] Test invalid or expired push subscriptions.
-- [ ] Test behavior when push permission is denied or later revoked.
+- [x] Test duplicate-notification prevention.
+- [x] Test expiration-date boundary conditions.
+- [x] Test the background worker when no items qualify.
+- [x] Test recovery from transient push-provider errors.
+- [x] Test invalid or expired push subscriptions.
+- [ ] Test behavior when push permission is denied or later revoked. (manual: browser)
 - [ ] Test notification delivery in the deployed environment, not only localhost.
 - [ ] Test database migration and backup/restore procedures.
-- [ ] Verify logs do not expose invitation tokens (n/a), VAPID private keys,
-  or push subscription secrets.
+- [x] Verify logs do not expose invitation tokens (n/a), VAPID private keys,
+  or push subscription secrets. (reviewed: only endpoint URLs, barcodes, counts)
 - [ ] Test desktop Chrome or Edge and Android Chrome.
 - [ ] Test iPhone/iPad Home Screen installation and Web Push if iOS support is in scope.
 
 ### Acceptance criteria
 
-- [ ] The background worker can encounter a delivery failure and continue processing.
-- [ ] Notifications are not duplicated during normal scheduled runs.
+- [x] The background worker can encounter a delivery failure and continue processing.
+- [x] Notifications are not duplicated during normal scheduled runs.
 - [ ] The app remains usable if push is unsupported or disabled.
 - [ ] The production deployment supports the intended devices and browsers.
 - [ ] A tested backup can be restored.

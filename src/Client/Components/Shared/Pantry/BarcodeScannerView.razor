@@ -1,0 +1,214 @@
+@namespace Client.Components.Shared.Pantry
+@inject ServerApi Api
+@inject ToastService Toast
+@inject Bit.Butil.MediaDevices MediaDevices
+@inject Bit.Butil.BarcodeDetector BarcodeDetector
+@inject ILogger<BarcodeScannerView> Log
+@implements IAsyncDisposable
+
+@if (!_checked)
+{
+    <div class="flex justify-center py-8">
+        <BbSpinner Size="SpinnerSize.Default" />
+    </div>
+}
+else if (_camera)
+{
+    <div class="space-y-3">
+        <video @ref="_video" autoplay playsinline muted class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
+        <p class="text-center text-xs text-muted-foreground">Point the camera at the barcode</p>
+        @if (_lookingUp)
+        {
+            <div class="flex justify-center py-2">
+                <BbSpinner Size="SpinnerSize.Default" />
+            </div>
+        }
+        @if (_notFound)
+        {
+            <div class="space-y-2">
+                <p class="text-center text-sm">Product not found. Try again or enter details manually.</p>
+                <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="RestartScanAsync">
+                    Scan again
+                </BbButton>
+            </div>
+        }
+        <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
+            Back
+        </BbButton>
+    </div>
+}
+else
+{
+    <div class="space-y-3">
+        <p class="text-sm text-muted-foreground">Camera scanning isn't supported in this browser. Enter the barcode instead.</p>
+        <BbInputGroup Class="bg-card">
+            <BbInputGroupInput @bind-Value="_manualCode" Placeholder="e.g. 5449000000996"
+                               UpdateTiming="UpdateTiming.Immediate" inputmode="numeric" />
+        </BbInputGroup>
+        <BbButton Class="w-full" Loading="@_lookingUp" OnClick="LookupManualAsync">
+            Look up
+        </BbButton>
+        <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
+            Back
+        </BbButton>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public EventCallback<ProductLookupDto> OnScanned { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancelled { get; set; }
+
+    private static readonly string[] WantedFormats = ["ean_13", "ean_8", "upc_a", "upc_e"];
+
+    private bool _checked;
+    private bool _camera;
+    private bool _lookingUp;
+    private bool _notFound;
+    private string? _manualCode;
+    private string[] _formats = [];
+
+    private ElementReference _video;
+    private Bit.Butil.MediaStreamHandle? _stream;
+    private Bit.Butil.ButilSubscription? _scan;
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        _started = true;
+
+        try
+        {
+            if (await BarcodeDetector.IsSupported())
+            {
+                var supported = await BarcodeDetector.GetSupportedFormats();
+                _formats = WantedFormats.Intersect(supported).ToArray();
+
+                if (_formats.Length > 0)
+                    _camera = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Barcode support check failed.");
+        }
+
+        _checked = true;
+        StateHasChanged();
+
+        if (_camera)
+            await StartCameraAsync();
+    }
+
+    private async Task StartCameraAsync()
+    {
+        await StopCameraAsync();
+        _notFound = false;
+
+        try
+        {
+            _stream = await MediaDevices.GetUserMedia(
+                audio: false,
+                video: true,
+                videoConstraints: new { facingMode = "environment" });
+
+            if (_stream is null)
+            {
+                _camera = false;
+                return;
+            }
+
+            await _stream.AttachTo(_video);
+
+            _scan = await BarcodeDetector.StartScan(
+                _video,
+                onDetected: codes => InvokeAsync(() => HandleDetectedAsync(codes)),
+                formats: _formats,
+                intervalMs: 250);
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Camera start failed.");
+            _camera = false;
+        }
+    }
+
+    private async Task HandleDetectedAsync(Bit.Butil.DetectedBarcode[] codes)
+    {
+        var code = codes.FirstOrDefault()?.RawValue;
+
+        if (string.IsNullOrWhiteSpace(code) || _lookingUp)
+            return;
+
+        // Stop the scan on first detection: the poll fires repeatedly
+        // while a code stays in view.
+        if (_scan is not null)
+            await _scan.DisposeAsync();
+        _scan = null;
+
+        await LookupAsync(code.Trim());
+    }
+
+    private async Task LookupManualAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_manualCode))
+            return;
+
+        await LookupAsync(_manualCode.Trim());
+    }
+
+    private async Task LookupAsync(string barcode)
+    {
+        _lookingUp = true;
+        _notFound = false;
+
+        try
+        {
+            using var response = await Api.Products.LookupAsync(barcode);
+
+            if (response.IsSuccessfulWithContent)
+            {
+                await StopCameraAsync();
+                await OnScanned.InvokeAsync(response.Content);
+                return;
+            }
+
+            _notFound = true;
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Product lookup failed.");
+            Toast.Error("Can't look up the product.");
+        }
+        finally
+        {
+            _lookingUp = false;
+        }
+    }
+
+    private Task RestartScanAsync() => StartCameraAsync();
+
+    private async Task CancelAsync()
+    {
+        await StopCameraAsync();
+        await OnCancelled.InvokeAsync();
+    }
+
+    private async Task StopCameraAsync()
+    {
+        if (_scan is not null)
+            await _scan.DisposeAsync();
+        _scan = null;
+
+        if (_stream is not null)
+            await _stream.DisposeAsync();
+        _stream = null;
+    }
+
+    public async ValueTask DisposeAsync() => await StopCameraAsync();
+}
