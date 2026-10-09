@@ -11,6 +11,7 @@ public sealed class BswupUpdateInterop : IAsyncDisposable
     internal const string ModulePath = "./Components/Shared/UpdateNotifier.razor.js";
     internal const string RegisterMethod = "registerBswupHandler";
     internal const string ActivateMethod = "activateUpdate";
+    internal const string ForceReloadMethod = "forceReload";
     internal const string DisposeMethod = "disposeBswupHandler";
 
     private readonly IJSRuntime _js;
@@ -31,6 +32,12 @@ public sealed class BswupUpdateInterop : IAsyncDisposable
     {
         var module = await GetModuleAsync();
         await module.InvokeVoidAsync(ActivateMethod);
+    }
+
+    public async ValueTask ForceReloadAsync()
+    {
+        var module = await GetModuleAsync();
+        await module.InvokeVoidAsync(ForceReloadMethod);
     }
 
     public async ValueTask DisposeAsync()
