@@ -84,7 +84,7 @@
             </div>
 
             <PantryUrgentList Items="@VisibleItems" BusyIds="@_busyIds" OnCheck="@MarkUsedAsync" OnEdit="@EditItemAsync"
-                              OnDelete="@DeleteItemAsync" />
+                              OnDelete="@DeleteItemAsync" HighlightId="@_highlightId" />
 
             @if (HasActiveFilters)
             {
@@ -119,6 +119,7 @@
 
     private List<PantryItemDto>? _items;
     private readonly HashSet<string> _busyIds = [];
+    private string? _highlightId;
 
     private string? _location = "all", _name;
     private PantryStatusFilter _status = PantryStatusFilter.All;
@@ -169,6 +170,8 @@
 
     private async Task LoadAsync()
     {
+        _highlightId = null;
+
         using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
 
         if (!response.IsSuccessfulWithContent)
@@ -228,8 +231,11 @@
             return;
         }
 
+        var createdId = response.Content?.Id;
+
         Toast.Success("Item added to the pantry.");
         await LoadAsync();
+        _highlightId = createdId;
     }
 
     private async Task EditItemAsync(PantryItemDto item)

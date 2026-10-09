@@ -1,0 +1,128 @@
+@namespace Client.Components.Shared
+@using Bit.Butil
+@typeparam T
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@foreach (var item in _visible)
+{
+    @ItemTemplate(item)
+}
+
+@if (_visible.Count < _total)
+{
+    <div @ref="_sentinel" class="flex flex-col items-center gap-2 py-4">
+        <BbSpinner Size="SpinnerSize.Default" />
+        @if (_observerFailed)
+        {
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ShowMore">
+                @TriggerButtonText
+            </BbButton>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<T> Items { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public RenderFragment<T> ItemTemplate { get; set; } = default!;
+
+    [Parameter]
+    public int PageSize { get; set; } = 20;
+
+    [Parameter]
+    public string TriggerButtonText { get; set; } = "Show more";
+
+    /// <summary>
+    /// Optional id the list must reveal: expands the window past its index
+    /// and scrolls to <c>pantry-item-{id}</c> once rendered.
+    /// </summary>
+    [Parameter]
+    public string? EnsureVisibleId { get; set; }
+
+    /// <summary>Extracts the scroll/highlight id from an item.</summary>
+    [Parameter]
+    public Func<T, string>? KeySelector { get; set; }
+
+    private List<T> _visible = [];
+    private int _total;
+    private IReadOnlyList<T>? _renderedItems;
+    private ElementReference _sentinel;
+    private Bit.Butil.ButilSubscription? _observation;
+    private bool _observerFailed;
+    private string? _scrolledFor;
+
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(_renderedItems, Items))
+            return;
+
+        _renderedItems = Items;
+        _total = Items.Count;
+
+        var count = PageSize;
+
+        if (EnsureVisibleId is not null && KeySelector is not null)
+        {
+            var index = Items.ToList().FindIndex(i => KeySelector(i) == EnsureVisibleId);
+            if (index >= 0)
+                count = Math.Max(count, index + 1);
+        }
+
+        _visible = Items.Take(count).ToList();
+        _ = StopObservingAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_visible.Count < _total && _observation is null && !_observerFailed)
+            await StartObservingAsync();
+
+        if (EnsureVisibleId is not null && EnsureVisibleId != _scrolledFor)
+        {
+            _scrolledFor = EnsureVisibleId;
+            await PantryScroll.ScrollToAsync(JS, EnsureVisibleId);
+        }
+    }
+
+    private async Task StartObservingAsync()
+    {
+        try
+        {
+            _observation = await _sentinel.ObserveIntersection(
+                JS,
+                entries =>
+                {
+                    if (entries.Any(e => e.IsIntersecting))
+                        _ = InvokeAsync(ShowMore);
+                });
+        }
+        catch
+        {
+            // No IntersectionObserver (old browsers, some web views):
+            // the manual trigger button stays visible instead.
+            _observerFailed = true;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowMore()
+    {
+        if (_visible.Count >= _total)
+            return;
+
+        _visible = _renderedItems?.Take(_visible.Count + PageSize).ToList() ?? _visible;
+        StateHasChanged();
+    }
+
+    private async Task StopObservingAsync()
+    {
+        if (_observation is not null)
+            await _observation.DisposeAsync();
+        _observation = null;
+    }
+
+    public async ValueTask DisposeAsync() => await StopObservingAsync();
+}
