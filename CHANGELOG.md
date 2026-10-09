@@ -1,3 +1,21 @@
+## [0.4.0] - 2026-10-09
+
+### 🚀 Features
+
+- Add health probe covering app and database
+- Report worker run stats via service result records
+
+### 📚 Documentation
+
+- Add operations phase and recovery checklist
+
+### 🚜 Refactor
+
+- Move OpenFoodFacts client registration to extension
+
+### 💼 Other
+
+- Feature/operations into develop
 ## [0.3.0] - 2026-10-09
 
 ### 🚀 Features
@@ -15,6 +33,10 @@
 - Document duplicate member names behavior
 - Cover notification window boundaries and empty runs
 - Prove push failure tolerance and gone-subscription pruning
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Version 0.3.0
 
 ### 💼 Other
 

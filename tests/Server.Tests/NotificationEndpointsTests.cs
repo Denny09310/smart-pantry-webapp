@@ -38,7 +38,7 @@ public sealed class NotificationEndpointsTests(PantryApiFactory factory)
         response.EnsureSuccessStatusCode();
     }
 
-    private static async Task<int> GenerateAsync(PantryApiFactory factory)
+    private static async Task<NotificationService.GenerationResult> GenerateAsync(PantryApiFactory factory)
     {
         using var scope = factory.Services.CreateScope();
         var service = scope.ServiceProvider.GetRequiredService<NotificationService>();
@@ -61,14 +61,14 @@ public sealed class NotificationEndpointsTests(PantryApiFactory factory)
         var itemId = await CreateItemAsync(InDays(1));
         try
         {
-            Assert.True(await GenerateAsync(factory) >= 1);
+            Assert.True((await GenerateAsync(factory)).Created >= 1);
 
             var mine = (await ListAsync()).Items.Where(n => n.PantryItemId == itemId).ToList();
             Assert.NotEmpty(mine);
             Assert.Contains("expires tomorrow", mine[0].Message);
 
             // Second run creates nothing while the first is still unread.
-            Assert.Equal(0, await GenerateAsync(factory));
+            Assert.Equal(0, (await GenerateAsync(factory)).Created);
         }
         finally
         {
@@ -129,7 +129,7 @@ public sealed class NotificationEndpointsTests(PantryApiFactory factory)
 
         try
         {
-            Assert.Equal(3, await GenerateAsync(factory));
+            Assert.Equal(3, (await GenerateAsync(factory)).Created);
 
             var notified = (await ListAsync()).Items
                 .Where(n => n.ReadAt == null)
@@ -151,7 +151,7 @@ public sealed class NotificationEndpointsTests(PantryApiFactory factory)
         var itemId = await CreateItemAsync(InDays(30));
         try
         {
-            Assert.Equal(0, await GenerateAsync(factory));
+            Assert.Equal(0, (await GenerateAsync(factory)).Created);
         }
         finally
         {

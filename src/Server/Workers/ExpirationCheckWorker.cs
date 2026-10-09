@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using Server.Services;
 
 namespace Server.Workers;
@@ -23,23 +25,31 @@ internal sealed class ExpirationCheckWorker(IServiceProvider services, ILogger<E
 
     private async Task RunOnceAsync(CancellationToken ct)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         try
         {
             using var scope = services.CreateScope();
             var notifications = scope.ServiceProvider.GetRequiredService<NotificationService>();
-            var created = await notifications.GenerateExpirationNotificationsAsync(ct);
+            var generated = await notifications.GenerateExpirationNotificationsAsync(ct);
 
-            var pushed = 0;
-            if (created > 0)
+            var pushed = new PushService.PushResult(0, 0, 0);
+            if (generated.Created > 0)
             {
                 var push = scope.ServiceProvider.GetRequiredService<PushService>();
                 pushed = await push.SendUnreadAsync(ct);
             }
 
             log.LogInformation(
-                "Expiration check completed, {Count} notification(s) created, {Pushed} push(es) sent.",
-                created,
-                pushed);
+                "Expiration check completed in {ElapsedMs}ms: {Evaluated} item(s) evaluated, " +
+                "{Created} notification(s) created, {Sent} push(es) sent, " +
+                "{Failed} push(es) failed, {Pruned} subscription(s) pruned.",
+                stopwatch.ElapsedMilliseconds,
+                generated.Evaluated,
+                generated.Created,
+                pushed.Sent,
+                pushed.Failed,
+                pushed.Pruned);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
