@@ -21,7 +21,7 @@
                 <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item">
                     <ChildContent Context="item">
                         <span class="inline-flex items-center gap-2 font-medium">
-                            <span class="h-1.5 w-1.5 shrink-0 rounded-full @DotClass(item)"></span>
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full @DotClass(item)" aria-hidden="true"></span>
                             @item.Name
                         </span>
                     </ChildContent>
@@ -112,7 +112,9 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_refreshPending && !firstRender)
+        // No first-render skip: the grid mounts its own initial query, and a
+        // skipped flag would fire spuriously on the next unrelated render.
+        if (_refreshPending)
         {
             _refreshPending = false;
             if (_grid is not null)

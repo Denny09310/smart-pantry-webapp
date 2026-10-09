@@ -43,7 +43,7 @@ else
                     <LucideIcon Name="minus" Size="16" />
                 </BbButton>
                 <div class="flex flex-col items-center leading-none">
-                    <span class="text-base font-semibold">@Input.Quantity</span>
+                    <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
                     <span class="text-xs text-muted-foreground">@Input.Unit</span>
                 </div>
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="Increase quantity"
@@ -94,7 +94,7 @@ else
         <BbField>
             <BbFieldLabel Class="text-sm font-medium">Shelf Life &amp; Expiry</BbFieldLabel>
             <BbFieldContent>
-                <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="DateTime.Today" DateFormat="dd/MM/yyyy"
+                <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(_editingId is null ? DateTime.Today : null)" DateFormat="dd/MM/yyyy"
                               Placeholder="Pick a date" Class="w-full" />
                 <ValidationMessage For="@(() => Input.ExpirationDate)" class="text-sm text-destructive" />
             </BbFieldContent>
@@ -190,21 +190,25 @@ else
     private int? DaysRemaining =>
         Input.ExpirationDate is { } d ? (int?)(d.Date - DateTime.Today).Days : null;
 
-    private string FreshnessText => DaysRemaining switch
+    // Same rule as the server and the lists: no private freshness thresholds.
+    private ExpiryStatus? Freshness =>
+        Input.ExpirationDate is { } d ? ExpiryStatusCalculator.GetStatus(DateOnly.FromDateTime(d.Date), DateOnly.FromDateTime(DateTime.Today)) : null;
+
+    private string FreshnessText => (Freshness, DaysRemaining) switch
     {
-        null => string.Empty,
-        < 0 => $"Expired {-DaysRemaining} days ago",
-        0 => "Expires today",
-        <= 3 => $"Use soon · {DaysRemaining} days left",
-        var d => $"Fresh & Stable · {d} days remaining",
+        (null, _) => string.Empty,
+        (ExpiryStatus.Expired, var days) => $"Expired {-days} days ago",
+        (ExpiryStatus.Today, _) => "Expires today",
+        (ExpiryStatus.Soon, var days) => $"Use soon · {days} days left",
+        (_, var days) => $"Fresh & Stable · {days} days remaining",
     };
 
-    private BadgeVariant FreshnessVariant => DaysRemaining switch
+    private BadgeVariant FreshnessVariant => Freshness switch
     {
         null => BadgeVariant.SoftInfo,
-        < 0 => BadgeVariant.SoftDestructive,
-        <= 3 => BadgeVariant.SoftWarning,
-        _ => BadgeVariant.SoftSuccess,
+        ExpiryStatus.Expired => BadgeVariant.SoftDestructive,
+        ExpiryStatus.Fresh => BadgeVariant.SoftSuccess,
+        _ => BadgeVariant.SoftWarning,
     };
 
     private void IncrementQuantity()
@@ -272,7 +276,7 @@ else
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [Range(1, 9999)]
+        [Range(0.01, 9999)]
         public double Quantity { get; set; } = 1;
 
         [Required]

@@ -69,6 +69,9 @@
 
     private async Task HandleSubmitAsync()
     {
+        if (_saving)
+            return;
+
         _saving = true;
         try
         {

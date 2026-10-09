@@ -21,7 +21,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
     {
         var query = db.Items.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not "all")
+        if (!string.IsNullOrWhiteSpace(request.Location)
+            && !request.Location.Trim().Equals("all", StringComparison.OrdinalIgnoreCase))
             query = query.Where(x => EF.Functions.ILike(x.Location, $"%{request.Location}%"));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
@@ -29,7 +30,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         if (request.Status is { } status)
         {
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            // UTC day everywhere: server local midnight must not shift boundaries.
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var horizon = today.AddDays(7);
             query = status switch
             {
@@ -91,7 +93,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
     }
 
     [MapPost("/")]
-    public async Task<Results<Ok<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
+    public async Task<Results<Created<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
         [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
@@ -110,7 +112,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
 
-        return TypedResults.Ok(ToDto(entry));
+        return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
     }
 
     [MapPut("/{id}")]
@@ -131,7 +133,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         entry.Location = request.Location;
         entry.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         entry.ExpirationDate = request.ExpirationDate;
-        entry.UpdatedAt = DateTime.UtcNow;
+        entry.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(ct);
 
@@ -163,7 +165,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.Location,
             entry.Notes,
             entry.ExpirationDate,
-            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.Today)),
+            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.UtcNow)),
             entry.CreatedByMemberId,
             memberName);
 

@@ -15,11 +15,11 @@ internal sealed class NotificationService(ApplicationDbContext db)
 
     /// <summary>
     /// Creates one notification per item expiring within 7 days (or already
-    /// expired) that has no unread notification yet.
+    /// expired) that was never notified before.
     /// </summary>
     public async Task<GenerationResult> GenerateExpirationNotificationsAsync(CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var horizon = today.AddDays(7);
 
         var candidates = await db.Items.AsNoTracking()
@@ -30,8 +30,8 @@ internal sealed class NotificationService(ApplicationDbContext db)
         if (candidates.Count == 0)
             return new GenerationResult(0, 0);
 
+        // One notification per item ever: a read reminder never regenerates.
         var alreadyNotified = new HashSet<string>(await db.Notifications.AsNoTracking()
-            .Where(n => n.ReadAt == null)
             .Select(n => n.PantryItemId)
             .Distinct()
             .ToListAsync(ct));
@@ -41,8 +41,8 @@ internal sealed class NotificationService(ApplicationDbContext db)
 
         foreach (var candidate in candidates)
         {
-            // One unread notification per item: prevents duplicates while the
-            // user hasn't acknowledged the previous one.
+            // One notification per item ever: prevents duplicates forever,
+            // including after the previous one was read.
             if (!alreadyNotified.Add(candidate.Id))
                 continue;
 

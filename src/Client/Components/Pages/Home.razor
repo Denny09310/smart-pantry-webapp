@@ -7,6 +7,7 @@
 @inject BottomSheetService BottomSheet
 @inject NavigationManager Nav
 @inject MemberService Members
+@inject ILogger<Home> Log
 @implements IDisposable
 
 <div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
@@ -18,7 +19,7 @@
                           AriaLabel="Switch member" OnClick="SwitchMemberAsync">
                     <BbAvatar Class="h-6 w-6">
                         <BbAvatarFallback Class="text-[10px]"
-                                          style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                                          style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
                             @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
                         </BbAvatarFallback>
                     </BbAvatar>
@@ -34,7 +35,7 @@
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Household Pantry • Live Status
                 </p>
-                <h2 class="text-2xl font-semibold">Overview &amp; Action Board</h2>
+                <h1 class="text-2xl font-semibold">Overview &amp; Action Board</h1>
             </div>
             <BbBadge Variant="BadgeVariant.SoftSuccess">
                 <BbBadgeIcon Name="circle-dot" />
@@ -151,16 +152,13 @@
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .Count() ?? 0;
 
-    private int ExpiredCount => CountBy(PantryItemStatus.Expired);
+    private int ExpiredCount => _items?.CountByStatus(PantryItemStatus.Expired) ?? 0;
 
-    private int TodayCount => CountBy(PantryItemStatus.Today);
+    private int TodayCount => _items?.CountByStatus(PantryItemStatus.Today) ?? 0;
 
-    private int SoonCount => CountBy(PantryItemStatus.Soon);
+    private int SoonCount => _items?.CountByStatus(PantryItemStatus.Soon) ?? 0;
 
-    private int FreshCount => CountBy(PantryItemStatus.Fresh);
-
-    private int CountBy(PantryItemStatus status)
-        => _items?.Count(i => i.GetStatus() == status) ?? 0;
+    private int FreshCount => _items?.CountByStatus(PantryItemStatus.Fresh) ?? 0;
 
     private IReadOnlyList<PantryItemDto> VisibleItems
         => _items?
@@ -181,14 +179,25 @@
 
     public void Dispose() => Members.Changed -= OnMembersChanged;
 
-    private async void OnMembersChanged() => await InvokeAsync(StateHasChanged);
+    private async void OnMembersChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // Member switched during navigation/dispose; nothing to render.
+        }
+    }
 
     private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
 
     private bool MatchesFilters(PantryItemDto item)
     {
         if (!string.IsNullOrWhiteSpace(_name)
-            && !item.Name.Contains(_name, StringComparison.OrdinalIgnoreCase))
+            && !item.Name.Contains(_name, StringComparison.OrdinalIgnoreCase)
+            && (item.Notes is null || !item.Notes.Contains(_name, StringComparison.OrdinalIgnoreCase)))
             return false;
 
         if (!string.IsNullOrWhiteSpace(_location)
@@ -203,15 +212,23 @@
     {
         _highlightId = null;
 
-        using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
-
-        if (!response.IsSuccessfulWithContent)
+        try
         {
-            Toast.Error("Can't retrieve data.");
-            return;
-        }
+            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
 
-        _items = new(response.Content.Items);
+            if (!response.IsSuccessfulWithContent)
+            {
+                Toast.Error("Can't retrieve data.");
+                return;
+            }
+
+            _items = new(response.Content.Items);
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Pantry load failed.");
+            Toast.Error("Can't retrieve data.");
+        }
     }
 
     private Task OnSearchChanged(string? value)

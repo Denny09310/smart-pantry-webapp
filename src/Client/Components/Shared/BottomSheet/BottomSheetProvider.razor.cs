@@ -8,7 +8,6 @@ public partial class BottomSheetProvider : IAsyncDisposable
 {
     private BottomSheet? _sheet;
     private IDialogReference _dialogRef = default!;
-    private int _appliedSnapVersion;
 
     protected override void OnInitialized()
     {
@@ -39,18 +38,6 @@ public partial class BottomSheetProvider : IAsyncDisposable
         catch (Exception ex)
         {
             await DispatchExceptionAsync(ex);
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        var pending = Service.PendingSnap;
-
-        if (_sheet is not null && pending is not null && pending.Version != _appliedSnapVersion)
-        {
-            _appliedSnapVersion = pending.Version;
-            Service.AcknowledgeSnap(pending.Version);
-            await _sheet.SetSnapAsync(pending.Index);
         }
     }
 

@@ -21,7 +21,7 @@
                       OnClick="SwitchMemberAsync">
                 <BbAvatar Class="h-6 w-6">
                     <BbAvatarFallback Class="text-[10px]"
-                                      style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                                      style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
                         @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
                     </BbAvatarFallback>
                 </BbAvatar>
@@ -61,7 +61,17 @@
 
     public void Dispose() => Members.Changed -= OnChanged;
 
-    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // Member switched during navigation/dispose; nothing to render.
+        }
+    }
 
     private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
 

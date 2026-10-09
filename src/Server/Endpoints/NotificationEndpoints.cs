@@ -27,11 +27,14 @@ internal class NotificationEndpoints(ApplicationDbContext db)
                     n.Message,
                     n.CreatedAt,
                     n.ReadAt))
+            .Take(100)
             .ToListAsync(ct);
 
-        return TypedResults.Ok(new GetNotificationsResponse(
-            items,
-            items.Count(n => n.ReadAt == null)));
+        var unread = await db.Notifications.AsNoTracking()
+            .Where(n => n.ReadAt == null)
+            .CountAsync(ct);
+
+        return TypedResults.Ok(new GetNotificationsResponse(items, unread));
     }
 
     [MapPost("/{id}/read")]

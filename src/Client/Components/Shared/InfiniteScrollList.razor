@@ -52,6 +52,7 @@
     private ElementReference _sentinel;
     private Bit.Butil.ButilSubscription? _observation;
     private bool _observerFailed;
+    private bool _restartObservation;
     private string? _scrolledFor;
 
     protected override void OnParametersSet()
@@ -72,13 +73,21 @@
         }
 
         _visible = Items.Take(count).ToList();
-        _ = StopObservingAsync();
+        _restartObservation = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_restartObservation)
+        {
+            _restartObservation = false;
+            await StopObservingAsync();
+        }
+
         if (_visible.Count < _total && _observation is null && !_observerFailed)
             await StartObservingAsync();
+        else if (_visible.Count >= _total && _observation is not null)
+            await StopObservingAsync();
 
         if (EnsureVisibleId is not null && EnsureVisibleId != _scrolledFor)
         {
@@ -119,9 +128,18 @@
 
     private async Task StopObservingAsync()
     {
-        if (_observation is not null)
-            await _observation.DisposeAsync();
-        _observation = null;
+        try
+        {
+            if (_observation is not null)
+                await _observation.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        finally
+        {
+            _observation = null;
+        }
     }
 
     public async ValueTask DisposeAsync() => await StopObservingAsync();

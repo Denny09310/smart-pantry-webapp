@@ -48,16 +48,14 @@ public sealed class BottomSheetEntry(Type componentType, IDictionary<string, obj
     public BottomSheetOptions Options { get; } = options;
 }
 
-public sealed record BottomSheetSnapRequest(int Index, int Version);
-
 /// <summary>
 /// Global controller for the <c>BottomSheetProvider</c>. Adaptive entry point:
 /// <c>OpenAsync</c> takes <c>DialogOpenOptions</c> and shows a bottom sheet on
 /// mobile, a Blueprint dialog on desktop. Content components use the same
 /// <c>[CascadingParameter] IDialogReference</c> pattern in both hosts:
 /// <c>CloseAsync(DialogResult.Ok(data))</c> / <c>CancelAsync()</c>.
-/// <c>SnapToAsync</c> / <c>CloseAsync</c> only apply to an open sheet and are
-/// no-ops while a desktop dialog is showing.
+/// <c>CloseAsync</c> only applies to an open sheet and is a
+/// no-op while a desktop dialog is showing.
 /// </summary>
 public sealed class BottomSheetService(
     DialogService dialog,
@@ -70,12 +68,9 @@ public sealed class BottomSheetService(
 
     private TaskCompletionSource<DialogResult>? _tcs;
     private object? _pendingData;
-    private int _snapVersion;
     private bool _dialogOpen;
 
     public BottomSheetEntry? Current { get; private set; }
-
-    public BottomSheetSnapRequest? PendingSnap { get; private set; }
 
     public bool IsOpen => Current is not null || _dialogOpen;
 
@@ -159,7 +154,6 @@ public sealed class BottomSheetService(
 
         _tcs = new TaskCompletionSource<DialogResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         Current = new BottomSheetEntry(componentType, parameters, sheetOptions);
-        PendingSnap = null;
         OnChange?.Invoke();
 
         return _tcs.Task;
@@ -183,25 +177,6 @@ public sealed class BottomSheetService(
             _ => null,
         },
     };
-
-    /// <summary>Programmatically move the open sheet to a snap point. No-op on desktop.</summary>
-    public Task SnapToAsync(int index)
-    {
-        if (Current is null)
-            return Task.CompletedTask;
-
-        index = Math.Clamp(index, 0, Current.Options.SnapPoints.Length - 1);
-        PendingSnap = new BottomSheetSnapRequest(index, ++_snapVersion);
-        OnChange?.Invoke();
-
-        return Task.CompletedTask;
-    }
-
-    public void AcknowledgeSnap(int version)
-    {
-        if (PendingSnap?.Version == version)
-            PendingSnap = null;
-    }
 
     /// <summary>
     /// Close with the exit animation, completing the <c>OpenAsync</c> task
@@ -232,7 +207,6 @@ public sealed class BottomSheetService(
         Current = null;
         _tcs = null;
         _pendingData = null;
-        PendingSnap = null;
 
         tcs?.TrySetResult(data is null ? DialogResult.Cancel() : DialogResult.Ok(data));
         OnChange?.Invoke();

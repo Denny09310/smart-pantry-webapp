@@ -15,11 +15,9 @@ internal static class PantryScroll
             await using var module = await js.InvokeAsync<IJSObjectReference>("import", "/js/scroll-helper.js");
             await module.InvokeVoidAsync("scrollToItem", itemId);
         }
-        catch (JSDisconnectedException)
+        catch (Exception)
         {
-        }
-        catch (JSException)
-        {
+            // Best effort: prerendering, navigation, or a disconnected circuit.
         }
     }
 }

@@ -6,20 +6,21 @@ namespace Shared.Models;
 
 [ValidatableType]
 public record CreatePantryItemRequest(
-    [Required]
-    [StringLength(100)]
+    [Required(ErrorMessage = "Name is required.")]
+    [StringLength(100, ErrorMessage = "Name must be 100 characters or fewer.")]
     string Name,
-
-    [Range(1, 9999)]
+    [Range(0.01, 9999, ErrorMessage = "Quantity must be between 0.01 and 9999.")]
     double Quantity,
-
-    [Required]
+    [Required(ErrorMessage = "Unit is required.")]
+    [StringLength(30, ErrorMessage = "Unit must be 30 characters or fewer.")]
     string Unit,
-
-    [Required]
+    [Required(ErrorMessage = "Location is required.")]
+    [StringLength(60, ErrorMessage = "Location must be 60 characters or fewer.")]
     string Location,
-
-    [StringLength(500)]
+    [StringLength(500, ErrorMessage = "Notes must be 500 characters or fewer.")]
     string? Notes,
-
-    DateOnly ExpirationDate);
+    DateOnly ExpirationDate) : IValidatableObject
+{
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        => PantryItemRules.Validate(Name, Unit, Location, ExpirationDate);
+}
