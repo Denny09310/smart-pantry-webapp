@@ -92,9 +92,6 @@ internal class PantryEndpoints(ApplicationDbContext db)
         CreatePantryItemRequest request,
         CancellationToken ct)
     {
-        if (Validate(request) is { } errors)
-            return TypedResults.ValidationProblem(errors);
-
         var entry = new PantryItem
         {
             Name = request.Name.Trim(),
@@ -117,9 +114,6 @@ internal class PantryEndpoints(ApplicationDbContext db)
         UpdatePantryItemRequest request,
         CancellationToken ct)
     {
-        if (Validate(request) is { } errors)
-            return TypedResults.ValidationProblem(errors);
-
         var entry = await db.Items.FindAsync([id], ct);
 
         if (entry is null)
@@ -170,48 +164,9 @@ internal class PantryEndpoints(ApplicationDbContext db)
     private async Task<string?> MemberNameAsync(string? memberId, CancellationToken ct)
         => memberId is null
             ? null
-            : await db.Members.AsNoTracking()
+            : await db.Members
+                .AsNoTracking()
                 .Where(m => m.Id == memberId)
                 .Select(m => m.Name)
                 .FirstOrDefaultAsync(ct);
-
-    private static Dictionary<string, string[]>? Validate(
-        string name,
-        double quantity,
-        string unit,
-        string location,
-        string? notes)
-    {
-        Dictionary<string, string[]>? errors = null;
-
-        void Add(string field, string message)
-        {
-            (errors ??= []).Add(field, [message]);
-        }
-
-        if (string.IsNullOrWhiteSpace(name))
-            Add(nameof(name), "Name is required.");
-        else if (name.Trim().Length > 100)
-            Add(nameof(name), "Name must be 100 characters or fewer.");
-
-        if (quantity is < 1 or > 9999)
-            Add(nameof(quantity), "Quantity must be between 1 and 9999.");
-
-        if (string.IsNullOrWhiteSpace(unit))
-            Add(nameof(unit), "Unit is required.");
-
-        if (string.IsNullOrWhiteSpace(location))
-            Add(nameof(location), "Location is required.");
-
-        if (notes is { Length: > 500 })
-            Add(nameof(notes), "Notes must be 500 characters or fewer.");
-
-        return errors;
-    }
-
-    private static Dictionary<string, string[]>? Validate(CreatePantryItemRequest request)
-        => Validate(request.Name, request.Quantity, request.Unit, request.Location, request.Notes);
-
-    private static Dictionary<string, string[]>? Validate(UpdatePantryItemRequest request)
-        => Validate(request.Name, request.Quantity, request.Unit, request.Location, request.Notes);
 }
