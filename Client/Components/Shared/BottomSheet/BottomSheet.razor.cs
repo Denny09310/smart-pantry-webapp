@@ -25,6 +25,13 @@ public partial class BottomSheet : IAsyncDisposable
     public string? Title { get; set; }
 
     [Parameter]
+    public string? Description { get; set; }
+
+    /// <summary>CSS max-width of the sheet (sets <c>--bs-max-width</c>).</summary>
+    [Parameter]
+    public string? MaxWidth { get; set; }
+
+    [Parameter]
     public bool ShowHandle { get; set; } = true;
 
     [Parameter]

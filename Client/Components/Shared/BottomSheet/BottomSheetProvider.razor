@@ -3,7 +3,7 @@
 
 @if (Service.Current is { } entry)
 {
-    <BottomSheet @ref="_sheet" IsOpen="true" Title="@entry.Options.Title" SnapPoints="@entry.Options.SnapPoints"
+    <BottomSheet @ref="_sheet" IsOpen="true" Title="@entry.Options.Title" Description="@entry.Options.Description" MaxWidth="@entry.Options.MaxWidth" SnapPoints="@entry.Options.SnapPoints"
                  InitialSnapIndex="@entry.Options.InitialSnapIndex" ShowHandle="@entry.Options.ShowHandle"
                  ShowCloseButton="@entry.Options.ShowCloseButton" Dismissible="@entry.Options.Dismissible"
                  DismissOnOverlayClick="@entry.Options.DismissOnOverlayClick" DismissOnEscape="@entry.Options.DismissOnEscape"

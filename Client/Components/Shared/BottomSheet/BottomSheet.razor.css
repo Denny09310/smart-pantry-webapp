@@ -5,7 +5,7 @@
      --bs-shadow, --bs-max-width, --bs-z-index,
      --bs-overlay-background,
      --bs-handle-width, --bs-handle-height, --bs-handle-background,
-     --bs-header-foreground, --bs-close-background */
+     --bs-header-foreground, --bs-description-foreground, --bs-close-background */
 
 .bs-overlay {
     position: fixed;
@@ -76,15 +76,18 @@
 
 .bs-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     flex: none;
     padding: 0.35rem 1rem 0.6rem;
 }
 
-.bs-title {
+.bs-header__text {
     flex: 1;
     min-width: 0;
+}
+
+.bs-title {
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -92,6 +95,13 @@
     font-size: 1rem;
     font-weight: 600;
     color: var(--bs-header-foreground, var(--bs-foreground, var(--card-foreground)));
+}
+
+.bs-description {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--bs-description-foreground, var(--muted-foreground));
 }
 
 .bs-close {
@@ -119,6 +129,18 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     padding: 0 1rem 1rem;
+}
+
+/* Hosted bodies (e.g. dialog forms) may bring their own inner scroll
+   container with overscroll-behavior none/contain. Inside the sheet that
+   inner box is unbounded, so it never overflows — yet it still traps every
+   touch/wheel gesture and blocks chaining to .bs-content, leaving only the
+   sheet's own padding edges scrollable. Release the trap so gestures chain
+   to the sheet. ::deep is required: CSS isolation would otherwise scope the
+   descendant to this component and never match hosted content. */
+.bs-content ::deep .overscroll-none,
+.bs-content ::deep .overscroll-contain {
+    overscroll-behavior: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

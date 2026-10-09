@@ -2,7 +2,6 @@
 @using Client.Components.Shared.Home
 
 @inject ServerApi Api
-@inject DialogService Dialog
 @inject ToastService Toast
 @inject BottomSheetService BottomSheet
 
@@ -51,17 +50,11 @@ else
 
 @code
 {
-    private static readonly DialogOpenOptions DOptions = new()
+    private static readonly DialogOpenOptions Options = new()
     {
         Title = "Add pantry item",
         Description = "Track a new pantry batch and expiration date",
         Size = DialogSize.Large
-    };
-
-    private static readonly BottomSheetOptions BsOptions = new()
-    {
-        Title = "Add pantry item",
-        @* Description = "Track a new pantry batch and expiration date", *@
     };
 
     private List<PantryItemDto>? _items;
@@ -93,7 +86,7 @@ else
 
     private async Task CreateItemAsync()
     {
-        var result = await BottomSheet.OpenAsync<CreatePantryItemDialog>(BsOptions);
+        var result = await BottomSheet.OpenAsync<CreatePantryItemDialog>(Options);
 
         if (result.Cancelled)
             return;

@@ -1,3 +1,4 @@
+using Bit.Butil;
 using BlazorBlueprint.Components;
 using Client.Components;
 using Client.Services;
@@ -13,6 +14,7 @@ builder.Logging.SetMinimumLevel(LogLevel.Warning);
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddBitButilServices();
 builder.Services.AddBottomSheet();
 builder.Services.AddServerApi();
 

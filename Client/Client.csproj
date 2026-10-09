@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bit.Butil" Version="10.6.2" />
+    <PackageReference Include="Bit.Minifier" Version="10.6.2" PrivateAssets="all" />
     <PackageReference Include="BlazorBlueprint.Components" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" />

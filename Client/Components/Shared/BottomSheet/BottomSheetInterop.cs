@@ -18,21 +18,17 @@ public sealed class BottomSheetJsOptions
 }
 
 /// <summary>Typed wrapper around the colocated BottomSheet JS module.</summary>
-public sealed class BottomSheetInterop : IAsyncDisposable
+public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
 {
     internal const string ModulePath = "./Components/Shared/BottomSheet/BottomSheet.razor.js";
     internal const string AttachMethod = "attach";
     internal const string SetSnapMethod = "setSnap";
     internal const string DismissMethod = "dismiss";
     internal const string DetachMethod = "detach";
-
-    private readonly IJSRuntime _js;
     private IJSObjectReference? _module;
 
-    public BottomSheetInterop(IJSRuntime js) => _js = js;
-
     private async ValueTask<IJSObjectReference> GetModuleAsync()
-        => _module ??= await _js.InvokeAsync<IJSObjectReference>("import", ModulePath);
+        => _module ??= await js.InvokeAsync<IJSObjectReference>("import", ModulePath);
 
     public async ValueTask AttachAsync(
         string id,
