@@ -3,7 +3,7 @@
 @inject ToastService Toast
 @inject Bit.Butil.MediaDevices MediaDevices
 @inject Bit.Butil.BarcodeDetector BarcodeDetector
-@inject ILogger<BarcodeScannerDialog> Log
+@inject ILogger<BarcodeScannerView> Log
 @implements IAsyncDisposable
 
 @if (!_checked)
@@ -33,7 +33,7 @@ else if (_camera)
             </div>
         }
         <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
-            Cancel
+            Back
         </BbButton>
     </div>
 }
@@ -49,14 +49,17 @@ else
             Look up
         </BbButton>
         <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
-            Cancel
+            Back
         </BbButton>
     </div>
 }
 
 @code {
-    [CascadingParameter]
-    public IDialogReference Reference { get; set; } = default!;
+    [Parameter]
+    public EventCallback<ProductLookupDto> OnScanned { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancelled { get; set; }
 
     private static readonly string[] WantedFormats = ["ean_13", "ean_8", "upc_a", "upc_e"];
 
@@ -171,7 +174,7 @@ else
             if (response.IsSuccessfulWithContent)
             {
                 await StopCameraAsync();
-                await Reference.CloseAsync(DialogResult.Ok(response.Content));
+                await OnScanned.InvokeAsync(response.Content);
                 return;
             }
 
@@ -193,7 +196,7 @@ else
     private async Task CancelAsync()
     {
         await StopCameraAsync();
-        await Reference.CancelAsync();
+        await OnCancelled.InvokeAsync();
     }
 
     private async Task StopCameraAsync()
