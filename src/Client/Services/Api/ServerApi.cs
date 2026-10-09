@@ -28,6 +28,7 @@ internal interface IPantryEndpoints
     [Post("/")]
     Task<ApiResponse<PantryItemDto>> CreateAsync(
         CreatePantryItemRequest request,
+        [Header("X-Member-Id")] string? memberId,
         CancellationToken ct = default);
 
     [Delete("/{id}")]
@@ -39,6 +40,7 @@ internal interface IPantryEndpoints
     Task<ApiResponse<PantryItemDto>> UpdateAsync(
         string id,
         UpdatePantryItemRequest request,
+        [Header("X-Member-Id")] string? memberId,
         CancellationToken ct = default);
 }
 

@@ -6,6 +6,7 @@
 @inject DialogService Dialog
 @inject BottomSheetService BottomSheet
 @inject NavigationManager Nav
+@inject MemberService Members
 
 <div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
     <header class="space-y-3">
@@ -231,7 +232,7 @@
         if (result.GetData<CreatePantryItemRequest>() is not { } request)
             return;
 
-        using var response = await Api.Pantry.CreateAsync(request);
+        using var response = await Api.Pantry.CreateAsync(request, Members.CurrentMemberId);
 
         if (!response.IsSuccessfulWithContent)
         {

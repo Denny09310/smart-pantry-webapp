@@ -26,5 +26,6 @@ builder.Services.AddBlazorBlueprintComponents();
 builder.Services.AddBitButilServices();
 builder.Services.AddBottomSheet();
 builder.Services.AddServerApi();
+builder.Services.AddScoped<MemberService>();
 
 await builder.Build().RunAsync();
