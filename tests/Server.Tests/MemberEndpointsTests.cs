@@ -65,6 +65,37 @@ public sealed class MemberEndpointsTests(PantryApiFactory factory)
     }
 
     [Fact]
+    public async Task Duplicate_Names_Are_Allowed()
+    {
+        // Names are labels, not identities: the server never rejects a duplicate.
+        var name = UniqueName("twin")[..20];
+
+        using var first = await _client.PostAsJsonAsync(
+            "/api/members",
+            new CreateMemberRequest(name, null));
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        var one = await first.Content.ReadFromJsonAsync<MemberDto>();
+        Assert.NotNull(one);
+
+        using var second = await _client.PostAsJsonAsync(
+            "/api/members",
+            new CreateMemberRequest(name, null));
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var two = await second.Content.ReadFromJsonAsync<MemberDto>();
+        Assert.NotNull(two);
+
+        try
+        {
+            Assert.NotEqual(one.Id, two.Id);
+        }
+        finally
+        {
+            await _client.DeleteAsync($"/api/members/{one.Id}");
+            await _client.DeleteAsync($"/api/members/{two.Id}");
+        }
+    }
+
+    [Fact]
     public async Task Create_Item_With_Member_Header_Sets_Attribution()
     {
         var member = await CreateMemberAsync();

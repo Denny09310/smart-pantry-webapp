@@ -159,7 +159,7 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 
 ### Tasks
 
-- [ ] Test member edge cases (duplicate names, delete current member,
+- [x] Test member edge cases (duplicate names, delete current member,
   write with unknown member ID).
 - [ ] Test duplicate-notification prevention.
 - [ ] Test expiration-date boundary conditions.
