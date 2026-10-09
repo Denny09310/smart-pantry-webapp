@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Entities;
-using Shared.Models;
 
 namespace Server.Services;
 
