@@ -1,11 +1,14 @@
 ﻿@page "/"
+@using Client.Components.Shared.Home
 
 @inject ServerApi Api
+@inject DialogService Dialog
+@inject ToastService Toast
 
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Smart Pantry</h1>
     <div class="inline-flex items-center gap-2">
-        <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16">
+        <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16" @onclick="CreateItemAsync">
             Add
         </BbButton>
     </div>
@@ -18,12 +21,12 @@
     <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
 </BbInputGroup>
 
-<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Class="flex-nowrap overflow-x-auto scrollbar-none">
-    <BbChip Value="@("all")" Class="text-nowrap">All locations</BbChip>
-    <BbChip Value="@("fridge")" Class="text-nowrap">Fridge</BbChip>
-    <BbChip Value="@("pantry")" Class="text-nowrap">Pantry</BbChip>
-    <BbChip Value="@("freezer")" Class="text-nowrap">Freezer</BbChip>
-    <BbChip Value="@("cabinet")" Class="text-nowrap">Cabinet</BbChip>
+<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Wrap="false" Class="scrollbar-none">
+    <BbChip Value="@("all")">All locations</BbChip>
+    <BbChip Value="@("fridge")">Fridge</BbChip>
+    <BbChip Value="@("pantry")">Pantry</BbChip>
+    <BbChip Value="@("freezer")">Freezer</BbChip>
+    <BbChip Value="@("cabinet")">Cabinet</BbChip>
 </BbChipSet>
 
 @if (_items is null)
@@ -47,6 +50,13 @@ else
 
 @code
 {
+    private static readonly DialogOpenOptions Options = new()
+    {
+        Title = "Add pantry item",
+        Description = "Track a new pantry batch and expiration date",
+        Size = DialogSize.Large
+    };
+
     private List<PantryItemDto>? _items;
     private int _totalItems;
 
@@ -63,7 +73,10 @@ else
         using var response = await Api.Pantry.GetAsync(request);
 
         if (!response.IsSuccessfulWithContent)
+        {
+            Toast.Error("Can't retrieve data.");
             return;
+        }
 
         var content = response.Content;
 
@@ -71,8 +84,25 @@ else
         _totalItems = content.TotalItems;
     }
 
-    private void CreateItemAsync()
+    private async Task CreateItemAsync()
     {
-        
+        var result = await Dialog.OpenAsync<CreatePantryItemDialog>(Options);
+
+        if (result.Cancelled)
+            return;
+
+        if (result.GetData<CreatePantryItemRequest>() is not { } request)
+            return;
+
+        using var response = await Api.Pantry.CreateAsync(request);
+
+        if (!response.IsSuccessfulWithContent)
+        {
+            Toast.Error("Can't create new item.");
+            return;
+        }
+
+        _items?.Insert(0, response.Content);
+        _totalItems++;
     }
 }

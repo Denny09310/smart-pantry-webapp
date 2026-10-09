@@ -16,6 +16,11 @@ internal interface IPantryEndpoints
     Task<ApiResponse<GetPantryItemsResponse>> GetAsync(
         GetPantryItemsRequest? request = null,
         CancellationToken ct = default);
+
+    [Post("/")]
+    Task<ApiResponse<PantryItemDto>> CreateAsync(
+        CreatePantryItemRequest request,
+        CancellationToken ct = default);
 }
 
 internal static class ServerApiExtensions
