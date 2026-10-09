@@ -16,6 +16,8 @@ public class ApplicationDbContext(
 
     public DbSet<Member> Members => Set<Member>();
 
+    public DbSet<BarcodeProduct> BarcodeProducts => Set<BarcodeProduct>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<Notification>()
@@ -34,5 +36,8 @@ public class ApplicationDbContext(
             .WithMany()
             .HasForeignKey(i => i.CreatedByMemberId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<BarcodeProduct>()
+            .HasKey(p => p.Barcode);
     }
 }
