@@ -189,9 +189,9 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 
 ### Tasks
 
-- [ ] Add a liveness endpoint plus a Postgres readiness check; the deployment
-  must report unhealthy when a critical dependency is unavailable.
-- [ ] Log each expiration-worker run with start/end time, duration, items
+- [x] Add a `/healthz` probe covering the app and Postgres: unhealthy when a
+  critical dependency is unavailable.
+- [x] Log each expiration-worker run with start/end time, duration, items
   evaluated, notifications created, and pushes sent/failed.
 
 ### Acceptance criteria

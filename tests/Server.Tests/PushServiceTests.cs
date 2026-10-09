@@ -37,7 +37,7 @@ public sealed class PushServiceTests(PantryApiFactory factory)
             var push = scope.ServiceProvider.GetRequiredService<PushService>();
 
             // Connection refused (or undecryptable keys): no throw, nothing sent.
-            Assert.Equal(0, await push.SendUnreadAsync());
+            Assert.Equal(0, (await push.SendUnreadAsync()).Sent);
 
             // Transient failures keep the subscription for the next run.
             Assert.True(await scope.ServiceProvider
@@ -81,7 +81,7 @@ public sealed class PushServiceTests(PantryApiFactory factory)
                 using var scope = factory.Services.CreateScope();
                 var push = scope.ServiceProvider.GetRequiredService<PushService>();
 
-                Assert.Equal(0, await push.SendUnreadAsync());
+                Assert.Equal(0, (await push.SendUnreadAsync()).Sent);
 
                 Assert.False(await scope.ServiceProvider
                     .GetRequiredService<ApplicationDbContext>()
@@ -159,6 +159,6 @@ public sealed class PushServiceTests(PantryApiFactory factory)
     {
         using var scope = factory.Services.CreateScope();
         var notifications = scope.ServiceProvider.GetRequiredService<NotificationService>();
-        Assert.True(await notifications.GenerateExpirationNotificationsAsync() >= 1);
+        Assert.True((await notifications.GenerateExpirationNotificationsAsync()).Created >= 1);
     }
 }

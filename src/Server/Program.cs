@@ -15,6 +15,9 @@ builder.Services.AddEndpointHandlers();
 builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(sp => sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")!);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
     .UseSnakeCaseNamingConvention());
@@ -22,13 +25,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PushService>();
 builder.Services.AddScoped<ProductLookupService>();
-builder.Services.AddHttpClient("OpenFoodFacts", client =>
-{
-    client.BaseAddress = new Uri("https://world.openfoodfacts.org/");
-    client.Timeout = TimeSpan.FromSeconds(8);
-    client.DefaultRequestHeaders.UserAgent.ParseAdd(
-        "SmartPantry/0.2 (https://github.com/Denny09310/smart-pantry-webapp)");
-});
+builder.Services.AddOpenFoodFacts();
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
 
 if (!builder.Environment.IsEnvironment("Testing"))
@@ -51,6 +48,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseServiceWorkerNoCache();
+
+app.MapHealthChecks("/healthz");
 
 app.MapEndpointHandlers();
 
