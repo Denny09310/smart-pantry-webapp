@@ -1,4 +1,8 @@
 @namespace Client.Components.Shared.Pantry
+@using Client.Components.Shared.Members
+@inject MemberService Members
+@inject BottomSheetService BottomSheet
+@implements IDisposable
 
 <div class="space-y-2">
     <div class="flex gap-2">
@@ -12,6 +16,15 @@
                                DebounceInterval="250"
                                Placeholder="Search items by name or notes..." />
         </BbInputGroup>
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Class="shrink-0 md:hidden"
+                  AriaLabel="Switch member" OnClick="SwitchMemberAsync">
+            <BbAvatar Class="h-6 w-6">
+                <BbAvatarFallback Class="text-[10px]"
+                                  style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                    @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
+                </BbAvatarFallback>
+            </BbAvatar>
+        </BbButton>
         <BbButton OnClick="@(() => OnAdd.InvokeAsync())" Class="shrink-0" AriaLabel="Add item">
             <LucideIcon Name="plus" Size="14" />
             <span class="hidden md:inline">Add Item</span>
@@ -77,6 +90,21 @@
 
     [Parameter]
     public EventCallback OnAdd { get; set; }
+
+    private static readonly DialogOpenOptions SwitcherOptions = new()
+    {
+        Title = "Who's using the app?",
+        Description = "Attribution for new items",
+        Size = DialogSize.Small
+    };
+
+    protected override void OnInitialized() => Members.Changed += OnChanged;
+
+    public void Dispose() => Members.Changed -= OnChanged;
+
+    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
 
     private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
 

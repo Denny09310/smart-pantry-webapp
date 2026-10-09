@@ -7,15 +7,27 @@
 @inject BottomSheetService BottomSheet
 @inject NavigationManager Nav
 @inject MemberService Members
+@implements IDisposable
 
 <div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
     <header class="space-y-3">
         <div class="flex items-center justify-between gap-2 md:hidden">
             <h1 class="text-xl font-semibold">Smart Pantry</h1>
-            <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16" OnClick="CreateItemAsync">
-                <LucideIcon Name="plus" Size="14" />
-                Add
-            </BbButton>
+            <div class="flex items-center gap-1">
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                          AriaLabel="Switch member" OnClick="SwitchMemberAsync">
+                    <BbAvatar Class="h-6 w-6">
+                        <BbAvatarFallback Class="text-[10px]"
+                                          style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                            @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
+                        </BbAvatarFallback>
+                    </BbAvatar>
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                          AriaLabel="Add item" OnClick="CreateItemAsync">
+                    <LucideIcon Name="plus" Size="18" />
+                </BbButton>
+            </div>
         </div>
         <div class="hidden items-end justify-between gap-2 md:flex">
             <div>
@@ -126,6 +138,13 @@
         Size = DialogSize.Large
     };
 
+    private static readonly DialogOpenOptions SwitcherOptions = new()
+    {
+        Title = "Who's using the app?",
+        Description = "Attribution for new items",
+        Size = DialogSize.Small
+    };
+
     private const int MaxItems = 500;
 
     private List<PantryItemDto>? _items;
@@ -165,8 +184,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Members.Changed += OnMembersChanged;
         await LoadAsync();
     }
+
+    public void Dispose() => Members.Changed -= OnMembersChanged;
+
+    private async void OnMembersChanged() => await InvokeAsync(StateHasChanged);
+
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
 
     private bool MatchesFilters(PantryItemDto item)
     {
