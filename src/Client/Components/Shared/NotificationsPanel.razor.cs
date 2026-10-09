@@ -41,8 +41,9 @@ public partial class NotificationsPanel : IAsyncDisposable
             if (_pushSupported)
                 _pushEnabled = (await Push.GetSubscription()).IsActive;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.LogWarning(ex, "Push availability check failed.");
             _pushSupported = false;
             _pushEnabled = false;
         }
@@ -66,7 +67,17 @@ public partial class NotificationsPanel : IAsyncDisposable
                 return;
             }
 
-            var subscription = await Push.Subscribe(key.Content.PublicKey);
+            Bit.Butil.PushSubscriptionInfo subscription;
+            try
+            {
+                subscription = await Push.Subscribe(key.Content.PublicKey);
+            }
+            catch (Exception ex)
+            {
+                Log.LogWarning(ex, "Browser push subscription failed.");
+                Toast.Info("Push was blocked. Allow notifications to enable it.");
+                return;
+            }
 
             if (!subscription.IsActive)
             {
@@ -81,12 +92,28 @@ public partial class NotificationsPanel : IAsyncDisposable
 
             if (!saved.IsSuccessfulWithContent)
             {
+                // Roll back the browser side: a subscription the server
+                // doesn't know about would never receive pushes.
+                try
+                {
+                    await Push.Unsubscribe();
+                }
+                catch (Exception ex)
+                {
+                    Log.LogWarning(ex, "Push rollback unsubscribe failed.");
+                }
+
                 Toast.Error("Can't save push subscription.");
                 return;
             }
 
             _pushEnabled = true;
             Toast.Success("Push notifications enabled.");
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Enabling push notifications failed.");
+            Toast.Error("Can't enable push notifications.");
         }
         finally
         {
@@ -108,10 +135,24 @@ public partial class NotificationsPanel : IAsyncDisposable
             {
                 await Push.Unsubscribe();
                 using var removed = await Api.Push.UnsubscribeAsync(existing.Endpoint);
+
+                if (!removed.IsSuccessStatusCode)
+                {
+                    // Browser is unsubscribed but the server still lists the
+                    // endpoint: report it instead of claiming success.
+                    _pushEnabled = (await Push.GetSubscription()).IsActive;
+                    Toast.Error("Can't remove push subscription from the server.");
+                    return;
+                }
             }
 
             _pushEnabled = false;
             Toast.Success("Push notifications disabled.");
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Disabling push notifications failed.");
+            Toast.Error("Can't disable push notifications.");
         }
         finally
         {
