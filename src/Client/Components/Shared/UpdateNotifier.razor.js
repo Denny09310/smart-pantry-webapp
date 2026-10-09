@@ -29,11 +29,42 @@ class BswupBridge {
         }
     }
 
-    activate() {
-        if (this.#pendingReload) {
-            this.#pendingReload();
-        } else {
-            window.location.reload();
+    async activate() {
+        // Prefer the engine's own path: it re-reads the live registration
+        // instead of trusting the worker captured when the event fired.
+        let posted = false;
+        try {
+            if (window.BitBswup && typeof window.BitBswup.skipWaiting === 'function') {
+                posted = await window.BitBswup.skipWaiting();
+            }
+        } catch (err) {
+            console.warn('BitBswup.skipWaiting failed:', err);
+        }
+
+        // Fall back to the callback stashed from the update event.
+        if (!posted && this.#pendingReload) {
+            try {
+                this.#pendingReload();
+            } catch (err) {
+                console.warn('Stashed update reload failed:', err);
+            }
+        }
+
+        // Bswup reloads on controllerchange once the new worker takes over.
+        // If that never comes (stuck worker), reload anyway so the click
+        // always does something observable.
+        let settled = false;
+        const fallback = setTimeout(() => {
+            if (!settled) {
+                console.warn('BitBswup: no controller change after activation; reloading.');
+                window.location.reload();
+            }
+        }, 4000);
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                settled = true;
+                clearTimeout(fallback);
+            }, { once: true });
         }
     }
 
@@ -57,6 +88,10 @@ export function activateUpdate() {
     } else {
         window.location.reload();
     }
+}
+
+export function forceReload() {
+    window.location.reload();
 }
 
 export function disposeBswupHandler() {

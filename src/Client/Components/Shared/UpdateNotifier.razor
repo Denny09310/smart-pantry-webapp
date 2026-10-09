@@ -1,5 +1,6 @@
 @inject IJSRuntime JS
 @inject ToastService Toast
+@inject ILogger<UpdateNotifier> Log
 @implements IAsyncDisposable
 
 @code
@@ -56,6 +57,21 @@
         catch (JSDisconnectedException)
         {
             // Page is going away anyway.
+        }
+        catch (Exception ex)
+        {
+            // The click must never die silently: log, tell the user,
+            // and fall back to a plain reload.
+            Log.LogError(ex, "Update activation failed; forcing reload.");
+            Toast.Error("Update couldn't activate. Reloading…");
+
+            try
+            {
+                await _interop.ForceReloadAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
         }
     }
 
