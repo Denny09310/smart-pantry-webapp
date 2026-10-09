@@ -1,0 +1,129 @@
+/* BottomSheet theme tokens. Every --bs-* variable falls back to the app
+   (BlazorBlueprint) theme, so the sheet follows light/dark mode automatically.
+   Override any token to theme a single sheet:
+     --bs-background, --bs-foreground, --bs-border, --bs-radius,
+     --bs-shadow, --bs-max-width, --bs-z-index,
+     --bs-overlay-background,
+     --bs-handle-width, --bs-handle-height, --bs-handle-background,
+     --bs-header-foreground, --bs-close-background */
+
+.bs-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--bs-z-index, 60);
+    background: var(--bs-overlay-background, rgb(0 0 0 / 0.45));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+}
+
+.bs-overlay[data-visible="true"] {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.bs-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Parked off-screen until JS attaches and animates open — avoids a
+       first-paint flash of the full-height sheet. */
+    transform: translateY(105%);
+    z-index: calc(var(--bs-z-index, 60) + 1);
+    margin-inline: auto;
+    width: 100%;
+    max-width: var(--bs-max-width, 36rem);
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bs-background, var(--card));
+    color: var(--bs-foreground, var(--card-foreground));
+    border: 1px solid var(--bs-border, var(--border));
+    border-bottom: none;
+    border-radius: var(--bs-radius, calc(var(--radius) + 6px)) var(--bs-radius, calc(var(--radius) + 6px)) 0 0;
+    box-shadow: var(--bs-shadow, var(--shadow-xl));
+    will-change: height, transform;
+}
+
+.bs-sheet.bs-animating {
+    transition: height 0.3s cubic-bezier(0.32, 0.72, 0.35, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0.35, 1);
+}
+
+.bs-handle {
+    display: flex;
+    justify-content: center;
+    flex: none;
+    padding: 0.6rem 1rem 0.35rem;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.bs-handle:active {
+    cursor: grabbing;
+}
+
+.bs-handle__bar {
+    width: var(--bs-handle-width, 2.75rem);
+    height: var(--bs-handle-height, 5px);
+    border-radius: 9999px;
+    background: var(--bs-handle-background, var(--muted-foreground));
+    opacity: 0.45;
+}
+
+.bs-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: none;
+    padding: 0.35rem 1rem 0.6rem;
+}
+
+.bs-title {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--bs-header-foreground, var(--bs-foreground, var(--card-foreground)));
+}
+
+.bs-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: calc(var(--radius) - 2px);
+    border: none;
+    background: var(--bs-close-background, transparent);
+    color: var(--bs-header-foreground, var(--bs-foreground, var(--card-foreground)));
+    cursor: pointer;
+}
+
+.bs-close:hover {
+    background: var(--muted);
+}
+
+.bs-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 1rem 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bs-sheet.bs-animating,
+    .bs-overlay {
+        transition: none;
+    }
+}

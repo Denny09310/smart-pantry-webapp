@@ -1,0 +1,15 @@
+@namespace Client.Components.Shared
+@implements IAsyncDisposable
+
+@if (Service.Current is { } entry)
+{
+    <BottomSheet @ref="_sheet" IsOpen="true" Title="@entry.Options.Title" SnapPoints="@entry.Options.SnapPoints"
+                 InitialSnapIndex="@entry.Options.InitialSnapIndex" ShowHandle="@entry.Options.ShowHandle"
+                 ShowCloseButton="@entry.Options.ShowCloseButton" Dismissible="@entry.Options.Dismissible"
+                 DismissOnOverlayClick="@entry.Options.DismissOnOverlayClick" DismissOnEscape="@entry.Options.DismissOnEscape"
+                 OnDismissed="OnSheetDismissed">
+        <CascadingValue Value="_dialogRef">
+            <DynamicComponent Type="@entry.ComponentType" Parameters="@entry.Parameters" />
+        </CascadingValue>
+    </BottomSheet>
+}

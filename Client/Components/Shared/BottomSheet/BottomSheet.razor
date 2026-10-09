@@ -1,0 +1,30 @@
+@namespace Client.Components.Shared
+@implements IAsyncDisposable
+
+@if (_visible)
+{
+    <div class="bs-overlay" @ref="_overlayRef" aria-hidden="true"></div>
+    <section class="bs-sheet @Class" @ref="_sheetRef" role="dialog" aria-modal="true" aria-label="@Title">
+        @if (ShowHandle)
+        {
+            <div class="bs-handle" @ref="_handleRef" aria-hidden="true">
+                <span class="bs-handle__bar"></span>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Title) || ShowCloseButton)
+        {
+            <div class="bs-header">
+                <h2 class="bs-title">@Title</h2>
+                @if (ShowCloseButton)
+                {
+                    <button type="button" class="bs-close" @onclick="DismissAsync" aria-label="Close sheet">
+                        <LucideIcon Name="x" Size="18" />
+                    </button>
+                }
+            </div>
+        }
+        <div class="bs-content">
+            @ChildContent
+        </div>
+    </section>
+}

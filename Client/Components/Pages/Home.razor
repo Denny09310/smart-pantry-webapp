@@ -4,6 +4,7 @@
 @inject ServerApi Api
 @inject DialogService Dialog
 @inject ToastService Toast
+@inject BottomSheetService BottomSheet
 
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Smart Pantry</h1>
@@ -50,11 +51,17 @@ else
 
 @code
 {
-    private static readonly DialogOpenOptions Options = new()
+    private static readonly DialogOpenOptions DOptions = new()
     {
         Title = "Add pantry item",
         Description = "Track a new pantry batch and expiration date",
         Size = DialogSize.Large
+    };
+
+    private static readonly BottomSheetOptions BsOptions = new()
+    {
+        Title = "Add pantry item",
+        @* Description = "Track a new pantry batch and expiration date", *@
     };
 
     private List<PantryItemDto>? _items;
@@ -86,7 +93,7 @@ else
 
     private async Task CreateItemAsync()
     {
-        var result = await Dialog.OpenAsync<CreatePantryItemDialog>(Options);
+        var result = await BottomSheet.OpenAsync<CreatePantryItemDialog>(BsOptions);
 
         if (result.Cancelled)
             return;
