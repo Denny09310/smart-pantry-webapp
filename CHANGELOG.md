@@ -1,8 +1,37 @@
+## [0.3.0] - 2026-10-09
+
+### 🚀 Features
+
+- Add Open Food Facts product lookup with local cache
+- Add barcode scanner with product prefill
+
+### 🐛 Bug Fixes
+
+- Suppress text selection and callout on long-press surface
+- Render barcode scanner inline instead of nested sheet
+
+### 🧪 Testing
+
+- Document duplicate member names behavior
+- Cover notification window boundaries and empty runs
+- Prove push failure tolerance and gone-subscription pruning
+
+### 💼 Other
+
+- Bugfix/longpress-touch-css into develop
+- Feature/product-lookup into develop
+- Feature/barcode-scanner into develop
+- Bugfix/inline-barcode-scanner into develop
+- Feature/phase-3-server-tests into develop
 ## [0.2.1] - 2026-10-09
 
 ### 🐛 Bug Fixes
 
 - Move member picker to mobile headers, slim add button
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Version 0.2.1
 
 ### 💼 Other
 
