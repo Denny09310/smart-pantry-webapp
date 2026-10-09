@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bit.Brouter" Version="10.6.2" />
     <PackageReference Include="Bit.Butil" Version="10.6.2" />
     <PackageReference Include="Bit.Minifier" Version="10.6.2" PrivateAssets="all" />
     <PackageReference Include="BlazorBlueprint.Components" Version="4.1.0" />

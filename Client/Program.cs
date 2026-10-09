@@ -1,3 +1,4 @@
+using Bit.Brouter;
 using Bit.Butil;
 using BlazorBlueprint.Components;
 using Client.Components;
@@ -13,6 +14,11 @@ builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
+builder.Services.AddBitBrouterServices(o =>
+{
+    o.ViewTransitions = true;
+    o.FocusOnNavigateSelector = "h1";
+});
 builder.Services.AddBlazorBlueprintComponents();
 builder.Services.AddBitButilServices();
 builder.Services.AddBottomSheet();

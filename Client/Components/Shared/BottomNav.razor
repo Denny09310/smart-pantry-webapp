@@ -1,7 +1,7 @@
 @namespace Client.Components.Shared
 @inject BottomSheetService BottomSheet
 
-<div class="fixed inset-x-4 bottom-4 z-50 md:hidden">
+<div class="fixed inset-x-4 bottom-4 z-50 md:hidden" style="view-transition-name: bottom-nav;">
     <BbCard Class="rounded-2xl">
         <nav class="flex items-center justify-around px-2 py-2" aria-label="Primary">
             <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="bg-secondary" class="@LinkClass">

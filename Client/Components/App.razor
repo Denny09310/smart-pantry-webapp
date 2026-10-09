@@ -1,6 +1,7 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages._404)">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="typeof(_Layout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿<Brouter DefaultLayout="@typeof(_Layout)" NotFoundUrl="404">
+    <Routes>
+        <Broute Path="/" Component="@typeof(Pages.Home)" />
+        <Broute Path="/pantry" Component="@typeof(Pages.Pantry)" />
+        <Broute Path="404" Component="@typeof(Pages._404)" />
+    </Routes>
+</Brouter>
