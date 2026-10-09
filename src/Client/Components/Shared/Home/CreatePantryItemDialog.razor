@@ -42,7 +42,7 @@
             </div>
             <ValidationMessage For="@(() => Input.Quantity)" class="text-sm text-destructive" />
 
-            <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none">
+            <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
                 <BbChip Value="@("pcs")">pcs</BbChip>
                 <BbChip Value="@("jar")">jar</BbChip>
                 <BbChip Value="@("can")">can</BbChip>

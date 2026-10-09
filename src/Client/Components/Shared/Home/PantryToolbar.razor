@@ -11,7 +11,7 @@
 
     @* Status filter *@
     <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false"
-               Class="scrollbar-none">
+               Class="scrollbar-none!">
         <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
@@ -20,7 +20,7 @@
     </BbChipSet>
 
     <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false"
-               Class="scrollbar-none">
+               Class="scrollbar-none!">
         <BbChip Value="@("all")">All locations</BbChip>
         <BbChip Value="@("fridge")">Fridge</BbChip>
         <BbChip Value="@("pantry")">Pantry</BbChip>

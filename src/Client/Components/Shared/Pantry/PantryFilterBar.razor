@@ -18,7 +18,7 @@
         </BbButton>
     </div>
 
-    <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false" Class="scrollbar-none">
+    <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false" Class="scrollbar-none!">
         <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
@@ -26,7 +26,7 @@
         <BbChip Value="@PantryStatusFilter.Fresh">Fresh (@FreshCount)</BbChip>
     </BbChipSet>
 
-    <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false" Class="scrollbar-none">
+    <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false" Class="scrollbar-none!">
         <BbChip Value="@("all")">All (@TotalCount)</BbChip>
         @foreach (var location in Locations)
         {
