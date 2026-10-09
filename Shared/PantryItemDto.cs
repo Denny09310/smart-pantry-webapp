@@ -7,4 +7,5 @@ public record PantryItemDto(
     string Unit,
     string Location,
     string? Notes,
-    DateOnly ExpirationDate);
+    DateOnly ExpirationDate,
+    ExpiryStatus Status);

@@ -190,11 +190,7 @@
             && !item.Location.Equals(_location, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        return _status switch
-        {
-            PantryStatusFilter.Fresh => item.GetStatus() is PantryItemStatus.Fresh,
-            _ => item.Matches(_status),
-        };
+        return item.Matches(_status);
     }
 
     private async Task LoadAsync()
@@ -268,12 +264,20 @@
         if (result.GetData<CreatePantryItemRequest>() is not { } request)
             return;
 
+        var update = new UpdatePantryItemRequest(
+            request.Name,
+            request.Quantity,
+            request.Unit,
+            request.Location,
+            request.Notes,
+            request.ExpirationDate);
+
         if (!_busyIds.Add(item.Id))
             return;
 
         try
         {
-            using var response = await Api.Pantry.UpdateAsync(item.Id, request);
+            using var response = await Api.Pantry.UpdateAsync(item.Id, update);
 
             if (!response.IsSuccessfulWithContent)
             {

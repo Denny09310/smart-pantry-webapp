@@ -31,7 +31,7 @@
 
     <PantryToolbar Search="@_name" SearchChanged="@OnSearchChanged" Location="@_location"
                    LocationChanged="@OnLocationChanged" Status="@_status" StatusChanged="@OnStatusChanged" TotalCount="@TotalCount"
-                   SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" />
+                   SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" FreshCount="@FreshCount" />
 
     @if (_items is null)
     {
@@ -133,6 +133,8 @@
     private int TodayCount => CountBy(PantryItemStatus.Today);
 
     private int SoonCount => CountBy(PantryItemStatus.Soon);
+
+    private int FreshCount => CountBy(PantryItemStatus.Fresh);
 
     private int CountBy(PantryItemStatus status)
         => _items?.Count(i => i.GetStatus() == status) ?? 0;

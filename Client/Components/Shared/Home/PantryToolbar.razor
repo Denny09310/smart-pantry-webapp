@@ -9,13 +9,14 @@
                            DebounceInterval="250" Placeholder="Search pantry items..." />
     </BbInputGroup>
 
-    @* Status filter, mobile only *@
+    @* Status filter *@
     <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false"
-               Class="scrollbar-none md:hidden">
+               Class="scrollbar-none">
         <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
         <BbChip Value="@PantryStatusFilter.Expired">Expired (@ExpiredCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Fresh">Fresh (@FreshCount)</BbChip>
     </BbChipSet>
 
     <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false"
@@ -59,6 +60,9 @@
 
     [Parameter]
     public int ExpiredCount { get; set; }
+
+    [Parameter]
+    public int FreshCount { get; set; }
 
     private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
 

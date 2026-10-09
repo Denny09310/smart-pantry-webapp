@@ -30,7 +30,7 @@ internal interface IPantryEndpoints
     [Put("/{id}")]
     Task<ApiResponse<PantryItemDto>> UpdateAsync(
         string id,
-        CreatePantryItemRequest request,
+        UpdatePantryItemRequest request,
         CancellationToken ct = default);
 }
 

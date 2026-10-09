@@ -24,19 +24,23 @@ public enum PantryStatusFilter
 public static class PantryItemStatusExtensions
 {
     public static PantryItemStatus GetStatus(this PantryItemDto item)
-        => GetStatus(item.ExpirationDate);
-
-    public static PantryItemStatus GetStatus(DateOnly expirationDate)
-    {
-        var days = expirationDate.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
-        return days switch
+        => item.Status switch
         {
-            < 0 => PantryItemStatus.Expired,
-            0 => PantryItemStatus.Today,
-            <= 7 => PantryItemStatus.Soon,
+            ExpiryStatus.Expired => PantryItemStatus.Expired,
+            ExpiryStatus.Today => PantryItemStatus.Today,
+            ExpiryStatus.Soon => PantryItemStatus.Soon,
             _ => PantryItemStatus.Fresh,
         };
-    }
+
+    public static PantryItemStatus GetStatus(DateOnly expirationDate)
+        => ExpiryStatusCalculator
+            .GetStatus(expirationDate, DateOnly.FromDateTime(DateTime.Today)) switch
+        {
+            ExpiryStatus.Expired => PantryItemStatus.Expired,
+            ExpiryStatus.Today => PantryItemStatus.Today,
+            ExpiryStatus.Soon => PantryItemStatus.Soon,
+            _ => PantryItemStatus.Fresh,
+        };
 
     public static int CountByStatus(this IEnumerable<PantryItemDto> items, PantryItemStatus status)
         => items.Count(i => i.GetStatus() == status);
@@ -70,6 +74,7 @@ public static class PantryItemStatusExtensions
             PantryStatusFilter.Soon => item.GetStatus() is PantryItemStatus.Soon,
             PantryStatusFilter.Today => item.GetStatus() is PantryItemStatus.Today,
             PantryStatusFilter.Expired => item.GetStatus() is PantryItemStatus.Expired,
+            PantryStatusFilter.Fresh => item.GetStatus() is PantryItemStatus.Fresh,
             _ => true,
         };
 
