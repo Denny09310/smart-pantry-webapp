@@ -2,7 +2,7 @@
 
 @inject BottomSheetService BottomSheet
 
-<InfiniteScrollList T="PantryItemDto" Items="@Items" IdOf="@(i => i.Id)" EnsureVisibleId="@HighlightId">
+<InfiniteScrollList T="PantryItemDto" Items="@Items" KeySelector="@(i => i.Id)" EnsureVisibleId="@HighlightId">
     <ItemTemplate Context="item">
         <div id="@($"pantry-item-{item.Id}")" class="@(item.Id == HighlightId ? "rounded-xl bg-muted" : "")">
         <LongPressSurface T="PantryItemDto" Value="item" OnLongPress="OpenActionsAsync">

@@ -44,7 +44,7 @@
 
     /// <summary>Extracts the scroll/highlight id from an item.</summary>
     [Parameter]
-    public Func<T, string>? IdOf { get; set; }
+    public Func<T, string>? KeySelector { get; set; }
 
     private List<T> _visible = [];
     private int _total;
@@ -64,9 +64,9 @@
 
         var count = PageSize;
 
-        if (EnsureVisibleId is not null && IdOf is not null)
+        if (EnsureVisibleId is not null && KeySelector is not null)
         {
-            var index = Items.ToList().FindIndex(i => IdOf(i) == EnsureVisibleId);
+            var index = Items.ToList().FindIndex(i => KeySelector(i) == EnsureVisibleId);
             if (index >= 0)
                 count = Math.Max(count, index + 1);
         }
