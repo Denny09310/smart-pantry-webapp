@@ -30,6 +30,12 @@ public class ApplicationDbContext(
             .HasIndex(s => s.Endpoint)
             .IsUnique();
 
+        builder.Entity<PantryItem>()
+            .HasIndex(i => i.ExpirationDate);
+
+        builder.Entity<Notification>()
+            .HasIndex(n => n.ReadAt);
+
         // Attribution only: deleting a member keeps the items.
         builder.Entity<PantryItem>()
             .HasOne<Member>()

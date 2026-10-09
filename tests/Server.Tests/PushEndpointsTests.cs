@@ -38,7 +38,7 @@ public sealed class PushEndpointsTests(PantryApiFactory factory)
         try
         {
             using var first = await _client.PostAsJsonAsync("/api/push/subscriptions", request);
-            Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+            Assert.Equal(HttpStatusCode.Created, first.StatusCode);
             var saved = await first.Content.ReadFromJsonAsync<PushSubscriptionDto>();
             Assert.NotNull(saved);
             Assert.Equal(endpoint, saved.Endpoint);

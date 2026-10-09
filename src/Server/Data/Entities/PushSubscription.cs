@@ -7,5 +7,5 @@ public class PushSubscription
     public string P256dh { get; set; } = default!;
     public string Auth { get; set; } = default!;
 
-    public DateTimeOffset CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

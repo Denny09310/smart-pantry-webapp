@@ -31,7 +31,7 @@ internal class MemberEndpoints(ApplicationDbContext db)
     }
 
     [MapPost("/")]
-    public async Task<Results<Ok<MemberDto>, ValidationProblem>> CreateMemberAsync(
+    public async Task<Results<Created<MemberDto>, ValidationProblem>> CreateMemberAsync(
         CreateMemberRequest request,
         CancellationToken ct)
     {
@@ -44,7 +44,7 @@ internal class MemberEndpoints(ApplicationDbContext db)
         db.Members.Add(entry);
         await db.SaveChangesAsync(ct);
 
-        return TypedResults.Ok(ToDto(entry));
+        return TypedResults.Created($"/api/members/{entry.Id}", ToDto(entry));
     }
 
     [MapDelete("/{id}")]

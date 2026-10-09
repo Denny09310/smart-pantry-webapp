@@ -30,7 +30,7 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
             expires ?? InDays(30));
 
         using var response = await _client.PostAsJsonAsync("/api/pantry", request);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
         Assert.NotNull(created);

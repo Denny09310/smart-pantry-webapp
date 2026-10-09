@@ -16,7 +16,7 @@ builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(sp => sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")!);
+    .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
@@ -33,10 +33,26 @@ if (!builder.Environment.IsEnvironment("Testing"))
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 using (var scope = app.Services.CreateScope())
 {
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+    if (string.IsNullOrWhiteSpace(configuration.GetConnectionString("Default")))
+        throw new InvalidOperationException("Missing ConnectionStrings:Default. Set it via appsettings, user secrets, or the ConnectionStrings__Default environment variable.");
+
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+
+    try
+    {
+        await db.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogCritical(ex, "Database migration failed. Check ConnectionStrings:Default and that Postgres is reachable.");
+        throw;
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -45,11 +61,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapHealthChecks("/healthz");
+
 app.UseHttpsRedirection();
 
 app.UseServiceWorkerNoCache();
-
-app.MapHealthChecks("/healthz");
 
 app.MapEndpointHandlers();
 

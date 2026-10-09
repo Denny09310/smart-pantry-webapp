@@ -21,7 +21,7 @@ public sealed class MemberEndpointsTests(PantryApiFactory factory)
         using var created = await _client.PostAsJsonAsync(
             "/api/members",
             new CreateMemberRequest(name, null));
-        Assert.Equal(HttpStatusCode.OK, created.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
 
         var member = await created.Content.ReadFromJsonAsync<MemberDto>();
         Assert.NotNull(member);
@@ -73,14 +73,14 @@ public sealed class MemberEndpointsTests(PantryApiFactory factory)
         using var first = await _client.PostAsJsonAsync(
             "/api/members",
             new CreateMemberRequest(name, null));
-        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         var one = await first.Content.ReadFromJsonAsync<MemberDto>();
         Assert.NotNull(one);
 
         using var second = await _client.PostAsJsonAsync(
             "/api/members",
             new CreateMemberRequest(name, null));
-        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, second.StatusCode);
         var two = await second.Content.ReadFromJsonAsync<MemberDto>();
         Assert.NotNull(two);
 
