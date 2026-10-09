@@ -14,13 +14,14 @@
                                ValueChanged="@OnSearchValueChanged"
                                UpdateTiming="UpdateTiming.Immediate"
                                DebounceInterval="250"
-                               Placeholder="Search items by name or notes..." />
+                               Placeholder="Search items by name or notes..."
+                               AriaLabel="Search pantry items" />
         </BbInputGroup>
         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Class="shrink-0 md:hidden"
                   AriaLabel="Switch member" OnClick="SwitchMemberAsync">
             <BbAvatar Class="h-6 w-6">
                 <BbAvatarFallback Class="text-[10px]"
-                                  style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                                  style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
                     @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
                 </BbAvatarFallback>
             </BbAvatar>
@@ -102,7 +103,17 @@
 
     public void Dispose() => Members.Changed -= OnChanged;
 
-    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // Member switched during navigation/dispose; nothing to render.
+        }
+    }
 
     private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
 

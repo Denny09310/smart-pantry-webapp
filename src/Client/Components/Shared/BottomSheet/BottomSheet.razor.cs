@@ -44,13 +44,7 @@ public partial class BottomSheet : IAsyncDisposable
     public bool DismissOnEscape { get; set; } = true;
 
     [Parameter]
-    public string? Class { get; set; }
-
-    [Parameter]
     public RenderFragment? ChildContent { get; set; }
-
-    [Parameter]
-    public EventCallback<int> OnSnapChanged { get; set; }
 
     [Parameter]
     public EventCallback OnDismissed { get; set; }
@@ -121,15 +115,6 @@ public partial class BottomSheet : IAsyncDisposable
         }
     }
 
-    /// <summary>Animate the sheet to a snap point.</summary>
-    public async Task SetSnapAsync(int index)
-    {
-        if (!_attached || _interop is null)
-            return;
-
-        await _interop.SetSnapAsync(_instanceId, index, true);
-    }
-
     /// <summary>Play the exit animation, then raise <see cref="OnDismissed"/>.</summary>
     public async Task DismissAsync()
     {
@@ -151,11 +136,7 @@ public partial class BottomSheet : IAsyncDisposable
         if (type == "settled")
         {
             _snapIndex = snapIndex;
-            await InvokeAsync(async () =>
-            {
-                await OnSnapChanged.InvokeAsync(snapIndex);
-                StateHasChanged();
-            });
+            await InvokeAsync(StateHasChanged);
         }
         else if (type == "dismissed")
         {

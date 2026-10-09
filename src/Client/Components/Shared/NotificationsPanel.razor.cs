@@ -2,7 +2,7 @@ using Shared.Models;
 
 namespace Client.Components.Shared;
 
-public partial class NotificationsPanel : IAsyncDisposable
+public partial class NotificationsPanel
 {
     private bool _loading = true;
     private bool _markingAll;
@@ -16,11 +16,13 @@ public partial class NotificationsPanel : IAsyncDisposable
 
     private int UnreadCount => _items.Count(n => n.ReadAt == null);
 
-    private string PushStatusText => _pushEnabled
-        ? "On for this browser"
-        : _pushSupported
-            ? "Get expiry alerts even with the app closed"
-            : "Not supported in this browser";
+    private string PushStatusText => !_pushChecked
+        ? "Checking push support…"
+        : _pushEnabled
+            ? "On for this browser"
+            : _pushSupported
+                ? "Get expiry alerts even with the app closed"
+                : "Not supported in this browser";
 
     protected override async Task OnInitializedAsync()
     {
@@ -176,6 +178,11 @@ public partial class NotificationsPanel : IAsyncDisposable
             _items.Clear();
             _items.AddRange(response.Content.Items);
         }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Notifications load failed.");
+            Toast.Error("Can't retrieve notifications.");
+        }
         finally
         {
             _loading = false;
@@ -235,6 +242,4 @@ public partial class NotificationsPanel : IAsyncDisposable
 
     private static string FormatWhen(DateTimeOffset createdAt)
         => createdAt.ToLocalTime().ToString("dd MMM HH:mm");
-
-    ValueTask IAsyncDisposable.DisposeAsync() => ValueTask.CompletedTask;
 }

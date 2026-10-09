@@ -6,7 +6,8 @@
             <LucideIcon Name="search" Size="16" />
         </BbInputGroupAddon>
         <BbInputGroupInput Value="@Search" ValueChanged="@OnSearchValueChanged" UpdateTiming="UpdateTiming.Immediate"
-                           DebounceInterval="250" Placeholder="Search pantry items..." />
+                           DebounceInterval="250" Placeholder="Search items by name or notes..."
+                           AriaLabel="Search pantry items" />
     </BbInputGroup>
 
     @* Status filter *@

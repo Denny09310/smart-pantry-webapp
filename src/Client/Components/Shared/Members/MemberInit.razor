@@ -1,5 +1,6 @@
 @namespace Client.Components.Shared.Members
 @inject MemberService Members
+@inject ToastService Toast
 @inject BottomSheetService BottomSheet
 
 @code {
@@ -20,7 +21,13 @@
         _started = true;
         await Members.InitializeAsync();
 
-        while (Members.Members.Count == 0)
+        if (Members.LoadFailed)
+        {
+            Toast.Error("Can't reach the server. Check your connection and reload.");
+            return;
+        }
+
+        while (Members.Members.Count == 0 && !Members.LoadFailed)
         {
             var parameters = new Dictionary<string, object?> { [nameof(CreateMemberDialog.AllowCancel)] = false };
             var result = await BottomSheet.OpenAsync<CreateMemberDialog>(parameters, FirstRunOptions);

@@ -21,8 +21,12 @@ self.addEventListener('notificationclick', event => {
 // The push service can rotate the endpoint; re-subscribe and tell the server,
 // or pushes keep going to the old endpoint.
 self.addEventListener('pushsubscriptionchange', event => {
+    // oldSubscription can be null per spec; fall back to a fresh subscribe.
+    const options = event.oldSubscription
+        ? event.oldSubscription.options
+        : { userVisibleOnly: true };
     event.waitUntil(
-        self.registration.pushManager.subscribe(event.oldSubscription.options)
+        self.registration.pushManager.subscribe(options)
             .then(subscription => {
                 const json = subscription.toJSON();
                 return fetch('api/push/subscriptions', {

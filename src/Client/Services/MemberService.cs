@@ -23,14 +23,14 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
 
     public bool IsReady => _initialized;
 
+    public bool LoadFailed { get; private set; }
+
     public event Action? Changed;
 
     public async Task InitializeAsync()
     {
         if (_initialized)
             return;
-
-        _initialized = true;
 
         try
         {
@@ -43,9 +43,12 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
             CurrentMemberId = _members.Any(m => m.Id == stored)
                 ? stored
                 : _members.FirstOrDefault()?.Id;
+
+            _initialized = true;
         }
         catch (Exception ex)
         {
+            LoadFailed = true;
             log.LogWarning(ex, "Member initialization failed.");
         }
 
@@ -62,7 +65,26 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
         Changed?.Invoke();
     }
 
+    private bool _creating;
+
     public async Task<MemberDto?> CreateMemberAsync(string name, string? color)
+    {
+        if (_creating)
+            return null;
+
+        _creating = true;
+
+        try
+        {
+            return await CreateMemberInnerAsync(name, color);
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    private async Task<MemberDto?> CreateMemberInnerAsync(string name, string? color)
     {
         MemberDto? created = null;
 

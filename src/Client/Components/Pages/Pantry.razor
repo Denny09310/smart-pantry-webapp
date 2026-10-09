@@ -7,6 +7,7 @@
 @inject DialogService Dialog
 @inject BottomSheetService BottomSheet
 @inject MemberService Members
+@inject ILogger<Pantry> Log
 
 <div class="mx-auto w-full max-w-6xl space-y-4">
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -89,7 +90,7 @@
             @if (HasActiveFilters)
             {
                 <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="ClearFilters">
-                    View all pantry items (@VisibleItems.Count)
+                    View all pantry items (@TotalCount)
                     <LucideIcon Name="arrow-right" Size="14" />
                 </BbButton>
             }
@@ -139,7 +140,7 @@
     private IReadOnlyList<string> Locations => _items?.DistinctLocations() ?? [];
 
     private IReadOnlyDictionary<string, int> LocationCounts
-        => _items?.CountByLocation() ?? new Dictionary<string, int>();
+        => _items?.CountByLocation() ?? System.Collections.Frozen.FrozenDictionary<string, int>.Empty;
 
     private IReadOnlyList<PantryItemDto> VisibleItems
         => _items?
@@ -172,15 +173,23 @@
     {
         _highlightId = null;
 
-        using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
-
-        if (!response.IsSuccessfulWithContent)
+        try
         {
-            Toast.Error("Can't retrieve data.");
-            return;
-        }
+            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
 
-        _items = new(response.Content.Items);
+            if (!response.IsSuccessfulWithContent)
+            {
+                Toast.Error("Can't retrieve data.");
+                return;
+            }
+
+            _items = new(response.Content.Items);
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Pantry load failed.");
+            Toast.Error("Can't retrieve data.");
+        }
     }
 
     private Task OnSearchChanged(string? value)

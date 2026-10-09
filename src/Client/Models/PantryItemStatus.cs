@@ -85,7 +85,9 @@ public static class PantryItemStatusExtensions
         {
             PantryItemStatus.Expired => "Expired",
             PantryItemStatus.Today => "Expires today",
-            PantryItemStatus.Soon => $"Expires in {item.DaysRemaining()} days",
+            PantryItemStatus.Soon => item.DaysRemaining() == 1
+                ? "Expires in 1 day"
+                : $"Expires in {item.DaysRemaining()} days",
             _ => "Fresh",
         };
 

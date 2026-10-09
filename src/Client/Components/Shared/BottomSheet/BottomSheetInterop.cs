@@ -22,7 +22,6 @@ public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
 {
     internal const string ModulePath = "./Components/Shared/BottomSheet/BottomSheet.razor.js";
     internal const string AttachMethod = "attach";
-    internal const string SetSnapMethod = "setSnap";
     internal const string DismissMethod = "dismiss";
     internal const string DetachMethod = "detach";
     private IJSObjectReference? _module;
@@ -40,14 +39,6 @@ public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
     {
         var module = await GetModuleAsync();
         await module.InvokeVoidAsync(AttachMethod, id, sheet, overlay, handle, dotNetRef, options);
-    }
-
-    public async ValueTask SetSnapAsync(string id, int index, bool animate)
-    {
-        if (_module is null)
-            return;
-
-        await _module.InvokeVoidAsync(SetSnapMethod, id, index, animate);
     }
 
     public async ValueTask DismissAsync(string id)
@@ -73,7 +64,10 @@ public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
             if (_module is not null)
                 await _module.DisposeAsync();
         }
-        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            // Teardown during navigation: module may already be gone.
+        }
 
         _module = null;
     }

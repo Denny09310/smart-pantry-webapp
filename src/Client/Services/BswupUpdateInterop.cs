@@ -50,6 +50,9 @@ public sealed class BswupUpdateInterop : IAsyncDisposable
                 await _module.DisposeAsync();
             }
         }
-        catch (JSDisconnectedException) { }
+        catch (Exception)
+        {
+            // Teardown during navigation: module may already be gone.
+        }
     }
 }
