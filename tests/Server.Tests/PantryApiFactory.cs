@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+
 using Server.Data;
 
 namespace Server.Tests;
@@ -15,6 +16,7 @@ public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContex
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
         var contentRoot = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Server"));
         builder.UseContentRoot(contentRoot);

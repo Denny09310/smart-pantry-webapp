@@ -1,0 +1,35 @@
+@namespace Client.Components.Shared.Members
+@inject MemberService Members
+@inject BottomSheetService BottomSheet
+
+@code {
+    private static readonly DialogOpenOptions FirstRunOptions = new()
+    {
+        Title = "Who's using this pantry?",
+        Description = "Create the first member to get started.",
+        Size = DialogSize.Small,
+    };
+
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        _started = true;
+        await Members.InitializeAsync();
+
+        while (Members.Members.Count == 0)
+        {
+            var parameters = new Dictionary<string, object?> { [nameof(CreateMemberDialog.AllowCancel)] = false };
+            var result = await BottomSheet.OpenAsync<CreateMemberDialog>(parameters, FirstRunOptions);
+
+            // Creation failed server-side: retry instead of entering a memberless app.
+            if (result.Cancelled)
+                continue;
+
+            break;
+        }
+    }
+}

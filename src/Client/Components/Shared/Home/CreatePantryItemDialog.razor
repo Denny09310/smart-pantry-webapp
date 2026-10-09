@@ -42,7 +42,7 @@
             </div>
             <ValidationMessage For="@(() => Input.Quantity)" class="text-sm text-destructive" />
 
-            <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none">
+            <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
                 <BbChip Value="@("pcs")">pcs</BbChip>
                 <BbChip Value="@("jar")">jar</BbChip>
                 <BbChip Value="@("can")">can</BbChip>
@@ -143,7 +143,7 @@
 @code
 {
     [CascadingParameter]
-    public IDialogReference DialogRef { get; set; } = default!;
+    public IDialogReference Reference { get; set; } = default!;
 
     /// <summary>When set, the form edits this item instead of creating a new one.</summary>
     [Parameter]
@@ -225,7 +225,7 @@
                 string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
                 DateOnly.FromDateTime(Input.ExpirationDate.Value));
 
-            await DialogRef.CloseAsync(DialogResult.Ok(request));
+            await Reference.CloseAsync(DialogResult.Ok(request));
         }
         finally
         {
@@ -233,7 +233,7 @@
         }
     }
 
-    private Task CancelAsync() => DialogRef.CancelAsync();
+    private Task CancelAsync() => Reference.CancelAsync();
 
     private sealed class InputModel
     {

@@ -33,7 +33,7 @@ self.addEventListener('pushsubscriptionchange', event => {
                         p256dh: json.keys.p256dh,
                         auth: json.keys.auth
                     })
-                });
+                }).catch(err => console.warn('pushsubscriptionchange sync failed:', err));
             })
     );
 });

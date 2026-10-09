@@ -1,7 +1,10 @@
 using System.Net;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
 using Server.Data;
+
 using WebPush;
 
 namespace Server.Services;
@@ -22,19 +25,23 @@ public sealed class PushOptions
 /// Server half of Web Push: signs with the VAPID private key and POSTs
 /// encrypted payloads to browser endpoints via the WebPush library.
 /// </summary>
-internal sealed class PushService(IOptions<PushOptions> options, ApplicationDbContext db)
+internal sealed class PushService(
+    IOptions<PushOptions> options,
+    ApplicationDbContext db,
+    ILogger<PushService> log)
 {
     private readonly PushOptions _options = options.Value;
 
     /// <summary>
     /// Sends every unread notification to every stored subscription.
-    /// Subscriptions the push service reports as gone (404/410) are removed.
+    /// One failing subscription never blocks the rest; subscriptions the
+    /// push service reports as gone (404/410) are removed.
     /// Returns how many pushes were accepted.
     /// </summary>
     public async Task<int> SendUnreadAsync(CancellationToken ct = default)
     {
         if (!_options.IsConfigured)
-            throw new InvalidOperationException("VAPID keys are not configured (Push:Vapid section).");
+            throw new InvalidOperationException("VAPID keys are not configured (Vapid section).");
 
         var messages = await db.Notifications.AsNoTracking()
             .Where(n => n.ReadAt == null)
@@ -53,6 +60,9 @@ internal sealed class PushService(IOptions<PushOptions> options, ApplicationDbCo
         var vapid = new VapidDetails(_options.Subject, _options.PublicKey, _options.PrivateKey);
         using var client = new WebPushClient();
 
+        // One push per subscription is enough to wake the client;
+        // the panel lists every unread notification.
+        var message = messages[0];
         var sent = 0;
         var dead = new List<string>();
 
@@ -62,20 +72,18 @@ internal sealed class PushService(IOptions<PushOptions> options, ApplicationDbCo
 
             var target = new PushSubscription(subscription.Endpoint, subscription.P256dh, subscription.Auth);
 
-            // One push per subscription is enough to wake the client;
-            // the panel lists every unread notification.
-            foreach (var message in messages.Take(1))
+            try
             {
-                try
-                {
-                    await client.SendNotificationAsync(target, message, vapid);
-                    sent++;
-                }
-                catch (WebPushException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone)
-                {
-                    dead.Add(subscription.Id);
-                    break;
-                }
+                await client.SendNotificationAsync(target, message, vapid);
+                sent++;
+            }
+            catch (WebPushException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone)
+            {
+                dead.Add(subscription.Id);
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "Push to {Endpoint} failed.", subscription.Endpoint);
             }
         }
 

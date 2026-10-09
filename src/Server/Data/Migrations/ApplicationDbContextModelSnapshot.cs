@@ -22,6 +22,31 @@ namespace Server.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Server.Data.Entities.Member", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text")
+                        .HasColumnName("color");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_members");
+
+                    b.ToTable("members", (string)null);
+                });
+
             modelBuilder.Entity("Server.Data.Entities.Notification", b =>
                 {
                     b.Property<string>("Id")
@@ -65,6 +90,10 @@ namespace Server.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("CreatedByMemberId")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by_member_id");
+
                     b.Property<DateOnly>("ExpirationDate")
                         .HasColumnType("date")
                         .HasColumnName("expiration_date");
@@ -98,6 +127,9 @@ namespace Server.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_items");
+
+                    b.HasIndex("CreatedByMemberId")
+                        .HasDatabaseName("ix_items_created_by_member_id");
 
                     b.ToTable("items", (string)null);
                 });
@@ -145,6 +177,15 @@ namespace Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_notifications_items_pantry_item_id");
+                });
+
+            modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
+                {
+                    b.HasOne("Server.Data.Entities.Member", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByMemberId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_items_members_created_by_member_id");
                 });
 #pragma warning restore 612, 618
         }

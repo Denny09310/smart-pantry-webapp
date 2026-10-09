@@ -1,5 +1,7 @@
 @namespace Client.Components.Shared
 @inject BottomSheetService BottomSheet
+@inject MemberService Members
+@implements IDisposable
 
 <div class="fixed inset-x-4 bottom-4 z-50 md:hidden" style="view-transition-name: bottom-nav;">
     <BbCard Class="rounded-2xl">
@@ -12,6 +14,15 @@
                 <LucideIcon Name="refrigerator" Size="20" />
                 <span>Pantry</span>
             </NavLink>
+            <button type="button" class="@LinkClass" @onclick="SwitchMemberAsync">
+                <BbAvatar Class="h-5 w-5">
+                    <BbAvatarFallback Class="text-[9px]"
+                                      style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                        @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
+                    </BbAvatarFallback>
+                </BbAvatar>
+                <span>Member</span>
+            </button>
             <button type="button" class="@LinkClass" @onclick="NotifyAsync">
                 <LucideIcon Name="bell" Size="20" />
                 <span>Notifications</span>
@@ -20,7 +31,8 @@
     </BbCard>
 </div>
 
-@code {
+@code
+{
     private const string LinkClass = "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[10px] font-medium text-muted-foreground";
 
     private static readonly DialogOpenOptions NotificationsOptions = new()
@@ -30,5 +42,20 @@
         Size = DialogSize.Default,
     };
 
+    private static readonly DialogOpenOptions SwitcherOptions = new()
+    {
+        Title = "Who's using the app?",
+        Description = "Attribution for new items",
+        Size = DialogSize.Small,
+    };
+
+    protected override void OnInitialized() => Members.Changed += OnChanged;
+
+    public void Dispose() => Members.Changed -= OnChanged;
+
+    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+
     private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
+
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
 }

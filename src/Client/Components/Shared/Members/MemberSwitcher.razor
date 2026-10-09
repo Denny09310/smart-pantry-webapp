@@ -1,0 +1,79 @@
+@namespace Client.Components.Shared.Members
+@inject MemberService Members
+@inject ToastService Toast
+@inject DialogService Dialog
+@inject BottomSheetService BottomSheet
+@implements IDisposable
+
+<div class="space-y-1">
+    @foreach (var member in Members.Members)
+    {
+        <div class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
+            <BbAvatar>
+                <BbAvatarFallback style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}")">
+                    @MemberDisplay.Initials(member.Name)
+                </BbAvatarFallback>
+            </BbAvatar>
+            <button type="button" class="min-w-0 flex-1 text-left" @onclick="@(() => SelectAsync(member.Id))">
+                <p class="truncate text-sm font-medium">@member.Name</p>
+                <p class="text-xs text-muted-foreground">
+                    @(member.Id == Members.CurrentMemberId ? "Current" : "Tap to switch")
+                </p>
+            </button>
+            @if (Members.Members.Count > 1)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                          AriaLabel="@($"Remove {member.Name}")"
+                          OnClick="@(() => RemoveAsync(member.Id, member.Name))">
+                    <LucideIcon Name="trash-2" Size="16" />
+                </BbButton>
+            }
+        </div>
+    }
+
+    <div class="border-t pt-3">
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="CreateAsync">
+            <LucideIcon Name="plus" Size="16" />
+            Add member
+        </BbButton>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public IDialogReference Reference { get; set; } = default!;
+
+    private static readonly DialogOpenOptions CreateOptions = new()
+    {
+        Title = "New member",
+        Description = "Who shares this pantry?",
+        Size = DialogSize.Small,
+    };
+
+    protected override void OnInitialized() => Members.Changed += OnChanged;
+
+    public void Dispose() => Members.Changed -= OnChanged;
+
+    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+
+    private async Task SelectAsync(string id)
+    {
+        await Members.SelectMemberAsync(id);
+        await Reference.CloseAsync(DialogResult.Ok(id));
+    }
+
+    private Task CreateAsync() => BottomSheet.OpenAsync<CreateMemberDialog>(CreateOptions);
+
+    private async Task RemoveAsync(string id, string name)
+    {
+        var confirm = await Dialog.ConfirmAsync(
+            $"Remove {name}?",
+            "Their items stay in the pantry.",
+            new ConfirmDialogOptions { ConfirmText = "Remove", Destructive = true });
+
+        if (!confirm.Confirmed)
+            return;
+
+        await Members.DeleteMemberAsync(id);
+    }
+}

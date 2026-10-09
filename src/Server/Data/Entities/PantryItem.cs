@@ -13,6 +13,12 @@ public class PantryItem
 
     public DateOnly ExpirationDate { get; set; }
 
+    /// <summary>
+    /// Attribution only ("added by…"): never used for access checks.
+    /// Null when the member was deleted or the writer sent none.
+    /// </summary>
+    public string? CreatedByMemberId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }
 }

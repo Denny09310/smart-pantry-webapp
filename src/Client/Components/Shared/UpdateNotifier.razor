@@ -5,7 +5,7 @@
 @code
 {
     private BswupUpdateInterop? _interop;
-    private DotNetObjectReference<UpdateNotifier>? _dotNetRef;
+    private DotNetObjectReference<UpdateNotifier>? _instance;
     private bool _toastShown;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -16,8 +16,8 @@
         try
         {
             _interop = new BswupUpdateInterop(JS);
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await _interop.RegisterAsync(_dotNetRef);
+            _instance = DotNetObjectReference.Create(this);
+            await _interop.RegisterAsync(_instance);
         }
         catch (JSDisconnectedException)
         {
@@ -64,6 +64,6 @@
         if (_interop is not null)
             await _interop.DisposeAsync();
 
-        _dotNetRef?.Dispose();
+        _instance?.Dispose();
     }
 }

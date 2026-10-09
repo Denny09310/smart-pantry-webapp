@@ -1,8 +1,11 @@
 using Bit.Brouter;
 using Bit.Butil;
+
 using BlazorBlueprint.Components;
+
 using Client.Components;
 using Client.Services;
+
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
@@ -23,5 +26,6 @@ builder.Services.AddBlazorBlueprintComponents();
 builder.Services.AddBitButilServices();
 builder.Services.AddBottomSheet();
 builder.Services.AddServerApi();
+builder.Services.AddScoped<MemberService>();
 
 await builder.Build().RunAsync();

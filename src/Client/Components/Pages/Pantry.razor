@@ -6,6 +6,7 @@
 @inject ToastService Toast
 @inject DialogService Dialog
 @inject BottomSheetService BottomSheet
+@inject MemberService Members
 
 <div class="mx-auto w-full max-w-6xl space-y-4">
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -19,26 +20,14 @@
             </p>
             <h1 class="text-2xl font-semibold">Pantry Overview</h1>
         </div>
-        <PantrySummary TotalItems="@TotalCount"
-                       CriticalCount="@CriticalCount"
-                       SoonCount="@SoonCount"
+        <PantrySummary TotalItems="@TotalCount" CriticalCount="@CriticalCount" SoonCount="@SoonCount"
                        ExpiredCount="@ExpiredCount" />
     </div>
 
-    <PantryFilterBar Search="@_name"
-                     SearchChanged="@OnSearchChanged"
-                     Location="@_location"
-                     LocationChanged="@OnLocationChanged"
-                     Status="@_status"
-                     StatusChanged="@OnStatusChanged"
-                     Locations="@Locations"
-                     LocationCounts="@LocationCounts"
-                     TotalCount="@TotalCount"
-                     SoonCount="@SoonCount"
-                     TodayCount="@TodayCount"
-                     ExpiredCount="@ExpiredCount"
-                     FreshCount="@FreshCount"
-                     OnAdd="@CreateItemAsync" />
+    <PantryFilterBar Search="@_name" SearchChanged="@OnSearchChanged" Location="@_location"
+                     LocationChanged="@OnLocationChanged" Status="@_status" StatusChanged="@OnStatusChanged" Locations="@Locations"
+                     LocationCounts="@LocationCounts" TotalCount="@TotalCount" SoonCount="@SoonCount" TodayCount="@TodayCount"
+                     ExpiredCount="@ExpiredCount" FreshCount="@FreshCount" OnAdd="@CreateItemAsync" />
 
     @if (_items is null)
     {
@@ -48,8 +37,7 @@
     }
     else if (VisibleItems.Count == 0 && TotalCount == 0)
     {
-        <BbEmpty Title="No items in the pantry yet"
-                 Description="Track a new pantry batch and expiration date."
+        <BbEmpty Title="No items in the pantry yet" Description="Track a new pantry batch and expiration date."
                  Size="EmptySize.Default">
             <Icon>
                 <LucideIcon Name="package" Size="28" />
@@ -64,9 +52,7 @@
     }
     else if (VisibleItems.Count == 0)
     {
-        <BbEmpty Title="No matches"
-                 Description="Try adjusting your search or filter criteria."
-                 Size="EmptySize.Default">
+        <BbEmpty Title="No matches" Description="Try adjusting your search or filter criteria." Size="EmptySize.Default">
             <Icon>
                 <LucideIcon Name="search" Size="28" />
             </Icon>
@@ -80,10 +66,8 @@
     else
     {
         <div class="hidden md:block">
-            <PantryInventoryTable Items="@VisibleItems"
-                                 BusyIds="@_busyIds"
-                                 OnEdit="@EditItemAsync"
-                                 OnDelete="@DeleteItemAsync" />
+            <PantryInventoryTable Items="@VisibleItems" BusyIds="@_busyIds" OnEdit="@EditItemAsync"
+                                  OnDelete="@DeleteItemAsync" />
             <div class="flex items-center justify-between gap-2 px-1 pt-2 text-xs text-muted-foreground">
                 <p>• Showing @VisibleItems.Count items</p>
                 <p>Sort priority: Expiration date (urgent first)</p>
@@ -99,9 +83,8 @@
                 <BbBadge Variant="BadgeVariant.SoftInfo">Sorted by Urgency</BbBadge>
             </div>
 
-            <PantryUrgentList Items="@VisibleItems"
-                              BusyIds="@_busyIds"
-                              OnCheck="@MarkUsedAsync" />
+            <PantryUrgentList Items="@VisibleItems" BusyIds="@_busyIds" OnCheck="@MarkUsedAsync" OnEdit="@EditItemAsync"
+                              OnDelete="@DeleteItemAsync" />
 
             @if (HasActiveFilters)
             {
@@ -237,7 +220,7 @@
         if (result.GetData<CreatePantryItemRequest>() is not { } request)
             return;
 
-        using var response = await Api.Pantry.CreateAsync(request);
+        using var response = await Api.Pantry.CreateAsync(request, Members.CurrentMemberId);
 
         if (!response.IsSuccessfulWithContent)
         {
@@ -273,7 +256,7 @@
 
         try
         {
-            using var response = await Api.Pantry.UpdateAsync(item.Id, update);
+            using var response = await Api.Pantry.UpdateAsync(item.Id, update, Members.CurrentMemberId);
 
             if (!response.IsSuccessfulWithContent)
             {

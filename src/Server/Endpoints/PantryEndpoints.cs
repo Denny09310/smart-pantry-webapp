@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 using Server.Data;
 using Server.Data.Entities;
+
 using Shared.Models;
 
 namespace Server.Endpoints;
@@ -40,14 +43,31 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         var totalItems = await query.CountAsync(ct);
 
+        var skip = Math.Max(0, request.Skip);
+        var take = Math.Clamp(request.Take, 1, 100);
+
         // Status is calculated in memory: the shared rule is not translatable to SQL.
-        var items = (await query
+        var entries = await query
             .OrderBy(x => x.ExpirationDate)
             .ThenBy(x => x.Id)
-            .Skip(request.Skip)
-            .Take(request.Take)
-            .ToListAsync(ct))
-            .Select(ToDto)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(ct);
+
+        var memberIds = entries
+            .Select(x => x.CreatedByMemberId)
+            .Where(id => id != null)
+            .Distinct()
+            .ToList();
+
+        var memberNames = memberIds.Count == 0
+            ? new Dictionary<string, string>()
+            : await db.Members.AsNoTracking()
+                .Where(m => memberIds.Contains(m.Id))
+                .ToDictionaryAsync(m => m.Id, m => m.Name, ct);
+
+        var items = entries
+            .Select(e => ToDto(e, e.CreatedByMemberId is not null && memberNames.TryGetValue(e.CreatedByMemberId, out var name) ? name : null))
             .ToList();
 
         return TypedResults.Ok(new GetPantryItemsResponse(
@@ -60,21 +80,22 @@ internal class PantryEndpoints(ApplicationDbContext db)
         string id,
         CancellationToken ct)
     {
-        var entry = await db.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        var entry = await db.Items
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
 
-        return entry is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(ToDto(entry));
+        if (entry is null)
+            return TypedResults.NotFound();
+
+        return TypedResults.Ok(ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
     }
 
     [MapPost("/")]
     public async Task<Results<Ok<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
+        [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
     {
-        if (Validate(request) is { } errors)
-            return TypedResults.ValidationProblem(errors);
-
         var entry = new PantryItem
         {
             Name = request.Name.Trim(),
@@ -82,7 +103,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
             Unit = request.Unit,
             Location = request.Location,
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
-            ExpirationDate = request.ExpirationDate
+            ExpirationDate = request.ExpirationDate,
+            CreatedByMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
         db.Items.Add(entry);
@@ -97,9 +119,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         UpdatePantryItemRequest request,
         CancellationToken ct)
     {
-        if (Validate(request) is { } errors)
-            return TypedResults.ValidationProblem(errors);
-
+        // Attribution intentionally untouched: it records who added the item.
         var entry = await db.Items.FindAsync([id], ct);
 
         if (entry is null)
@@ -134,7 +154,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         return TypedResults.NoContent();
     }
 
-    private static PantryItemDto ToDto(PantryItem entry)
+    private static PantryItemDto ToDto(PantryItem entry, string? memberName = null)
         => new(
             entry.Id,
             entry.Name,
@@ -143,45 +163,29 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.Location,
             entry.Notes,
             entry.ExpirationDate,
-            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.Today)));
+            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.Today)),
+            entry.CreatedByMemberId,
+            memberName);
 
-    private static Dictionary<string, string[]>? Validate(
-        string name,
-        double quantity,
-        string unit,
-        string location,
-        string? notes)
-    {
-        Dictionary<string, string[]>? errors = null;
+    private async Task<string?> MemberNameAsync(string? memberId, CancellationToken ct)
+        => memberId is null
+            ? null
+            : await db.Members
+                .AsNoTracking()
+                .Where(m => m.Id == memberId)
+                .Select(m => m.Name)
+                .FirstOrDefaultAsync(ct);
 
-        void Add(string field, string message)
-        {
-            (errors ??= []).Add(field, [message]);
-        }
-
-        if (string.IsNullOrWhiteSpace(name))
-            Add(nameof(name), "Name is required.");
-        else if (name.Trim().Length > 100)
-            Add(nameof(name), "Name must be 100 characters or fewer.");
-
-        if (quantity is < 1 or > 9999)
-            Add(nameof(quantity), "Quantity must be between 1 and 9999.");
-
-        if (string.IsNullOrWhiteSpace(unit))
-            Add(nameof(unit), "Unit is required.");
-
-        if (string.IsNullOrWhiteSpace(location))
-            Add(nameof(location), "Location is required.");
-
-        if (notes is { Length: > 500 })
-            Add(nameof(notes), "Notes must be 500 characters or fewer.");
-
-        return errors;
-    }
-
-    private static Dictionary<string, string[]>? Validate(CreatePantryItemRequest request)
-        => Validate(request.Name, request.Quantity, request.Unit, request.Location, request.Notes);
-
-    private static Dictionary<string, string[]>? Validate(UpdatePantryItemRequest request)
-        => Validate(request.Name, request.Quantity, request.Unit, request.Location, request.Notes);
+    /// <summary>
+    /// Attribution is a label, never access control: unknown or missing
+    /// members resolve to null instead of failing the write.
+    /// </summary>
+    private async Task<string?> ResolveMemberIdAsync(string? memberId, CancellationToken ct)
+        => string.IsNullOrWhiteSpace(memberId)
+            ? null
+            : await db.Members
+                .AsNoTracking()
+                .Where(m => m.Id == memberId)
+                .Select(m => m.Id)
+                .FirstOrDefaultAsync(ct);
 }

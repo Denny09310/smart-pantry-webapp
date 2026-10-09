@@ -1,0 +1,107 @@
+@typeparam T
+@implements IDisposable
+
+<div class="@Class" @onpointerdown="HandlePointerDown" @onpointerup="HandlePointerEnd"
+     @onpointerleave="HandlePointerEnd" @onpointercancel="HandlePointerEnd" @onpointermove="HandlePointerMove"
+     @oncontextmenu="HandleContextMenu" @oncontextmenu:preventDefault="PreventContextMenu">
+    @ChildContent
+</div>
+
+@code
+{
+    [Parameter, EditorRequired]
+    public T Value { get; set; } = default!;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback<T> OnLongPress { get; set; }
+
+    [Parameter]
+    public int ThresholdMs { get; set; } = 600;
+
+    [Parameter]
+    public double MovementTolerance { get; set; } = 10;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public bool PreventContextMenu { get; set; } = true;
+
+    private CancellationTokenSource? _pressCts;
+    private double _startX;
+    private double _startY;
+
+    private async Task HandlePointerDown(PointerEventArgs e)
+    {
+        // Ignore secondary buttons and non-primary pointers.
+        if (!e.IsPrimary || e.Button != 0)
+            return;
+
+        CancelPendingPress();
+
+        _startX = e.ClientX;
+        _startY = e.ClientY;
+
+        var valueAtPress = Value;
+        var cts = _pressCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(
+                Math.Max(0, ThresholdMs),
+                cts.Token);
+
+            if (ReferenceEquals(_pressCts, cts))
+            {
+                await OnLongPress.InvokeAsync(valueAtPress);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // The pointer was released, moved, or cancelled.
+        }
+        finally
+        {
+            if (ReferenceEquals(_pressCts, cts))
+                _pressCts = null;
+
+            cts.Dispose();
+        }
+    }
+
+    private void HandlePointerMove(PointerEventArgs e)
+    {
+        if (_pressCts is null)
+            return;
+
+        var dx = e.ClientX - _startX;
+        var dy = e.ClientY - _startY;
+        var tolerance = Math.Max(0, MovementTolerance);
+
+        // Cancel if movement looks like scrolling or dragging.
+        if (dx * dx + dy * dy > tolerance * tolerance)
+            CancelPendingPress();
+    }
+
+    private void HandlePointerEnd(PointerEventArgs _)
+        => CancelPendingPress();
+
+    private void CancelPendingPress()
+    {
+        var cts = _pressCts;
+        _pressCts = null;
+        cts?.Cancel();
+    }
+
+    private void HandleContextMenu(MouseEventArgs _)
+    {
+    }
+
+    public void Dispose()
+    {
+        CancelPendingPress();
+    }
+}

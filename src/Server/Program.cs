@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
+
 using Server.Data;
 using Server.Extensions;
 using Server.Services;
@@ -8,7 +9,11 @@ using Server.Workers;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
 builder.Services.AddEndpointHandlers();
+
+builder.Services.AddValidation();
+builder.Services.AddSharedValidation();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
@@ -17,11 +22,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PushService>();
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
-builder.Services.AddHostedService<ExpirationCheckWorker>();
+
+if (!builder.Environment.IsEnvironment("Testing"))
+    builder.Services.AddHostedService<ExpirationCheckWorker>();
 
 var app = builder.Build();
 
-// Keep a sample database usable without manual tooling.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

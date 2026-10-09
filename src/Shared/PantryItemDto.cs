@@ -8,4 +8,6 @@ public record PantryItemDto(
     string Location,
     string? Notes,
     DateOnly ExpirationDate,
-    ExpiryStatus Status);
+    ExpiryStatus Status,
+    string? CreatedByMemberId = null,
+    string? CreatedByName = null);

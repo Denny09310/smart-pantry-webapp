@@ -1,6 +1,8 @@
 @namespace Client.Components.Shared
 @inject ToastService Toast
 @inject BottomSheetService BottomSheet
+@inject MemberService Members
+@implements IDisposable
 
 <BbResponsiveNavProvider>
     <header class="hidden border-b bg-card md:block" style="view-transition-name: app-header;">
@@ -13,6 +15,17 @@
             </span>
             <BbResponsiveNavItems Items="@_items" MobileClass="hidden" />
             <span class="flex-1"></span>
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.IconSmall"
+                      AriaLabel="Switch member"
+                      OnClick="SwitchMemberAsync">
+                <BbAvatar Class="h-6 w-6">
+                    <BbAvatarFallback Class="text-[10px]"
+                                      style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}")">
+                        @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
+                    </BbAvatarFallback>
+                </BbAvatar>
+            </BbButton>
             <BbButton Variant="ButtonVariant.Ghost"
                       Size="ButtonSize.IconSmall"
                       AriaLabel="Notifications"
@@ -37,5 +50,20 @@
         Size = DialogSize.Default,
     };
 
+    private static readonly DialogOpenOptions SwitcherOptions = new()
+    {
+        Title = "Who's using the app?",
+        Description = "Attribution for new items",
+        Size = DialogSize.Small,
+    };
+
+    protected override void OnInitialized() => Members.Changed += OnChanged;
+
+    public void Dispose() => Members.Changed -= OnChanged;
+
+    private async void OnChanged() => await InvokeAsync(StateHasChanged);
+
     private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
+
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
 }

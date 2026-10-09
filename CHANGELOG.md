@@ -1,3 +1,45 @@
+## [0.2.0] - 2026-10-09
+
+### 🚀 Features
+
+- Add Member entity with pantry attribution
+- Added longpress actions for mobile
+- Add member endpoints with tests
+- Resolve X-Member-Id attribution on pantry create
+- Send current member on pantry writes via MemberService
+- Add member picker, switcher and first-run dialog
+- Show item attribution in pantry list
+
+### 🐛 Bug Fixes
+
+- Isolate push fan-out failures and handle subscription errors
+- Clamp pantry paging and cover search
+- Hide chip set scrollbars with important utility
+- Validation not propagating from shared
+- Validate push unsubscribe via AsParameters dto
+
+### 📚 Documentation
+
+- Replace auth roadmap with local members, add barcode phase
+- Tick completed member model tasks
+
+### 🎨 Styling
+
+- One fluent call per line in pantry lookup
+- Code formatting
+
+### 🧪 Testing
+
+- Keep expiration worker out of the test host
+
+### ⚙️ Miscellaneous Tasks
+
+- Added validation
+
+### 💼 Other
+
+- Feature/member-attribution into develop
+- Feature/member-picker into develop
 ## [0.1.0] - 2026-10-09
 
 ### 🚀 Features
@@ -44,3 +86,4 @@
 - Moved projects into src folder
 - Moved VAPID private key to user secrets, rotated pair
 - Dev service worker back to network-only stub
+- *(release)* Version 0.1.0
