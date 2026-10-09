@@ -1,10 +1,9 @@
 @namespace Client.Components.Shared.Home
-@inject IJSRuntime JS
 
 <BbCard>
     <BbCardContent Class="p-0">
-        <Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="84" OverscanCount="4" @ref="_virtualize">
-            <ItemContent Context="item">
+        <InfiniteScrollList T="PantryItemDto" Items="@Items" IdOf="@(i => i.Id)" EnsureVisibleId="@HighlightId">
+            <ItemTemplate Context="item">
                 <div id="@($"pantry-item-{item.Id}")" class="flex items-center gap-3 border-b p-3 last:border-0 @(item.Id == HighlightId ? "bg-muted" : "")">
                     <BbAvatar>
                         <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
@@ -29,17 +28,10 @@
                             </div>
                         </div>
                     </div>
-                </ItemContent>
-                <Placeholder>
-                    <div class="space-y-2 p-3">
-                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
-                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
-                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
-                    </div>
-                </Placeholder>
-            </Virtualize>
-        </BbCardContent>
-    </BbCard>
+            </ItemTemplate>
+        </InfiniteScrollList>
+    </BbCardContent>
+</BbCard>
 
 @code
 {
@@ -54,41 +46,6 @@
 
     [Parameter]
     public string? HighlightId { get; set; }
-
-    private Virtualize<PantryItemDto>? _virtualize;
-    private IReadOnlyList<PantryItemDto>? _renderedItems;
-    private bool _refreshPending;
-    private string? _scrolledFor;
-
-    protected override void OnParametersSet()
-    {
-        if (!ReferenceEquals(_renderedItems, Items))
-        {
-            _renderedItems = Items;
-            _refreshPending = true;
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_refreshPending && !firstRender && _virtualize is not null)
-        {
-            _refreshPending = false;
-            await _virtualize.RefreshDataAsync();
-            StateHasChanged();
-        }
-        else if (HighlightId is not null && HighlightId != _scrolledFor)
-        {
-            _scrolledFor = HighlightId;
-            await PantryScroll.ScrollToAsync(JS, HighlightId);
-        }
-    }
-
-    private ValueTask<ItemsProviderResult<PantryItemDto>> ProvideItemsAsync(ItemsProviderRequest request)
-    {
-        var page = Items.Skip(request.StartIndex).Take(request.Count).ToList();
-        return ValueTask.FromResult(new ItemsProviderResult<PantryItemDto>(page, Items.Count));
-    }
 
     private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
 }
