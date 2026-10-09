@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Extensions;
 using Server.Services;
 using Server.Workers;
 
@@ -34,6 +35,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseServiceWorkerNoCache();
 
 app.MapEndpointHandlers();
 

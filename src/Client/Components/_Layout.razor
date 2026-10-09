@@ -9,20 +9,16 @@
 <BottomNav />
 
 <footer class="fixed inset-x-0 bottom-0 hidden border-t bg-card md:block">
-    <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2 text-xs text-muted-foreground">
+    <div
+        class="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2 text-xs text-muted-foreground">
         <p>Smart Pantry — Household Inventory Management</p>
         <p>System Status: Local Storage Synchronized</p>
     </div>
 </footer>
 
-<!-- Required for portal-based components (Popover, Dialog, Select, etc.) -->
+<UpdateNotifier />
+
 <BbPortalHost />
-
-<!-- Required if you use ToastService to show toasts -->
 <BbToastProvider />
-
-<!-- Required if you use DialogService for programmatic confirm dialogs -->
 <BbDialogProvider />
-
-<!-- Required if you use BottomSheetService for programmatic bottom sheets -->
 <BottomSheetProvider />

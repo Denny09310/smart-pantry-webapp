@@ -1,6 +1,6 @@
 {
-  "name": "Client",
-  "short_name": "Client",
+  "name": "Smart Pantry",
+  "short_name": "Smart Pantry",
   "id": "./",
   "start_url": "./",
   "display": "standalone",

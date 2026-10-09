@@ -1,0 +1,69 @@
+@inject IJSRuntime JS
+@inject ToastService Toast
+@implements IAsyncDisposable
+
+@code
+{
+    private BswupUpdateInterop? _interop;
+    private DotNetObjectReference<UpdateNotifier>? _dotNetRef;
+    private bool _toastShown;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            _interop = new BswupUpdateInterop(JS);
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await _interop.RegisterAsync(_dotNetRef);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Prerendering / circuit gone; nothing to register.
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnUpdateReady()
+    {
+        if (_toastShown)
+            return;
+
+        _toastShown = true;
+
+        await InvokeAsync(() => Toast.Show(new ToastData
+        {
+            Title = "Update available",
+            Description = "A new version is ready to install.",
+            Variant = ToastVariant.Info,
+            Duration = 0,
+            ActionText = "Reload to update",
+            OnAction = () => _ = ActivateAsync(),
+        }));
+    }
+
+    private async Task ActivateAsync()
+    {
+        if (_interop is null)
+            return;
+
+        try
+        {
+            await _interop.ActivateAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Page is going away anyway.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_interop is not null)
+            await _interop.DisposeAsync();
+
+        _dotNetRef?.Dispose();
+    }
+}
