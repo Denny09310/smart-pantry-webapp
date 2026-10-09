@@ -132,7 +132,7 @@
             <Icon>
                 <LucideIcon Name="save" Size="16" />
             </Icon>
-            <ChildContent>Save Item</ChildContent>
+            <ChildContent>@(_editingId is null ? "Save Item" : "Save Changes")</ChildContent>
         </BbButton>
         <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
             Cancel
@@ -145,8 +145,34 @@
     [CascadingParameter]
     public IDialogReference DialogRef { get; set; } = default!;
 
+    /// <summary>When set, the form edits this item instead of creating a new one.</summary>
+    [Parameter]
+    public PantryItemDto? Item { get; set; }
+
     private bool _saving;
     private InputModel Input { get; set; } = new();
+    private string? _editingId;
+
+    protected override void OnParametersSet()
+    {
+        if (Item is { } item && _editingId != item.Id)
+        {
+            _editingId = item.Id;
+            Input = new InputModel
+            {
+                Name = item.Name,
+                Quantity = item.Quantity,
+                Unit = item.Unit,
+                Location = item.Location,
+                Notes = item.Notes,
+                ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue),
+            };
+        }
+        else if (Item is null)
+        {
+            _editingId = null;
+        }
+    }
 
     private int? DaysRemaining =>
         Input.ExpirationDate is { } d ? (int?)(d.Date - DateTime.Today).Days : null;

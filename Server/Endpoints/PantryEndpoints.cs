@@ -72,6 +72,37 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.ExpirationDate));
     }
 
+    [MapPut("/{id}")]
+    public async Task<Results<Ok<PantryItemDto>, NotFound>> UpdatePantryItemAsync(
+        string id,
+        CreatePantryItemRequest request,
+        CancellationToken ct)
+    {
+        var entry = await db.Items.FindAsync([id], ct);
+
+        if (entry is null)
+            return TypedResults.NotFound();
+
+        entry.Name = request.Name;
+        entry.Quantity = request.Quantity;
+        entry.Unit = request.Unit;
+        entry.Location = request.Location;
+        entry.Notes = request.Notes;
+        entry.ExpirationDate = request.ExpirationDate;
+        entry.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+
+        return TypedResults.Ok(new PantryItemDto(
+            entry.Id,
+            entry.Name,
+            entry.Quantity,
+            entry.Unit,
+            entry.Location,
+            entry.Notes,
+            entry.ExpirationDate));
+    }
+
     [MapDelete("/{id}")]
     public async Task<Results<NoContent, NotFound>> DeletePantryItemAsync(
         string id,
