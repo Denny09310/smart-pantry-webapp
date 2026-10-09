@@ -8,9 +8,11 @@ using Server.Workers;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddEndpointHandlers();
 builder.Services.AddProblemDetails();
+builder.Services.AddEndpointHandlers();
+
 builder.Services.AddValidation();
+builder.Services.AddSharedValidation();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))

@@ -86,10 +86,10 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
         using var errors = await response.Content.ReadFromJsonAsync<JsonDocument>();
         Assert.NotNull(errors);
         var fields = errors.RootElement.GetProperty("errors");
-        Assert.True(fields.TryGetProperty("name", out _));
-        Assert.True(fields.TryGetProperty("quantity", out _));
-        Assert.True(fields.TryGetProperty("unit", out _));
-        Assert.True(fields.TryGetProperty("location", out _));
+        Assert.True(fields.TryGetProperty("Name", out _));
+        Assert.True(fields.TryGetProperty("Quantity", out _));
+        Assert.True(fields.TryGetProperty("Unit", out _));
+        Assert.True(fields.TryGetProperty("Location", out _));
     }
 
     [Fact]
