@@ -1,3 +1,12 @@
+## [0.2.1] - 2026-10-09
+
+### 🐛 Bug Fixes
+
+- Move member picker to mobile headers, slim add button
+
+### 💼 Other
+
+- Feature/member-mobile-header into develop
 ## [0.2.0] - 2026-10-09
 
 ### 🚀 Features
@@ -35,6 +44,7 @@
 ### ⚙️ Miscellaneous Tasks
 
 - Added validation
+- *(release)* Version 0.2.0
 
 ### 💼 Other
 
