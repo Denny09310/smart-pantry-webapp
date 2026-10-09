@@ -1,7 +1,7 @@
 @typeparam T
 @implements IDisposable
 
-<div class="@Class" @onpointerdown="HandlePointerDown" @onpointerup="HandlePointerEnd"
+<div class="@CssClass" @onpointerdown="HandlePointerDown" @onpointerup="HandlePointerEnd"
      @onpointerleave="HandlePointerEnd" @onpointercancel="HandlePointerEnd" @onpointermove="HandlePointerMove"
      @oncontextmenu="HandleContextMenu" @oncontextmenu:preventDefault="PreventContextMenu">
     @ChildContent
@@ -33,6 +33,12 @@
     private CancellationTokenSource? _pressCts;
     private double _startX;
     private double _startY;
+
+    // Press-and-hold defaults: no text selection or callout while holding,
+    // list scrolling still works (scroll hijack surfaces as pointercancel).
+    private string CssClass => string.IsNullOrWhiteSpace(Class)
+        ? "select-none touch-manipulation [-webkit-touch-callout:none]"
+        : $"select-none touch-manipulation [-webkit-touch-callout:none] {Class}";
 
     private async Task HandlePointerDown(PointerEventArgs e)
     {
