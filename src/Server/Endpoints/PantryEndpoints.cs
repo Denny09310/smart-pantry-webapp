@@ -44,13 +44,27 @@ internal class PantryEndpoints(ApplicationDbContext db)
         var take = Math.Clamp(request.Take, 1, 100);
 
         // Status is calculated in memory: the shared rule is not translatable to SQL.
-        var items = (await query
+        var entries = await query
             .OrderBy(x => x.ExpirationDate)
             .ThenBy(x => x.Id)
             .Skip(skip)
             .Take(take)
-            .ToListAsync(ct))
-            .Select(ToDto)
+            .ToListAsync(ct);
+
+        var memberIds = entries
+            .Select(x => x.CreatedByMemberId)
+            .Where(id => id != null)
+            .Distinct()
+            .ToList();
+
+        var memberNames = memberIds.Count == 0
+            ? new Dictionary<string, string>()
+            : await db.Members.AsNoTracking()
+                .Where(m => memberIds.Contains(m.Id))
+                .ToDictionaryAsync(m => m.Id, m => m.Name, ct);
+
+        var items = entries
+            .Select(e => ToDto(e, e.CreatedByMemberId is not null && memberNames.TryGetValue(e.CreatedByMemberId, out var name) ? name : null))
             .ToList();
 
         return TypedResults.Ok(new GetPantryItemsResponse(
@@ -65,9 +79,10 @@ internal class PantryEndpoints(ApplicationDbContext db)
     {
         var entry = await db.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
 
-        return entry is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(ToDto(entry));
+        if (entry is null)
+            return TypedResults.NotFound();
+
+        return TypedResults.Ok(ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
     }
 
     [MapPost("/")]
@@ -137,7 +152,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         return TypedResults.NoContent();
     }
 
-    private static PantryItemDto ToDto(PantryItem entry)
+    private static PantryItemDto ToDto(PantryItem entry, string? memberName = null)
         => new(
             entry.Id,
             entry.Name,
@@ -146,7 +161,17 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.Location,
             entry.Notes,
             entry.ExpirationDate,
-            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.Today)));
+            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.Today)),
+            entry.CreatedByMemberId,
+            memberName);
+
+    private async Task<string?> MemberNameAsync(string? memberId, CancellationToken ct)
+        => memberId is null
+            ? null
+            : await db.Members.AsNoTracking()
+                .Where(m => m.Id == memberId)
+                .Select(m => m.Name)
+                .FirstOrDefaultAsync(ct);
 
     private static Dictionary<string, string[]>? Validate(
         string name,

@@ -13,6 +13,8 @@ public class ApplicationDbContext(
 
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
+    public DbSet<Member> Members => Set<Member>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<Notification>()
@@ -24,5 +26,12 @@ public class ApplicationDbContext(
         builder.Entity<PushSubscription>()
             .HasIndex(s => s.Endpoint)
             .IsUnique();
+
+        // Attribution only: deleting a member keeps the items.
+        builder.Entity<PantryItem>()
+            .HasOne<Member>()
+            .WithMany()
+            .HasForeignKey(i => i.CreatedByMemberId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
