@@ -1,0 +1,86 @@
+@namespace Client.Components.Shared.Home
+
+@* Desktop stat cards *@
+<div class="hidden gap-4 md:grid md:grid-cols-3">
+    <BbCard>
+        <BbCardHeader>
+            <BbCardTitle Class="text-sm font-medium text-muted-foreground">Total Items</BbCardTitle>
+            <BbCardAction>
+                <LucideIcon Name="package" Size="18" Class="text-muted-foreground" />
+            </BbCardAction>
+        </BbCardHeader>
+        <BbCardContent>
+            <p class="text-3xl font-semibold">@TotalItems</p>
+            <p class="mt-1 text-sm text-muted-foreground">Across @LocationsCount storage locations</p>
+        </BbCardContent>
+    </BbCard>
+
+    <BbCard>
+        <BbCardHeader>
+            <BbCardTitle Class="text-sm font-medium text-muted-foreground">Expiring Soon</BbCardTitle>
+            <BbCardAction>
+                <BbBadge Variant="BadgeVariant.SoftWarning">Within 7 days</BbBadge>
+            </BbCardAction>
+        </BbCardHeader>
+        <BbCardContent>
+            <p class="text-3xl font-semibold">@SoonCount</p>
+            <p class="mt-1 text-sm text-muted-foreground">Requires priority consumption</p>
+        </BbCardContent>
+    </BbCard>
+
+    <BbCard>
+        <BbCardHeader>
+            <BbCardTitle Class="text-sm font-medium text-muted-foreground">Expired</BbCardTitle>
+            <BbCardAction>
+                <BbBadge Variant="BadgeVariant.SoftDestructive">Critical</BbBadge>
+            </BbCardAction>
+        </BbCardHeader>
+        <BbCardContent>
+            <p class="text-3xl font-semibold">@ExpiredCount</p>
+            <p class="mt-1 text-sm text-muted-foreground">Needs immediate attention</p>
+        </BbCardContent>
+    </BbCard>
+</div>
+
+@* Mobile compact strip *@
+<div class="grid grid-cols-3 gap-2 md:hidden">
+    <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
+        <LucideIcon Name="triangle-alert" Size="18" Class="shrink-0 text-destructive" />
+        <div class="leading-tight">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Expired</p>
+            <p class="text-base font-semibold">@ExpiredCount</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
+        <LucideIcon Name="clock" Size="18" Class="shrink-0 text-amber-600" />
+        <div class="leading-tight">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
+            <p class="text-base font-semibold">@TodayCount</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
+        <LucideIcon Name="hourglass" Size="18" Class="shrink-0 text-sky-600" />
+        <div class="leading-tight">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Soon</p>
+            <p class="text-base font-semibold">@SoonCount</p>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    [Parameter]
+    public int TotalItems { get; set; }
+
+    [Parameter]
+    public int LocationsCount { get; set; }
+
+    [Parameter]
+    public int ExpiredCount { get; set; }
+
+    [Parameter]
+    public int TodayCount { get; set; }
+
+    [Parameter]
+    public int SoonCount { get; set; }
+}

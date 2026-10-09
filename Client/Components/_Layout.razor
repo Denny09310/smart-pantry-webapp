@@ -1,8 +1,12 @@
 ﻿@inherits LayoutComponentBase
 
-<main class="p-4 space-y-4">
+<AppHeader />
+
+<main class="space-y-4 p-4 pb-28 md:pb-16">
     @Body
 </main>
+
+<BottomNav />
 
 <!-- Required for portal-based components (Popover, Dialog, Select, etc.) -->
 <BbPortalHost />

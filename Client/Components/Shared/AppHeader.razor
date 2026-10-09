@@ -1,0 +1,37 @@
+@namespace Client.Components.Shared
+@inject ToastService Toast
+
+<BbResponsiveNavProvider>
+    <header class="hidden border-b bg-card md:block">
+        <div class="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3">
+            <span class="inline-flex items-center gap-2 text-base font-semibold">
+                <span class="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <LucideIcon Name="package" Size="16" />
+                </span>
+                Smart Pantry
+            </span>
+            <BbResponsiveNavItems Items="@_items" MobileClass="hidden" />
+            <span class="flex-1"></span>
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.IconSmall"
+                      AriaLabel="Notifications"
+                      OnClick="NotifyAsync">
+                <LucideIcon Name="bell" Size="18" />
+            </BbButton>
+        </div>
+    </header>
+</BbResponsiveNavProvider>
+
+@code {
+    private static readonly IReadOnlyList<NavItemDefinition> _items =
+    [
+        new() { Text = "Dashboard", Href = "/", Match = NavLinkMatch.All },
+        new() { Text = "Pantry", Href = "/#pantry-items" },
+    ];
+
+    private Task NotifyAsync()
+    {
+        Toast.Info("You're all caught up.");
+        return Task.CompletedTask;
+    }
+}

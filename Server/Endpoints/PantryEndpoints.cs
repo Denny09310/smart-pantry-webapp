@@ -71,4 +71,20 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.Notes,
             entry.ExpirationDate));
     }
+
+    [MapDelete("/{id}")]
+    public async Task<Results<NoContent, NotFound>> DeletePantryItemAsync(
+        string id,
+        CancellationToken ct)
+    {
+        var entry = await db.Items.FindAsync([id], ct);
+
+        if (entry is null)
+            return TypedResults.NotFound();
+
+        db.Items.Remove(entry);
+        await db.SaveChangesAsync(ct);
+
+        return TypedResults.NoContent();
+    }
 }

@@ -1,0 +1,105 @@
+@namespace Client.Components.Shared.Home
+
+<BbCard>
+    <BbCardHeader>
+        <div>
+            <BbCardTitle>Expiring Soon</BbCardTitle>
+            <BbCardDescription>Items needing attention in the next 7 days</BbCardDescription>
+        </div>
+        <BbCardAction>
+            <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <LucideIcon Name="clock" Size="14" />
+                Sorted by Urgency
+            </span>
+        </BbCardAction>
+    </BbCardHeader>
+    <BbCardContent Class="px-0">
+        <BbDataGrid TData="PantryItemDto" Items="Items" ShowPagination="false" TableContainerClass="overflow-x-auto"
+                    AriaLabel="Items expiring soon">
+            <Columns>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item">
+                    <ChildContent Context="item">
+                        <span class="inline-flex items-center gap-2 font-medium">
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full @DotClass(item)"></span>
+                            @item.Name
+                        </span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Quantity">
+                    <ChildContent Context="item">
+                        <span class="text-muted-foreground">@item.FormatQuantity()</span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Location">
+                    <ChildContent Context="item">
+                        <BbBadge Variant="BadgeVariant.Outline">@item.Location</BbBadge>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Expiration" Sortable="true"
+                                          SortBy="@(i => i.ExpirationDate)">
+                    <ChildContent Context="item">
+                        <span class="text-muted-foreground">@item.FormatExpiration()</span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Status">
+                    <ChildContent Context="item">
+                        <BbBadge Variant="@item.GetBadgeVariant()">@item.GetLabel()</BbBadge>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Quick Action">
+                    <ChildContent Context="item">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                  AriaLabel="@($"Delete {item.Name}")" Loading="@IsBusy(item)"
+                                  OnClick="@(() => OnDelete.InvokeAsync(item))">
+                            <LucideIcon Name="trash-2" Size="16" />
+                        </BbButton>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+            </Columns>
+        </BbDataGrid>
+    </BbCardContent>
+    <BbCardFooter Class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <p class="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">
+            <LucideIcon Name="info" Size="14" />
+            Inventory counts reflect real-time physical stock
+        </p>
+        <div class="flex gap-2">
+            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => OnViewAll.InvokeAsync())">
+                View all pantry items
+                <LucideIcon Name="arrow-right" Size="14" />
+            </BbButton>
+            <BbButton Size="ButtonSize.Small" OnClick="@(() => OnAdd.InvokeAsync())">
+                <LucideIcon Name="plus" Size="14" />
+                Add new item
+            </BbButton>
+        </div>
+    </BbCardFooter>
+</BbCard>
+
+@code
+{
+    [Parameter]
+    public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnDelete { get; set; }
+
+    [Parameter]
+    public EventCallback OnViewAll { get; set; }
+
+    [Parameter]
+    public EventCallback OnAdd { get; set; }
+
+    [Parameter]
+    public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
+
+    private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
+
+    private static string DotClass(PantryItemDto item) => item.GetStatus() switch
+    {
+        PantryItemStatus.Expired => "bg-destructive",
+        PantryItemStatus.Today => "bg-amber-500",
+        PantryItemStatus.Soon => "bg-sky-500",
+        _ => "bg-emerald-500",
+    };
+}

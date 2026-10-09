@@ -1,0 +1,68 @@
+@namespace Client.Components.Shared.Home
+
+<div class="scroll-mt-4 space-y-2" id="pantry-items">
+    <BbInputGroup>
+        <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+            <LucideIcon Name="search" Size="16" />
+        </BbInputGroupAddon>
+        <BbInputGroupInput Value="@Search" ValueChanged="@OnSearchValueChanged" UpdateTiming="UpdateTiming.Immediate"
+                           DebounceInterval="250" Placeholder="Search pantry items..." />
+    </BbInputGroup>
+
+    @* Status filter, mobile only *@
+    <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false"
+               Class="scrollbar-none md:hidden">
+        <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.Expired">Expired (@ExpiredCount)</BbChip>
+    </BbChipSet>
+
+    <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false"
+               Class="scrollbar-none">
+        <BbChip Value="@("all")">All locations</BbChip>
+        <BbChip Value="@("fridge")">Fridge</BbChip>
+        <BbChip Value="@("pantry")">Pantry</BbChip>
+        <BbChip Value="@("freezer")">Freezer</BbChip>
+        <BbChip Value="@("cabinet")">Cabinet</BbChip>
+    </BbChipSet>
+</div>
+
+@code
+{
+    [Parameter]
+    public string? Search { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SearchChanged { get; set; }
+
+    [Parameter]
+    public string? Location { get; set; } = "all";
+
+    [Parameter]
+    public EventCallback<string?> LocationChanged { get; set; }
+
+    [Parameter]
+    public PantryStatusFilter Status { get; set; } = PantryStatusFilter.All;
+
+    [Parameter]
+    public EventCallback<PantryStatusFilter> StatusChanged { get; set; }
+
+    [Parameter]
+    public int TotalCount { get; set; }
+
+    [Parameter]
+    public int SoonCount { get; set; }
+
+    [Parameter]
+    public int TodayCount { get; set; }
+
+    [Parameter]
+    public int ExpiredCount { get; set; }
+
+    private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
+
+    private Task OnLocationValueChanged(string? value) => LocationChanged.InvokeAsync(value);
+
+    private Task OnStatusValueChanged(PantryStatusFilter value) => StatusChanged.InvokeAsync(value);
+}

@@ -1,0 +1,46 @@
+@namespace Client.Components.Shared.Home
+
+<BbCard>
+    <BbCardContent Class="divide-y p-0">
+        @foreach (var item in Items)
+        {
+            <div @key="item.Id" class="flex items-center gap-3 p-3">
+                <BbAvatar>
+                    <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
+                </BbAvatar>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center justify-between gap-2">
+                        <p class="truncate text-sm font-semibold">@item.Name</p>
+                        <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
+                    </div>
+                    <p class="truncate text-xs text-muted-foreground">@item.FormatQuantity() • @item.Location</p>
+                    <div class="mt-1 flex items-center justify-between gap-2">
+                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <LucideIcon Name="calendar-days" Size="12" />
+                            @item.FormatExpiration()
+                        </span>
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                  AriaLabel="@($"Delete {item.Name}")" Loading="@IsBusy(item)"
+                                  OnClick="@(() => OnDelete.InvokeAsync(item))">
+                            <LucideIcon Name="trash-2" Size="16" />
+                        </BbButton>
+                    </div>
+                </div>
+            </div>
+        }
+    </BbCardContent>
+</BbCard>
+
+@code
+{
+    [Parameter]
+    public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnDelete { get; set; }
+
+    [Parameter]
+    public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
+
+    private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
+}

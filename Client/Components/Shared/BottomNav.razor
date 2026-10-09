@@ -1,0 +1,31 @@
+@namespace Client.Components.Shared
+@inject ToastService Toast
+
+<div class="fixed inset-x-4 bottom-4 z-50 md:hidden">
+    <BbCard Class="rounded-2xl">
+        <nav class="flex items-center justify-around px-2 py-2" aria-label="Primary">
+            <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="bg-secondary" class="@LinkClass">
+                <LucideIcon Name="layout-dashboard" Size="20" />
+                <span>Dashboard</span>
+            </NavLink>
+            <NavLink href="/#pantry-items" ActiveClass="bg-secondary" class="@LinkClass">
+                <LucideIcon Name="refrigerator" Size="20" />
+                <span>Pantry</span>
+            </NavLink>
+            <button type="button" class="@LinkClass" @onclick="NotifyAsync">
+                <LucideIcon Name="bell" Size="20" />
+                <span>Notifications</span>
+            </button>
+        </nav>
+    </BbCard>
+</div>
+
+@code {
+    private const string LinkClass = "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[10px] font-medium text-muted-foreground";
+
+    private Task NotifyAsync()
+    {
+        Toast.Info("You're all caught up.");
+        return Task.CompletedTask;
+    }
+}

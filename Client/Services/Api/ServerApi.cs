@@ -21,6 +21,11 @@ internal interface IPantryEndpoints
     Task<ApiResponse<PantryItemDto>> CreateAsync(
         CreatePantryItemRequest request,
         CancellationToken ct = default);
+
+    [Delete("/{id}")]
+    Task<IApiResponse> DeleteAsync(
+        string id,
+        CancellationToken ct = default);
 }
 
 internal static class ServerApiExtensions

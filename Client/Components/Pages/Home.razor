@@ -5,48 +5,109 @@
 @inject ToastService Toast
 @inject BottomSheetService BottomSheet
 
-<header class="flex items-center justify-between gap-2">
-    <h1 class="text-xl font-semibold">Smart Pantry</h1>
-    <div class="inline-flex items-center gap-2">
-        <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16" @onclick="CreateItemAsync">
-            Add
-        </BbButton>
-    </div>
-</header>
+<div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
+    <header class="space-y-3">
+        <div class="flex items-center justify-between gap-2 md:hidden">
+            <h1 class="text-xl font-semibold">Smart Pantry</h1>
+            <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16" OnClick="CreateItemAsync">
+                <LucideIcon Name="plus" Size="14" />
+                Add
+            </BbButton>
+        </div>
+        <div class="hidden items-end justify-between gap-2 md:flex">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Household Pantry • Live Status
+                </p>
+                <h2 class="text-2xl font-semibold">Overview &amp; Action Board</h2>
+            </div>
+            <BbBadge Variant="BadgeVariant.SoftSuccess">
+                <BbBadgeIcon Name="circle-dot" />
+                Stock active • @LocationsCount locations
+            </BbBadge>
+        </div>
+    </header>
 
-<BbInputGroup>
-    <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
-        <LucideIcon Name="search" Size="16" />
-    </BbInputGroupAddon>
-    <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
-</BbInputGroup>
+    <PantryToolbar Search="@_name" SearchChanged="@OnSearchChanged" Location="@_location"
+                   LocationChanged="@OnLocationChanged" Status="@_status" StatusChanged="@OnStatusChanged" TotalCount="@TotalCount"
+                   SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" />
 
-<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Wrap="false" Class="scrollbar-none">
-    <BbChip Value="@("all")">All locations</BbChip>
-    <BbChip Value="@("fridge")">Fridge</BbChip>
-    <BbChip Value="@("pantry")">Pantry</BbChip>
-    <BbChip Value="@("freezer")">Freezer</BbChip>
-    <BbChip Value="@("cabinet")">Cabinet</BbChip>
-</BbChipSet>
+    @if (_items is null)
+    {
+        <div class="flex justify-center py-12">
+            <BbSpinner Size="SpinnerSize.Large" />
+        </div>
+    }
+    else if (VisibleItems.Count == 0 && TotalCount == 0)
+    {
+        <BbEmpty Title="No items in the pantry yet" Description="Track a new pantry batch and expiration date."
+                 Size="EmptySize.Default">
+            <Icon>
+                <LucideIcon Name="package" Size="28" />
+            </Icon>
+            <ChildContent>
+                <BbButton Size="ButtonSize.Small" OnClick="CreateItemAsync">
+                    <LucideIcon Name="plus" Size="14" />
+                    Add item
+                </BbButton>
+            </ChildContent>
+        </BbEmpty>
+    }
+    else if (VisibleItems.Count == 0)
+    {
+        <BbEmpty Title="No matches" Description="Try adjusting your search or filter criteria." Size="EmptySize.Default">
+            <Icon>
+                <LucideIcon Name="search" Size="28" />
+            </Icon>
+            <ChildContent>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ClearFilters">
+                    Clear filters
+                </BbButton>
+            </ChildContent>
+        </BbEmpty>
+    }
+    else
+    {
+        <PantryStats TotalItems="@TotalCount" LocationsCount="@LocationsCount" ExpiredCount="@ExpiredCount"
+                     TodayCount="@TodayCount" SoonCount="@SoonCount" />
 
-@if (_items is null)
-{
-    <em>Loading...</em>
-}
-else if (_items.Count == 0)
-{
-    <p>No items in the pantry yet</p>
-    <button type="button" @onclick="CreateItemAsync">Create one</button>
-}
-else
-{
-    <ul>
-        @foreach (var item in _items)
+        @if (AttentionItems.Count > 0)
         {
-            <li @key="item.Id">@item.Name</li>
+            <div class="hidden md:block">
+                <PantryExpiringTable Items="@AttentionItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
+                                     OnViewAll="@ClearFilters" OnAdd="@CreateItemAsync" />
+            </div>
         }
-    </ul>
-}
+        else
+        {
+            <div class="hidden md:block">
+                <BbEmpty Title="All fresh" Description="Nothing needs attention right now." Size="EmptySize.Default">
+                    <Icon>
+                        <LucideIcon Name="badge-check" Size="28" />
+                    </Icon>
+                </BbEmpty>
+            </div>
+        }
+
+        <div class="md:hidden">
+            <PantryItemsList Items="@VisibleItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync" />
+        </div>
+
+        <div class="flex flex-col gap-2 md:hidden">
+            <BbButton Class="w-full" OnClick="CreateItemAsync">
+                <LucideIcon Name="plus" Size="14" />
+                Add new item
+            </BbButton>
+        </div>
+    }
+
+    <footer class="fixed inset-x-0 bottom-0 hidden border-t bg-card md:block">
+        <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2 text-xs text-muted-foreground">
+            <p>Smart Pantry — Household Inventory Management</p>
+            <p>System Status: Local Storage Synchronized</p>
+        </div>
+    </footer>
+</div>
 
 @code
 {
@@ -57,20 +118,63 @@ else
         Size = DialogSize.Large
     };
 
+    private const int MaxItems = 500;
+
     private List<PantryItemDto>? _items;
-    private int _totalItems;
+    private readonly HashSet<string> _deletingIds = [];
 
     private string? _location = "all", _name;
+    private PantryStatusFilter _status = PantryStatusFilter.All;
+
+    private int TotalCount => _items?.Count ?? 0;
+
+    private int LocationsCount => _items?
+        .Select(i => i.Location)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Count() ?? 0;
+
+    private int ExpiredCount => CountBy(PantryItemStatus.Expired);
+
+    private int TodayCount => CountBy(PantryItemStatus.Today);
+
+    private int SoonCount => CountBy(PantryItemStatus.Soon);
+
+    private int CountBy(PantryItemStatus status)
+        => _items?.Count(i => i.GetStatus() == status) ?? 0;
+
+    private IReadOnlyList<PantryItemDto> VisibleItems
+        => _items?
+            .Where(MatchesFilters)
+            .OrderBy(i => i.UrgencyRank())
+            .ThenBy(i => i.ExpirationDate)
+            .ThenBy(i => i.Name)
+            .ToList() ?? [];
+
+    private IReadOnlyList<PantryItemDto> AttentionItems
+        => VisibleItems.Where(i => i.GetStatus() is not PantryItemStatus.Fresh).ToList();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
     }
 
+    private bool MatchesFilters(PantryItemDto item)
+    {
+        if (!string.IsNullOrWhiteSpace(_name)
+            && !item.Name.Contains(_name, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(_location)
+            && _location is not "all"
+            && !item.Location.Equals(_location, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return item.Matches(_status);
+    }
+
     private async Task LoadAsync()
     {
-        var request = new GetPantryItemsRequest(_location, _name);
-        using var response = await Api.Pantry.GetAsync(request);
+        using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
 
         if (!response.IsSuccessfulWithContent)
         {
@@ -78,10 +182,32 @@ else
             return;
         }
 
-        var content = response.Content;
+        _items = new(response.Content.Items);
+    }
 
-        _items = new(content.Items);
-        _totalItems = content.TotalItems;
+    private Task OnSearchChanged(string? value)
+    {
+        _name = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnLocationChanged(string? value)
+    {
+        _location = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnStatusChanged(PantryStatusFilter value)
+    {
+        _status = value;
+        return Task.CompletedTask;
+    }
+
+    private void ClearFilters()
+    {
+        _name = null;
+        _location = "all";
+        _status = PantryStatusFilter.All;
     }
 
     private async Task CreateItemAsync()
@@ -102,7 +228,31 @@ else
             return;
         }
 
-        _items?.Insert(0, response.Content);
-        _totalItems++;
+        Toast.Success("Item added to the pantry.");
+        await LoadAsync();
+    }
+
+    private async Task DeleteItemAsync(PantryItemDto item)
+    {
+        if (!_deletingIds.Add(item.Id))
+            return;
+
+        try
+        {
+            using var response = await Api.Pantry.DeleteAsync(item.Id);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Toast.Error("Can't delete item.");
+                return;
+            }
+
+            _items?.RemoveAll(i => i.Id == item.Id);
+            Toast.Success($"Removed {item.Name}.");
+        }
+        finally
+        {
+            _deletingIds.Remove(item.Id);
+        }
     }
 }
