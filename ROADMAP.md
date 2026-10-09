@@ -169,6 +169,7 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 - [ ] Test behavior when push permission is denied or later revoked. (manual: browser)
 - [ ] Test notification delivery in the deployed environment, not only localhost.
 - [ ] Test database migration and backup/restore procedures.
+- [ ] Write the recovery checklist (backup location/retention, restore-into-test-env drill, who holds secrets).
 - [x] Verify logs do not expose invitation tokens (n/a), VAPID private keys,
   or push subscription secrets. (reviewed: only endpoint URLs, barcodes, counts)
 - [ ] Test desktop Chrome or Edge and Android Chrome.
@@ -181,6 +182,23 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 - [ ] The app remains usable if push is unsupported or disabled.
 - [ ] The production deployment supports the intended devices and browsers.
 - [ ] A tested backup can be restored.
+
+## Phase 4 — Operations
+
+**Goal:** Know the deployment is healthy and what each background run did.
+
+### Tasks
+
+- [ ] Add a liveness endpoint plus a Postgres readiness check; the deployment
+  must report unhealthy when a critical dependency is unavailable.
+- [ ] Log each expiration-worker run with start/end time, duration, items
+  evaluated, notifications created, and pushes sent/failed.
+
+### Acceptance criteria
+
+- [ ] You can tell whether the API, database, and worker are healthy without
+  reproducing a user report.
+- [ ] Recent worker runs and delivery counts are inspectable from logs alone.
 
 ## Release definition of done
 
@@ -195,6 +213,8 @@ The release is complete when:
 - [ ] Scanning a barcode pre-fills item creation where supported.
 - [ ] Duplicate reminders are prevented.
 - [ ] Core workflows and backup/restore have been tested.
+- [ ] The deployment reports healthy status and unhealthy when dependencies are down.
+- [ ] A written recovery checklist exists and a backup has been restored from it.
 
 ## Explicitly out of scope
 
@@ -207,7 +227,7 @@ Do not implement these as part of this release:
 - Native Android or iOS applications.
 - Offline editing or background synchronization.
 - Shopping lists, recipes, or meal planning.
-- Barcode scanning, OCR, or AI features.
+- OCR or AI features.
 - Grocery-store integrations.
 - Consumption history or inventory ledgers.
 - Advanced role-based permissions.
@@ -220,3 +240,4 @@ Do not implement these as part of this release:
 1. Local members (attribution only).
 2. Barcode-assisted item creation.
 3. Reliability, security, and release testing.
+4. Operations (health checks, worker run logging).
