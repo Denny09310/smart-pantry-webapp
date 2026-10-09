@@ -5,6 +5,7 @@
 @inject ToastService Toast
 @inject DialogService Dialog
 @inject BottomSheetService BottomSheet
+@inject NavigationManager Nav
 
 <div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
     <header class="space-y-3">
@@ -76,7 +77,7 @@
         {
             <div class="hidden md:block">
                 <PantryExpiringTable Items="@AttentionItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
-                                     OnViewAll="@ClearFilters" OnAdd="@CreateItemAsync" />
+                                     OnViewAll="@ViewAllItems" OnAdd="@CreateItemAsync" />
             </div>
         }
         else
@@ -206,6 +207,8 @@
         _location = "all";
         _status = PantryStatusFilter.All;
     }
+
+    private void ViewAllItems() => Nav.NavigateTo("/pantry");
 
     private async Task CreateItemAsync()
     {

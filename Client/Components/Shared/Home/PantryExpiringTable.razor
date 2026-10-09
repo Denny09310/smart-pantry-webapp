@@ -13,9 +13,9 @@
             </span>
         </BbCardAction>
     </BbCardHeader>
-    <BbCardContent Class="px-0">
+    <BbCardContent Class="bg-background">
         <BbDataGrid TData="PantryItemDto" Items="Items" ShowPagination="false" TableContainerClass="overflow-x-auto"
-                    AriaLabel="Items expiring soon">
+                    AriaLabel="Items expiring soon" @ref="_grid">
             <Columns>
                 <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item">
                     <ChildContent Context="item">
@@ -58,7 +58,7 @@
             </Columns>
         </BbDataGrid>
     </BbCardContent>
-    <BbCardFooter Class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <BbCardFooter Class="bg-background flex flex-col gap-2 sm:flex-row sm:items-center">
         <p class="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">
             <LucideIcon Name="info" Size="14" />
             Inventory counts reflect real-time physical stock
@@ -92,6 +92,32 @@
 
     [Parameter]
     public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
+
+    private BbDataGrid<PantryItemDto>? _grid;
+    private IReadOnlyList<PantryItemDto>? _renderedItems;
+    private bool _refreshPending;
+
+    protected override void OnParametersSet()
+    {
+        // The grid detects data changes by collection reference. This component
+        // otherwise forwards the identical reference it received, so nudge the
+        // grid explicitly whenever a new collection arrives.
+        if (!ReferenceEquals(_renderedItems, Items))
+        {
+            _renderedItems = Items;
+            _refreshPending = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_refreshPending && !firstRender)
+        {
+            _refreshPending = false;
+            if (_grid is not null)
+                await _grid.RefreshDataAsync();
+        }
+    }
 
     private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
 

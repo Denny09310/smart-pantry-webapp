@@ -112,10 +112,13 @@
                          Size="EmptySize.Small" />
             }
 
-            <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="ClearFilters">
-                View all pantry items (@VisibleItems.Count)
-                <LucideIcon Name="arrow-right" Size="14" />
-            </BbButton>
+            @if (HasActiveFilters)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="ClearFilters">
+                    View all pantry items (@VisibleItems.Count)
+                    <LucideIcon Name="arrow-right" Size="14" />
+                </BbButton>
+            }
 
             <PantryTip />
         </div>
@@ -230,6 +233,11 @@
         _location = "all";
         _status = PantryStatusFilter.All;
     }
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(_name)
+        || (_location is not null && _location is not "all")
+        || _status != PantryStatusFilter.All;
 
     private async Task CreateItemAsync()
     {
