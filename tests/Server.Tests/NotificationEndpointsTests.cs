@@ -111,4 +111,51 @@ public sealed class NotificationEndpointsTests(PantryApiFactory factory)
         using var response = await _client.PostAsync($"/api/notifications/{Guid.NewGuid():N}/read", null);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Generate_Respects_Seven_Day_Window()
+    {
+        var inside = new[]
+        {
+            await CreateItemAsync(InDays(-1)),
+            await CreateItemAsync(InDays(0)),
+            await CreateItemAsync(InDays(7)),
+        };
+        var outside = new[]
+        {
+            await CreateItemAsync(InDays(8)),
+            await CreateItemAsync(InDays(30)),
+        };
+
+        try
+        {
+            Assert.Equal(3, await GenerateAsync(factory));
+
+            var notified = (await ListAsync()).Items
+                .Where(n => n.ReadAt == null)
+                .Select(n => n.PantryItemId)
+                .ToHashSet();
+            Assert.All(inside, id => Assert.Contains(id, notified));
+            Assert.All(outside, id => Assert.DoesNotContain(id, notified));
+        }
+        finally
+        {
+            foreach (var id in inside.Concat(outside))
+                await DeleteItemAsync(id);
+        }
+    }
+
+    [Fact]
+    public async Task Generate_With_No_Qualifying_Items_Returns_Zero()
+    {
+        var itemId = await CreateItemAsync(InDays(30));
+        try
+        {
+            Assert.Equal(0, await GenerateAsync(factory));
+        }
+        finally
+        {
+            await DeleteItemAsync(itemId);
+        }
+    }
 }

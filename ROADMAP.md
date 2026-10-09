@@ -161,9 +161,9 @@ offline on re-scan. Quantity parsing stays dumb on purpose: OFF's
 
 - [x] Test member edge cases (duplicate names, delete current member,
   write with unknown member ID).
-- [ ] Test duplicate-notification prevention.
-- [ ] Test expiration-date boundary conditions.
-- [ ] Test the background worker when no items qualify.
+- [x] Test duplicate-notification prevention.
+- [x] Test expiration-date boundary conditions.
+- [x] Test the background worker when no items qualify.
 - [ ] Test recovery from transient push-provider errors.
 - [ ] Test invalid or expired push subscriptions.
 - [ ] Test behavior when push permission is denied or later revoked.
