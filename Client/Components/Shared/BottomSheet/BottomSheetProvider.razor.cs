@@ -6,9 +6,6 @@ namespace Client.Components.Shared;
 
 public partial class BottomSheetProvider : IAsyncDisposable
 {
-    [Inject]
-    private BottomSheetService Service { get; set; } = default!;
-
     private BottomSheet? _sheet;
     private IDialogReference _dialogRef = default!;
     private int _appliedSnapVersion;

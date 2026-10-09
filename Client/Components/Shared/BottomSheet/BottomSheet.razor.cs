@@ -5,9 +5,6 @@ namespace Client.Components.Shared;
 
 public partial class BottomSheet : IAsyncDisposable
 {
-    [Inject]
-    private IJSRuntime JS { get; set; } = default!;
-
     [Parameter]
     public bool IsOpen { get; set; }
 
