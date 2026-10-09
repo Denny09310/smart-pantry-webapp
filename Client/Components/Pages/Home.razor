@@ -92,7 +92,18 @@
         }
 
         <div class="md:hidden">
-            <PantryItemsList Items="@VisibleItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync" />
+            @if (AttentionItems.Count > 0)
+            {
+                <PantryItemsList Items="@AttentionItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync" />
+            }
+            else
+            {
+                <BbEmpty Title="All fresh" Description="Nothing needs attention right now." Size="EmptySize.Small">
+                    <Icon>
+                        <LucideIcon Name="badge-check" Size="28" />
+                    </Icon>
+                </BbEmpty>
+            }
         </div>
 
         <div class="flex flex-col gap-2 md:hidden">

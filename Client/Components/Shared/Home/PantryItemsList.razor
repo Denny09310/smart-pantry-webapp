@@ -1,35 +1,44 @@
 @namespace Client.Components.Shared.Home
 
 <BbCard>
-    <BbCardContent Class="divide-y p-0">
-        @foreach (var item in Items)
-        {
-            <div @key="item.Id" class="flex items-center gap-3 p-3">
-                <BbAvatar>
-                    <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
-                </BbAvatar>
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center justify-between gap-2">
-                        <p class="truncate text-sm font-semibold">@item.Name</p>
-                        <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
+    <BbCardContent Class="p-0">
+        <Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="84" OverscanCount="4" @ref="_virtualize">
+            <ItemContent Context="item">
+                <div class="flex items-center gap-3 border-b p-3 last:border-0">
+                    <BbAvatar>
+                        <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="truncate text-sm font-semibold">@item.Name</p>
+                            <BbBadge Variant="@item.GetBadgeVariant()" Class="shrink-0">@item.GetLabel()</BbBadge>
+                        </div>
+                        <p class="truncate text-xs text-muted-foreground">@item.FormatQuantity() •
+                            @item.GetDisplayLocation()</p>
+                            <div class="mt-1 flex items-center justify-between gap-2">
+                                <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                    <LucideIcon Name="calendar-days" Size="12" />
+                                    @item.FormatExpiration()
+                                </span>
+                                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                          AriaLabel="@($"Delete {item.Name}")" Loading="@IsBusy(item)"
+                                          OnClick="@(() => OnDelete.InvokeAsync(item))">
+                                    <LucideIcon Name="trash-2" Size="16" />
+                                </BbButton>
+                            </div>
+                        </div>
                     </div>
-                    <p class="truncate text-xs text-muted-foreground">@item.FormatQuantity() • @item.GetDisplayLocation()</p>
-                    <div class="mt-1 flex items-center justify-between gap-2">
-                        <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <LucideIcon Name="calendar-days" Size="12" />
-                            @item.FormatExpiration()
-                        </span>
-                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                                  AriaLabel="@($"Delete {item.Name}")" Loading="@IsBusy(item)"
-                                  OnClick="@(() => OnDelete.InvokeAsync(item))">
-                            <LucideIcon Name="trash-2" Size="16" />
-                        </BbButton>
+                </ItemContent>
+                <Placeholder>
+                    <div class="space-y-2 p-3">
+                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
+                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
+                        <div class="h-[68px] animate-pulse rounded-lg bg-muted"></div>
                     </div>
-                </div>
-            </div>
-        }
-    </BbCardContent>
-</BbCard>
+                </Placeholder>
+            </Virtualize>
+        </BbCardContent>
+    </BbCard>
 
 @code
 {
@@ -41,6 +50,34 @@
 
     [Parameter]
     public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
+
+    private Virtualize<PantryItemDto>? _virtualize;
+    private IReadOnlyList<PantryItemDto>? _renderedItems;
+    private bool _refreshPending;
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(_renderedItems, Items))
+        {
+            _renderedItems = Items;
+            _refreshPending = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_refreshPending && !firstRender && _virtualize is not null)
+        {
+            _refreshPending = false;
+            await _virtualize.RefreshDataAsync();
+        }
+    }
+
+    private ValueTask<ItemsProviderResult<PantryItemDto>> ProvideItemsAsync(ItemsProviderRequest request)
+    {
+        var page = Items.Skip(request.StartIndex).Take(request.Count).ToList();
+        return ValueTask.FromResult(new ItemsProviderResult<PantryItemDto>(page, Items.Count));
+    }
 
     private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
 }

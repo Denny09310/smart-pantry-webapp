@@ -1,9 +1,8 @@
 @namespace Client.Components.Shared.Pantry
 
-<div class="space-y-2">
-    @foreach (var item in Items)
-    {
-        <BbCard @key="item.Id">
+<Virtualize ItemsProvider="@ProvideItemsAsync" ItemSize="104" OverscanCount="4" @ref="_virtualize">
+    <ItemContent Context="item">
+        <BbCard Class="mb-2">
             <BbCardContent Class="flex items-center gap-3 p-3">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2">
@@ -18,25 +17,29 @@
                             <LucideIcon Name="package" Size="12" />
                             @item.GetDisplayLocation()
                         </span>
-                        <span class="text-xs @(IsUrgent(item) ? "font-medium text-destructive" : "text-muted-foreground")">
+                        <span
+                            class="text-xs @(IsUrgent(item) ? "font-medium text-destructive" : "text-muted-foreground")">
                             @ExpiryText(item)
                         </span>
                     </div>
                 </div>
-                <BbButton Variant="ButtonVariant.Outline"
-                          Size="ButtonSize.IconSmall"
-                          Class="shrink-0 rounded-full"
-                          AriaLabel="@($"Mark {item.Name} as used")"
-                          Loading="@IsBusy(item)"
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Class="shrink-0 rounded-full"
+                          AriaLabel="@($"Mark {item.Name} as used")" Loading="@IsBusy(item)"
                           OnClick="@(() => OnCheck.InvokeAsync(item))">
                     <LucideIcon Name="check" Size="16" />
                 </BbButton>
             </BbCardContent>
         </BbCard>
-    }
-</div>
+    </ItemContent>
+    <Placeholder>
+        <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
+        <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
+        <div class="h-[92px] animate-pulse rounded-lg bg-muted"></div>
+    </Placeholder>
+</Virtualize>
 
-@code {
+@code
+{
     [Parameter]
     public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
 
@@ -45,6 +48,34 @@
 
     [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
+
+    private Virtualize<PantryItemDto>? _virtualize;
+    private IReadOnlyList<PantryItemDto>? _renderedItems;
+    private bool _refreshPending;
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(_renderedItems, Items))
+        {
+            _renderedItems = Items;
+            _refreshPending = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_refreshPending && !firstRender && _virtualize is not null)
+        {
+            _refreshPending = false;
+            await _virtualize.RefreshDataAsync();
+        }
+    }
+
+    private ValueTask<ItemsProviderResult<PantryItemDto>> ProvideItemsAsync(ItemsProviderRequest request)
+    {
+        var page = Items.Skip(request.StartIndex).Take(request.Count).ToList();
+        return ValueTask.FromResult(new ItemsProviderResult<PantryItemDto>(page, Items.Count));
+    }
 
     private bool IsBusy(PantryItemDto item) => BusyIds.Contains(item.Id);
 

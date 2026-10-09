@@ -93,24 +93,15 @@
         <div class="space-y-3 md:hidden">
             <div class="flex items-start justify-between gap-2">
                 <div>
-                    <h2 class="text-base font-semibold">Expiring Soon</h2>
-                    <p class="text-xs text-muted-foreground">@AttentionItems.Count items requiring prompt consumption</p>
+                    <h2 class="text-base font-semibold">Pantry Items</h2>
+                    <p class="text-xs text-muted-foreground">@VisibleItems.Count items, sorted by urgency</p>
                 </div>
                 <BbBadge Variant="BadgeVariant.SoftInfo">Sorted by Urgency</BbBadge>
             </div>
 
-            @if (AttentionItems.Count > 0)
-            {
-                <PantryUrgentList Items="@AttentionItems"
-                                  BusyIds="@_busyIds"
-                                  OnCheck="@MarkUsedAsync" />
-            }
-            else
-            {
-                <BbEmpty Title="All fresh"
-                         Description="Nothing needs attention right now."
-                         Size="EmptySize.Small" />
-            }
+            <PantryUrgentList Items="@VisibleItems"
+                              BusyIds="@_busyIds"
+                              OnCheck="@MarkUsedAsync" />
 
             @if (HasActiveFilters)
             {
@@ -172,9 +163,6 @@
             .OrderBy(i => i.ExpirationDate)
             .ThenBy(i => i.Name)
             .ToList() ?? [];
-
-    private IReadOnlyList<PantryItemDto> AttentionItems
-        => VisibleItems.Where(i => i.GetStatus() is not PantryItemStatus.Fresh).ToList();
 
     protected override async Task OnInitializedAsync()
     {

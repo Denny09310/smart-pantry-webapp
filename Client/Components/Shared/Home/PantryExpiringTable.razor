@@ -1,4 +1,5 @@
 @namespace Client.Components.Shared.Home
+@using DataGridPrimitives = BlazorBlueprint.Primitives.DataGrid
 
 <BbCard>
     <BbCardHeader>
@@ -14,8 +15,8 @@
         </BbCardAction>
     </BbCardHeader>
     <BbCardContent Class="bg-background">
-        <BbDataGrid TData="PantryItemDto" Items="Items" ShowPagination="false" TableContainerClass="overflow-x-auto"
-                    AriaLabel="Items expiring soon" @ref="_grid">
+        <BbDataGrid TData="PantryItemDto" ItemsProvider="@ProvidePageAsync" ShowPagination="true" InitialPageSize="10"
+                    TableContainerClass="overflow-x-auto" AriaLabel="Items expiring soon" @ref="_grid">
             <Columns>
                 <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item">
                     <ChildContent Context="item">
@@ -120,6 +121,31 @@
     }
 
     private bool IsBusy(PantryItemDto item) => DeletingIds.Contains(item.Id);
+
+    private ValueTask<DataGridPrimitives.DataGridResult<PantryItemDto>> ProvidePageAsync(DataGridPrimitives.DataGridRequest request)
+    {
+        request.CancellationToken.ThrowIfCancellationRequested();
+
+        var sorted = ApplyRequestSort(Items, request.SortDefinitions);
+        var page = sorted.Skip(request.StartIndex).Take(request.Count ?? sorted.Count).ToList();
+
+        return ValueTask.FromResult(new DataGridPrimitives.DataGridResult<PantryItemDto>
+        {
+            Items = page,
+            TotalItemCount = sorted.Count,
+        });
+    }
+
+    private static List<PantryItemDto> ApplyRequestSort(IReadOnlyList<PantryItemDto> source, IReadOnlyList<DataGridPrimitives.SortDefinition> sorts)
+    {
+        // Only the expiration column is sortable, so any user sort targets it.
+        if (sorts is not [{ Direction: var direction }, ..])
+            return source.ToList();
+
+        return direction == SortDirection.Descending
+            ? source.OrderByDescending(i => i.ExpirationDate).ToList()
+            : source.OrderBy(i => i.ExpirationDate).ToList();
+    }
 
     private static string DotClass(PantryItemDto item) => item.GetStatus() switch
     {
