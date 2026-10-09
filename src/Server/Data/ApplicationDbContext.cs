@@ -11,12 +11,18 @@ public class ApplicationDbContext(
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        modelBuilder.Entity<Notification>()
+        builder.Entity<Notification>()
             .HasOne<PantryItem>()
             .WithMany()
             .HasForeignKey(n => n.PantryItemId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PushSubscription>()
+            .HasIndex(s => s.Endpoint)
+            .IsUnique();
     }
 }

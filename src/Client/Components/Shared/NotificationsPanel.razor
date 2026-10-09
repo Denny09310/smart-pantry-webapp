@@ -2,8 +2,27 @@
 @implements IAsyncDisposable
 @inject ServerApi Api
 @inject ToastService Toast
+@inject Bit.Butil.Push Push
 
 <div class="space-y-3">
+    <div class="flex items-center justify-between gap-2 rounded-lg border bg-card p-3">
+        <div class="min-w-0">
+            <p class="text-sm font-medium">Push notifications</p>
+            <p class="truncate text-xs text-muted-foreground">@PushStatusText</p>
+        </div>
+        @if (_pushEnabled)
+        {
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Loading="@_pushBusy" OnClick="DisablePushAsync">
+                Disable
+            </BbButton>
+        }
+        else
+        {
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Loading="@_pushBusy" OnClick="EnablePushAsync">
+                Enable
+            </BbButton>
+        }
+    </div>
     @if (_loading)
     {
         <div class="flex justify-center py-8">

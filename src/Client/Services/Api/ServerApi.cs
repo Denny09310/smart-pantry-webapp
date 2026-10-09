@@ -9,6 +9,8 @@ internal sealed class ServerApi(IServiceProvider services)
     public IPantryEndpoints Pantry => services.GetRequiredService<IPantryEndpoints>();
 
     public INotificationEndpoints Notifications => services.GetRequiredService<INotificationEndpoints>();
+
+    public IPushEndpoints Push => services.GetRequiredService<IPushEndpoints>();
 }
 
 [PathPrefix("/api/pantry")]
@@ -53,6 +55,24 @@ internal interface INotificationEndpoints
         CancellationToken ct = default);
 }
 
+[PathPrefix("/api/push")]
+internal interface IPushEndpoints
+{
+    [Get("/vapid-public-key")]
+    Task<ApiResponse<PushPublicKeyResponse>> GetPublicKeyAsync(
+        CancellationToken ct = default);
+
+    [Post("/subscriptions")]
+    Task<ApiResponse<PushSubscriptionDto>> SubscribeAsync(
+        PushSubscriptionRequest request,
+        CancellationToken ct = default);
+
+    [Delete("/subscriptions")]
+    Task<IApiResponse> UnsubscribeAsync(
+        [Query] string endpoint,
+        CancellationToken ct = default);
+}
+
 internal static class ServerApiExtensions
 {
     public static IServiceCollection AddServerApi(this IServiceCollection services)
@@ -68,6 +88,10 @@ internal static class ServerApiExtensions
             httpClientName: "Server.API");
 
         services.AddRefitGeneratedClient<INotificationEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IPushEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 

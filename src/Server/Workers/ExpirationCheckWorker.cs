@@ -4,7 +4,8 @@ namespace Server.Workers;
 
 /// <summary>
 /// Once per day (plus a catch-up run at startup): asks the
-/// <see cref="NotificationService"/> to generate expiration notifications.
+/// <see cref="NotificationService"/> to generate expiration notifications,
+/// then fans the unread ones out as web pushes.
 /// </summary>
 internal sealed class ExpirationCheckWorker(IServiceProvider services, ILogger<ExpirationCheckWorker> log)
     : BackgroundService
@@ -27,7 +28,18 @@ internal sealed class ExpirationCheckWorker(IServiceProvider services, ILogger<E
             using var scope = services.CreateScope();
             var notifications = scope.ServiceProvider.GetRequiredService<NotificationService>();
             var created = await notifications.GenerateExpirationNotificationsAsync(ct);
-            log.LogInformation("Expiration check completed, {Count} notification(s) created.", created);
+
+            var pushed = 0;
+            if (created > 0)
+            {
+                var push = scope.ServiceProvider.GetRequiredService<PushService>();
+                pushed = await push.SendUnreadAsync(ct);
+            }
+
+            log.LogInformation(
+                "Expiration check completed, {Count} notification(s) created, {Pushed} push(es) sent.",
+                created,
+                pushed);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {

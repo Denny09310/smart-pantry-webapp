@@ -53,3 +53,6 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
+
+// Shared push handling (see service-worker.shared.js).
+self.importScripts('service-worker.shared.js');

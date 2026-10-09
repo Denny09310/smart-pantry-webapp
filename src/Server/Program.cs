@@ -14,6 +14,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     .UseSnakeCaseNamingConvention());
 
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<PushService>();
+builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
 builder.Services.AddHostedService<ExpirationCheckWorker>();
 
 var app = builder.Build();
