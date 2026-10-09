@@ -15,6 +15,7 @@ public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContex
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
         var contentRoot = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Server"));
         builder.UseContentRoot(contentRoot);
