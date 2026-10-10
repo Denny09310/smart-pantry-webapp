@@ -269,6 +269,7 @@ public class UIStrings
     public static string Recipe_Uses => Get(nameof(Recipe_Uses));
     public static string Recipe_Attribution => Get(nameof(Recipe_Attribution));
     public static string Recipe_OpenAria => Get(nameof(Recipe_OpenAria));
+    public static string Recipe_OpenRecipe => Get(nameof(Recipe_OpenRecipe));
     public static string Lang_SwitchAria => Get(nameof(Lang_SwitchAria));
     public static string Settings_Title => Get(nameof(Settings_Title));
     public static string Settings_Eyebrow => Get(nameof(Settings_Eyebrow));

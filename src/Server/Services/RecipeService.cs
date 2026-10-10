@@ -26,18 +26,16 @@ internal sealed class RecipeService(
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromHours(24);
 
     public async Task<IReadOnlyList<RecipeSuggestion>> GetSuggestionsAsync(
-        IReadOnlyList<string> expiringNames,
+        IReadOnlyList<string> expiring,
         bool translate,
         CancellationToken ct = default)
     {
-        // Each pantry name contributes its English lookup candidates
-        // (translated plus original); display and matching keep the original.
-        var names = expiringNames
-            .Select(n => n.Trim())
-            .Where(n => n.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(MaxIngredients)
-            .ToList();
+        var names = expiring
+             .Select(n => n.Trim())
+             .Where(n => n.Length > 0)
+             .Distinct(StringComparer.OrdinalIgnoreCase)
+             .Take(MaxIngredients)
+             .ToList();
 
         if (names.Count == 0)
             return [];
