@@ -3,18 +3,30 @@
 @inject IStringLocalizer<UIStrings> L
 
 <div class="mx-auto w-full max-w-6xl space-y-4 p-4 md:space-y-6">
-    <header>
+    <header class="space-y-1">
+        <p class="text-xs font-medium uppercase text-muted-foreground">@L["Settings_Eyebrow"]</p>
         <h1 class="text-xl font-semibold md:text-2xl">@L["Settings_Title"]</h1>
+        <p class="text-sm text-muted-foreground">@L["Settings_Description"]</p>
     </header>
 
-    <BbCard Class="space-y-3 p-4 md:p-6">
-        <BbLabel Class="text-base">@L["Settings_LanguageLabel"]</BbLabel>
-        <BbSelect TValue="string"
-                  Class="w-full text-base"
-                  AriaLabel="@L["Settings_LanguageLabel"]"
-                  Value="@Languages.Current"
-                  ValueChanged="@OnLanguageChanged"
-                  Options="@_options" />
+    <BbCard Class="p-4 md:p-6">
+        <div class="flex items-center gap-3">
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <LucideIcon Name="globe" Size="18" />
+            </span>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium">@L["Settings_LanguageLabel"]</p>
+                <p class="truncate text-xs text-muted-foreground">@L["Settings_LanguageDescription"]</p>
+            </div>
+        </div>
+        <div class="mt-4">
+            <BbSelect TValue="string"
+                      Class="w-full text-base"
+                      AriaLabel="@L["Settings_LanguageLabel"]"
+                      Value="@Languages.Current"
+                      ValueChanged="@OnLanguageChanged"
+                      Options="@_options" />
+        </div>
     </BbCard>
 </div>
 
