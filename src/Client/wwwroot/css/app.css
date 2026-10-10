@@ -70,6 +70,7 @@ body {
    generated utilities: full-height centering with a 100vh fallback for
    browsers without dynamic viewport units. */
 #app .splash {
+    position: relative;
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
@@ -79,6 +80,15 @@ body {
     gap: 0.75rem;
     padding: 1.5rem;
     text-align: center;
+}
+
+#app .splash .version {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1rem;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
 }
 
 /* Boot-phase progress text, driven by Blazor itself: it sets

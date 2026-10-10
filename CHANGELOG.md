@@ -1,3 +1,24 @@
+## [0.6.1] - 2026-10-10
+
+### 🚀 Features
+
+- Show app version on boot splash with release checklist guard
+
+### 🐛 Bug Fixes
+
+- Scan feedback with vibration and visible lookup state
+
+### 📚 Documentation
+
+- Require tailwind rebuild in release checklist
+- Plan SignalR realtime updates phase
+- Trim roadmap to remaining work only
+
+### 💼 Other
+
+- Prune orphaned utilities from tailwind build
+- Bugfix/scan-feedback into develop
+
 ## [0.6.0] - 2026-10-10
 
 ### 🚀 Features

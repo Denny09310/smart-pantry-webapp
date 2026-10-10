@@ -203,6 +203,7 @@
   <data name="Bc_ManualPlaceholder" xml:space="preserve"><value>e.g. 5449000000996</value></data>
   <data name="Bc_ManualAria" xml:space="preserve"><value>Barcode</value></data>
   <data name="Bc_Lookup" xml:space="preserve"><value>Look up</value></data>
+  <data name="Bc_LookingUp" xml:space="preserve"><value>Looking up product…</value></data>
   <data name="Bc_LookupFailed" xml:space="preserve"><value>Can't look up the product.</value></data>
   <!-- Pantry filter bar. -->
   <data name="Pl_LocCount" xml:space="preserve"><value>{0} ({1})</value></data>
