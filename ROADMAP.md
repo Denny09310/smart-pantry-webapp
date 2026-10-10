@@ -174,6 +174,7 @@ The release is complete when:
 - [ ] The deployment reports healthy status and unhealthy when dependencies are down.
 - [ ] A written recovery checklist exists and a backup has been restored from it.
 - [ ] The Tailwind build is regenerated and committed (`tailwindcss -i ./wwwroot/css/tailwind.css -o ./wwwroot/css/tailwind.min.css --minify` from `src/Client`).
+- [ ] The splash-screen version in `index.html` matches the release.
 
 ## Explicitly out of scope
 
