@@ -2,26 +2,31 @@
 @inject LanguageService Languages
 @inject IStringLocalizer<UIStrings> L
 
-<div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
-    <header class="space-y-3">
-        <h1 class="text-xl font-semibold">@L["Settings_Title"]</h1>
+<div class="mx-auto w-full max-w-6xl space-y-4 p-4 md:space-y-6">
+    <header>
+        <h1 class="text-xl font-semibold md:text-2xl">@L["Settings_Title"]</h1>
     </header>
 
     <BbCard>
-        <BbCardContent Class="space-y-2">
-            <label for="language-select" class="text-sm font-medium">@L["Settings_LanguageLabel"]</label>
-            <select id="language-select"
-                    class="w-full rounded-md border bg-card px-3 py-2 text-sm"
-                    value="@Languages.Current"
-                    @onchange="OnLanguageChanged">
-                <option value="en">English</option>
-                <option value="it">Italiano</option>
-            </select>
+        <BbCardContent Class="space-y-3 p-4 md:p-6">
+            <BbLabel Class="text-base">@L["Settings_LanguageLabel"]</BbLabel>
+            <BbSelect TValue="string"
+                      Class="w-full text-base"
+                      AriaLabel="@L["Settings_LanguageLabel"]"
+                      Value="@Languages.Current"
+                      ValueChanged="@OnLanguageChanged"
+                      Options="@_options" />
         </BbCardContent>
     </BbCard>
 </div>
 
 @code {
-    private Task OnLanguageChanged(ChangeEventArgs e)
-        => Languages.SetAsync(e.Value?.ToString() ?? UIStrings.DefaultLanguage);
+    private static readonly IReadOnlyList<SelectOption<string>> _options =
+    [
+        new("en", "English"),
+        new("it", "Italiano"),
+    ];
+
+    private Task OnLanguageChanged(string? value)
+        => Languages.SetAsync(value ?? UIStrings.DefaultLanguage);
 }

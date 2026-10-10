@@ -18,13 +18,17 @@
                 <LucideIcon Name="bell" Size="20" />
                 <span>@L["Common_NotificationsTitle"]</span>
             </button>
+            <NavLink href="/settings" ActiveClass="bg-secondary" class="@LinkClass">
+                <LucideIcon Name="settings" Size="20" />
+                <span>@L["Settings_Title"]</span>
+            </NavLink>
         </nav>
     </BbCard>
 </div>
 
 @code
 {
-    private const string LinkClass = "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[10px] font-medium text-muted-foreground";
+    private const string LinkClass = "flex flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[10px] font-medium text-muted-foreground";
 
     private DialogOpenOptions NotificationsOptions() => new()
     {

@@ -2,7 +2,6 @@
 @using Client.Components.Shared.Members
 @inject MemberService Members
 @inject BottomSheetService BottomSheet
-@inject NavigationManager Nav
 @inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
@@ -32,13 +31,6 @@
             <LucideIcon Name="plus" Size="14" />
             <span class="hidden md:inline">@L["Common_AddItem"]</span>
         </BbButton>
-        <div class="shrink-0 md:hidden">
-            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Class="shrink-0"
-                      AriaLabel="@L["Settings_OpenAria"]"
-                      OnClick="@(() => Nav.NavigateTo("/settings"))">
-                <LucideIcon Name="settings" Size="16" />
-            </BbButton>
-        </div>
     </div>
 
     <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false" Class="scrollbar-none!">
