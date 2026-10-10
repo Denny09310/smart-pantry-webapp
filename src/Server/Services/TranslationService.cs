@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.Caching.Memory;
@@ -20,7 +19,6 @@ internal sealed class TranslationService(
 
     public async Task<IReadOnlyList<string>> CandidatesAsync(
         string name,
-        bool translate,
         CancellationToken ct = default)
     {
         var trimmed = name.Trim();
@@ -28,18 +26,11 @@ internal sealed class TranslationService(
         if (trimmed.Length == 0)
             return [];
 
-        var local = PantryTranslator.Candidates(trimmed);
-
-        // Dictionary hit already yields a translation; nothing to do.
-        if (!translate || local.Count > 1)
-            return local;
-
         var remote = await TranslateAsync(trimmed, ct);
 
-        if (remote is null || string.Equals(remote, trimmed, StringComparison.OrdinalIgnoreCase))
-            return local;
-
-        return [remote, trimmed];
+        return remote is null || string.Equals(remote, trimmed, StringComparison.OrdinalIgnoreCase)
+            ? [trimmed]
+            : [remote, trimmed];
     }
 
     private async Task<string?> TranslateAsync(string text, CancellationToken ct)
@@ -60,7 +51,6 @@ internal sealed class TranslationService(
             log.LogWarning(ex, "Translation of {Text} failed.", text);
         }
 
-        // Cache misses too (null): an outage shouldn't retry every call.
         cache.Set(cacheKey, translated, TranslationCacheLifetime);
 
         return translated;
@@ -81,10 +71,7 @@ internal sealed class TranslationService(
         var best = payload?.Matches?.FirstOrDefault(m => !string.IsNullOrWhiteSpace(m.Translation))?.Translation
             ?? payload?.Data?.TranslatedText;
 
-        if (string.IsNullOrWhiteSpace(best) || IsQuotaRefusal(best))
-            return null;
-
-        return best.Trim();
+        return string.IsNullOrWhiteSpace(best) || IsQuotaRefusal(best) ? null : best.Trim();
     }
 
     private static bool IsQuotaRefusal(string text)

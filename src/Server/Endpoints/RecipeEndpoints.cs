@@ -30,12 +30,7 @@ internal class RecipeEndpoints(ApplicationDbContext db, RecipeService recipes)
             .Take(20)
             .ToListAsync(ct);
 
-        var translate = string.Equals(
-            UIStrings.Normalize(lang),
-            "it",
-            StringComparison.OrdinalIgnoreCase);
-
-        var suggestions = await recipes.GetSuggestionsAsync(expiring, translate, ct);
+        var suggestions = await recipes.GetSuggestionsAsync(expiring, ct);
 
         return TypedResults.Ok(new GetRecipeSuggestionsResponse(
             suggestions.Select(s => new RecipeSuggestionDto(

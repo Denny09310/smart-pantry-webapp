@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -27,7 +26,6 @@ internal sealed class RecipeService(
 
     public async Task<IReadOnlyList<RecipeSuggestion>> GetSuggestionsAsync(
         IReadOnlyList<string> expiring,
-        bool translate,
         CancellationToken ct = default)
     {
         var names = expiring
@@ -41,7 +39,7 @@ internal sealed class RecipeService(
             return [];
 
         var candidateLists = await Task.WhenAll(
-            names.Select(n => translations.CandidatesAsync(n, translate, ct)));
+            names.Select(n => translations.CandidatesAsync(n, ct)));
 
         var terms = names
             .Zip(candidateLists, (name, candidates) => (

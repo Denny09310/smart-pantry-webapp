@@ -4,8 +4,6 @@ using System.Text;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Server.Services;
-
 using Shared.Models;
 
 namespace Server.Tests;
@@ -130,6 +128,63 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
     }
 
     [Fact]
+    public async Task Suggestions_Mix_Candidates_Across_Ingredients()
+    {
+        var stub = factory.Services.GetRequiredService<StubOffHandler>();
+        stub.Responder = request =>
+        {
+            var path = request.RequestUri?.PathAndQuery ?? string.Empty;
+
+            // First ingredient alone could fill the whole candidate budget.
+            if (path.Contains("filter.php?i=chicken", StringComparison.Ordinal))
+            {
+                var meals = string.Join(",", Enumerable.Range(10, 8)
+                    .Select(n => $$"""{"idMeal":"{{n}}","strMeal":"Chicken Dish {{n}}","strMealThumb":"https://www.themealdb.com/images/media/meals/x{{n}}.jpg"}"""));
+
+                return Json($"{{\"meals\":[{meals}]}}");
+            }
+
+            if (path.Contains("filter.php", StringComparison.Ordinal))
+            {
+                return Json("""
+                    {"meals":[
+                      {"idMeal":"20","strMeal":"Garlic Mix","strMealThumb":"https://www.themealdb.com/images/media/meals/g.jpg"}
+                    ]}
+                    """);
+            }
+
+            if (path.Contains("lookup.php", StringComparison.Ordinal))
+            {
+                var id = path.Contains("i=20", StringComparison.Ordinal) ? "20" : "10";
+                var ingredient = id == "20" ? "garlic" : "chicken";
+
+                return Json($"{{\"meals\":[{{\"idMeal\":\"{id}\",\"strMeal\":\"Dish {id}\",\"strMealThumb\":\"https://www.themealdb.com/images/media/meals/y.jpg\",\"strArea\":null,\"strIngredient1\":\"{ingredient}\",\"strIngredient2\":\"\"}}]}}");
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        };
+
+        var chickenId = await CreateItemAsync("chicken", InDays(2));
+        var garlicId = await CreateItemAsync("garlic", InDays(2));
+
+        try
+        {
+            var page = await SuggestionsAsync(_client);
+            Assert.NotNull(page);
+            Assert.NotEmpty(page.Items);
+
+            // Garlic's only meal must survive despite chicken's oversupply.
+            Assert.Contains(page.Items, m => m.IdMeal == "20");
+            Assert.All(page.Items, m => Assert.NotEmpty(m.MatchedIngredients));
+        }
+        finally
+        {
+            await DeleteItemAsync(chickenId);
+            await DeleteItemAsync(garlicId);
+        }
+    }
+
+    [Fact]
     public async Task Suggestions_Are_Empty_When_Nothing_Matches()
     {
         var stub = factory.Services.GetRequiredService<StubOffHandler>();
@@ -195,34 +250,6 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
         {
             await DeleteItemAsync(itemId);
         }
-    }
-}
-
-public sealed class PantryTranslatorTests
-{
-    [Theory]
-    [InlineData("pomodoro", "tomato")]
-    [InlineData("POMODORI", "tomato")]
-    [InlineData("pollo", "chicken")]
-    [InlineData("olio d'oliva", "olive oil")]
-    public void Translates_Italian_Staples(string input, string expected)
-    {
-        Assert.Contains(expected, PantryTranslator.Candidates(input));
-    }
-
-    [Theory]
-    [InlineData("chicken")]
-    [InlineData("pasta")]
-    [InlineData("mozzarella")]
-    public void Passes_Through_English_And_Universal_Words(string input)
-    {
-        Assert.Equal([input], PantryTranslator.Candidates(input));
-    }
-
-    [Fact]
-    public void Ignores_Blank_Names()
-    {
-        Assert.Empty(PantryTranslator.Candidates("   "));
     }
 }
 
