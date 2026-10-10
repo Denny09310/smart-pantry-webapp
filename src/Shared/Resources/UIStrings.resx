@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <!-- Shared UI strings (buttons, toasts, dialogs, aria labels). -->
+  <data name="Common_AddItem" xml:space="preserve"><value>Add item</value></data>
+  <data name="Common_AddItemAria" xml:space="preserve"><value>Add item</value></data>
+  <data name="Common_AddNewItem" xml:space="preserve"><value>Add new item</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="Common_Created" xml:space="preserve"><value>Item added to the pantry.</value></data>
+  <data name="Common_CreateError" xml:space="preserve"><value>Can't create new item.</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Common_DeleteAria" xml:space="preserve"><value>Delete {0}</value></data>
+  <data name="Common_DeleteError" xml:space="preserve"><value>Can't delete item.</value></data>
+  <data name="Common_DeleteUndone" xml:space="preserve"><value>This action cannot be undone.</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Common_EditAria" xml:space="preserve"><value>Edit {0}</value></data>
+  <data name="Common_EmptyDescription" xml:space="preserve"><value>Track a new pantry batch and expiration date.</value></data>
+  <data name="Common_EmptyTitle" xml:space="preserve"><value>No items in the pantry yet</value></data>
+  <data name="Common_ExpiredDaysAgo" xml:space="preserve"><value>Expired {0} days ago</value></data>
+  <data name="Common_ExpiredYesterday" xml:space="preserve"><value>Expired yesterday</value></data>
+  <data name="Common_ExpiresInDays" xml:space="preserve"><value>Expires in {0} days</value></data>
+  <data name="Common_ExpiresInOneDay" xml:space="preserve"><value>Expires in 1 day</value></data>
+  <data name="Common_ExpiresToday" xml:space="preserve"><value>Expires today</value></data>
+  <data name="Common_FilterAll" xml:space="preserve"><value>All ({0})</value></data>
+  <data name="Common_FilterExpired" xml:space="preserve"><value>Expired ({0})</value></data>
+  <data name="Common_FilterFresh" xml:space="preserve"><value>Fresh ({0})</value></data>
+  <data name="Common_FilterSoon" xml:space="preserve"><value>Expiring soon ({0})</value></data>
+  <data name="Common_FilterToday" xml:space="preserve"><value>Expires today ({0})</value></data>
+  <data name="Common_LoadError" xml:space="preserve"><value>Can't retrieve data.</value></data>
+  <data name="Common_LocationAll" xml:space="preserve"><value>All locations</value></data>
+  <data name="Common_LocationCabinet" xml:space="preserve"><value>Cabinet</value></data>
+  <data name="Common_LocationFreezer" xml:space="preserve"><value>Freezer</value></data>
+  <data name="Common_LocationFridge" xml:space="preserve"><value>Fridge</value></data>
+  <data name="Common_LocationPantry" xml:space="preserve"><value>Pantry</value></data>
+  <data name="Common_NoMatches" xml:space="preserve"><value>No matches</value></data>
+  <data name="Common_NoMatchesHint" xml:space="preserve"><value>Try adjusting your search or filter criteria.</value></data>
+  <data name="Common_NotificationsDescription" xml:space="preserve"><value>Items approaching expiration</value></data>
+  <data name="Common_NotificationsTitle" xml:space="preserve"><value>Notifications</value></data>
+  <data name="Common_Removed" xml:space="preserve"><value>Removed {0}.</value></data>
+  <data name="Common_SearchAria" xml:space="preserve"><value>Search pantry items</value></data>
+  <data name="Common_SearchPlaceholder" xml:space="preserve"><value>Search items by name or notes...</value></data>
+  <data name="Common_SortedBadge" xml:space="preserve"><value>Sorted by urgency</value></data>
+  <data name="Common_StatusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="Common_StatusFresh" xml:space="preserve"><value>Fresh</value></data>
+  <data name="Common_SwitcherDescription" xml:space="preserve"><value>Attribution for new items</value></data>
+  <data name="Common_SwitcherTitle" xml:space="preserve"><value>Who's using the app?</value></data>
+  <data name="Common_SwitchMemberAria" xml:space="preserve"><value>Switch member</value></data>
+  <data name="Common_UpdateError" xml:space="preserve"><value>Can't update item.</value></data>
+  <!-- Navigation labels. -->
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Nav_Pantry" xml:space="preserve"><value>Pantry</value></data>
+  <data name="Nav_PrimaryAria" xml:space="preserve"><value>Primary</value></data>
+  <!-- Home page. -->
+  <data name="Home_Eyebrow" xml:space="preserve"><value>Household Pantry • Live Status</value></data>
+  <data name="Home_Heading" xml:space="preserve"><value>Overview &amp; Action Board</value></data>
+  <data name="Home_StockBadge" xml:space="preserve"><value>Stock active • {0} locations</value></data>
+  <data name="Home_AllFreshTitle" xml:space="preserve"><value>All fresh</value></data>
+  <data name="Home_AllFreshDescription" xml:space="preserve"><value>Nothing needs attention right now.</value></data>
+  <data name="Home_DeleteTitle" xml:space="preserve"><value>Delete {0}?</value></data>
+  <data name="Home_Updated" xml:space="preserve"><value>Updated {0}.</value></data>
+  <!-- Pantry page. -->
+  <data name="Pantry_Eyebrow" xml:space="preserve"><value>Active Stock</value></data>
+  <data name="Pantry_UrgentBadge" xml:space="preserve"><value>• {0} Urgent Items</value></data>
+  <data name="Pantry_Title" xml:space="preserve"><value>Pantry Overview</value></data>
+  <data name="Pantry_Showing" xml:space="preserve"><value>• Showing {0} items</value></data>
+  <data name="Pantry_SortHint" xml:space="preserve"><value>Sort priority: Expiration date (urgent first)</value></data>
+  <data name="Pantry_ItemsHeading" xml:space="preserve"><value>Pantry Items</value></data>
+  <data name="Pantry_ItemsSubtext" xml:space="preserve"><value>{0} items, sorted by urgency</value></data>
+  <data name="Pantry_ViewAll" xml:space="preserve"><value>View all pantry items ({0})</value></data>
+  <data name="Pantry_EditTitle" xml:space="preserve"><value>Edit pantry item</value></data>
+  <data name="Pantry_EditDescription" xml:space="preserve"><value>Update this pantry batch and expiration date</value></data>
+  <data name="Pantry_MarkUsedTitle" xml:space="preserve"><value>Mark {0} as used?</value></data>
+  <data name="Pantry_MarkUsedDescription" xml:space="preserve"><value>{0} will be removed from the pantry.</value></data>
+  <data name="Pantry_MarkUsedButton" xml:space="preserve"><value>Mark used</value></data>
+  <data name="Pantry_UsedUp" xml:space="preserve"><value>Used up {0}.</value></data>
+  <!-- 404 page. -->
+  <data name="NotFound_Title" xml:space="preserve"><value>Page not found</value></data>
+  <data name="NotFound_Description" xml:space="preserve"><value>Sorry, the content you are looking for does not exist.</value></data>
+  <!-- Layout footer. -->
+  <data name="Layout_FooterBrand" xml:space="preserve"><value>Smart Pantry — Household Inventory Management</value></data>
+  <data name="Layout_FooterStatus" xml:space="preserve"><value>System Status: Local Storage Synchronized</value></data>
+  <!-- Notifications panel. -->
+  <data name="Np_PushTitle" xml:space="preserve"><value>Push notifications</value></data>
+  <data name="Np_Enable" xml:space="preserve"><value>Enable</value></data>
+  <data name="Np_Disable" xml:space="preserve"><value>Disable</value></data>
+  <data name="Np_EmptyTitle" xml:space="preserve"><value>All caught up</value></data>
+  <data name="Np_EmptyDescription" xml:space="preserve"><value>Items approaching expiration will show up here.</value></data>
+  <data name="Np_NoUnread" xml:space="preserve"><value>No unread notifications</value></data>
+  <data name="Np_UnreadCount" xml:space="preserve"><value>{0} unread</value></data>
+  <data name="Np_MarkAllRead" xml:space="preserve"><value>Mark all read</value></data>
+  <data name="Np_MarkRead" xml:space="preserve"><value>Mark read</value></data>
+  <data name="Np_PushChecking" xml:space="preserve"><value>Checking push support…</value></data>
+  <data name="Np_PushOn" xml:space="preserve"><value>On for this browser</value></data>
+  <data name="Np_PushPromo" xml:space="preserve"><value>Get expiry alerts even with the app closed</value></data>
+  <data name="Np_PushUnsupported" xml:space="preserve"><value>Not supported in this browser</value></data>
+  <data name="Np_PushNotConfigured" xml:space="preserve"><value>Push is not configured on the server.</value></data>
+  <data name="Np_PushBlocked" xml:space="preserve"><value>Push was blocked. Allow notifications to enable it.</value></data>
+  <data name="Np_PushSaveFailed" xml:space="preserve"><value>Can't save push subscription.</value></data>
+  <data name="Np_PushEnabled" xml:space="preserve"><value>Push notifications enabled.</value></data>
+  <data name="Np_PushEnableFailed" xml:space="preserve"><value>Can't enable push notifications.</value></data>
+  <data name="Np_PushRemoveFailed" xml:space="preserve"><value>Can't remove push subscription from the server.</value></data>
+  <data name="Np_PushDisabled" xml:space="preserve"><value>Push notifications disabled.</value></data>
+  <data name="Np_PushDisableFailed" xml:space="preserve"><value>Can't disable push notifications.</value></data>
+  <data name="Np_LoadFailed" xml:space="preserve"><value>Can't retrieve notifications.</value></data>
+  <data name="Np_MarkReadFailed" xml:space="preserve"><value>Can't update notification.</value></data>
+  <data name="Np_MarkAllReadFailed" xml:space="preserve"><value>Can't update notifications.</value></data>
+  <!-- Update notifier. -->
+  <data name="Un_UpdateTitle" xml:space="preserve"><value>Update available</value></data>
+  <data name="Un_UpdateDescription" xml:space="preserve"><value>A new version is ready to install.</value></data>
+  <data name="Un_ReloadButton" xml:space="preserve"><value>Reload</value></data>
+  <!-- Infinite scroll. -->
+  <data name="Is_ShowMore" xml:space="preserve"><value>Show more</value></data>
+  <!-- Members. -->
+  <data name="Mi_FirstRunTitle" xml:space="preserve"><value>Who's using this pantry?</value></data>
+  <data name="Mi_FirstRunDescription" xml:space="preserve"><value>Create the first member to get started.</value></data>
+  <data name="Mi_LoadFailed" xml:space="preserve"><value>Can't reach the server. Check your connection and reload.</value></data>
+  <data name="Cmd_NameLabel" xml:space="preserve"><value>Name *</value></data>
+  <data name="Cmd_NamePlaceholder" xml:space="preserve"><value>e.g. Alex</value></data>
+  <data name="Cmd_ColorLabel" xml:space="preserve"><value>Color</value></data>
+  <data name="Cmd_PickColorAria" xml:space="preserve"><value>Pick color {0}</value></data>
+  <data name="Cmd_SaveMember" xml:space="preserve"><value>Save member</value></data>
+  <data name="Cmd_CreateFailed" xml:space="preserve"><value>Can't create member.</value></data>
+  <data name="Cmd_NameRequired" xml:space="preserve"><value>Give the member a name.</value></data>
+  <data name="Ms_Current" xml:space="preserve"><value>Current</value></data>
+  <data name="Ms_TapToSwitch" xml:space="preserve"><value>Tap to switch</value></data>
+  <data name="Ms_RemoveAria" xml:space="preserve"><value>Remove {0}</value></data>
+  <data name="Ms_AddButton" xml:space="preserve"><value>Add member</value></data>
+  <data name="Ms_NewTitle" xml:space="preserve"><value>New member</value></data>
+  <data name="Ms_NewDescription" xml:space="preserve"><value>Who shares this pantry?</value></data>
+  <data name="Ms_RemoveTitle" xml:space="preserve"><value>Remove {0}?</value></data>
+  <data name="Ms_RemoveDescription" xml:space="preserve"><value>Their items stay in the pantry.</value></data>
+  <data name="Ms_RemoveButton" xml:space="preserve"><value>Remove</value></data>
+  <data name="Bs_CloseAria" xml:space="preserve"><value>Close sheet</value></data>
+  <!-- Create/edit pantry item dialog. -->
+  <data name="Cd_ScanBarcode" xml:space="preserve"><value>Scan barcode</value></data>
+  <data name="Cd_ItemNameLabel" xml:space="preserve"><value>Item Name *</value></data>
+  <data name="Cd_RequiredHint" xml:space="preserve"><value>Required</value></data>
+  <data name="Cd_ItemNamePlaceholder" xml:space="preserve"><value>e.g. Tomato sauce, Whole milk</value></data>
+  <data name="Cd_QuantityMeasureLabel" xml:space="preserve"><value>Quantity &amp; Measure</value></data>
+  <data name="Cd_StepCounterHint" xml:space="preserve"><value>Step counter</value></data>
+  <data name="Cd_DecreaseAria" xml:space="preserve"><value>Decrease quantity</value></data>
+  <data name="Cd_IncreaseAria" xml:space="preserve"><value>Increase quantity</value></data>
+  <data name="Cd_UnitPcs" xml:space="preserve"><value>pcs</value></data>
+  <data name="Cd_UnitJar" xml:space="preserve"><value>jar</value></data>
+  <data name="Cd_UnitCan" xml:space="preserve"><value>can</value></data>
+  <data name="Cd_UnitBox" xml:space="preserve"><value>box</value></data>
+  <data name="Cd_UnitKg" xml:space="preserve"><value>kg</value></data>
+  <data name="Cd_UnitGram" xml:space="preserve"><value>g</value></data>
+  <data name="Cd_UnitLitre" xml:space="preserve"><value>litre</value></data>
+  <data name="Cd_StorageLocationLabel" xml:space="preserve"><value>Storage Location</value></data>
+  <data name="Cd_ShelfLifeLabel" xml:space="preserve"><value>Shelf Life &amp; Expiry</value></data>
+  <data name="Cd_ExpiryPlaceholder" xml:space="preserve"><value>Pick a date</value></data>
+  <data name="Cd_AddShortcuts" xml:space="preserve"><value>Add shortcuts</value></data>
+  <data name="Cd_Plus3Days" xml:space="preserve"><value>+3 days</value></data>
+  <data name="Cd_Plus1Week" xml:space="preserve"><value>+1 week</value></data>
+  <data name="Cd_Plus1Month" xml:space="preserve"><value>+1 month</value></data>
+  <data name="Cd_Plus6Months" xml:space="preserve"><value>+6 months</value></data>
+  <data name="Cd_BatchNotesLabel" xml:space="preserve"><value>Batch Notes</value></data>
+  <data name="Cd_OptionalHint" xml:space="preserve"><value>Optional</value></data>
+  <data name="Cd_BatchNotesPlaceholder" xml:space="preserve"><value>e.g. Arrabbiata, top shelf, opened</value></data>
+  <data name="Cd_SaveItem" xml:space="preserve"><value>Save Item</value></data>
+  <data name="Cd_SaveChanges" xml:space="preserve"><value>Save Changes</value></data>
+  <data name="Cd_UseSoon" xml:space="preserve"><value>Use soon · {0} days left</value></data>
+  <data name="Cd_FreshStable" xml:space="preserve"><value>Fresh &amp; Stable · {0} days remaining</value></data>
+  <data name="Cd_NameRequired" xml:space="preserve"><value>Give the batch a name.</value></data>
+  <data name="Cd_ExpiryRequired" xml:space="preserve"><value>Pick an expiry date.</value></data>
+  <!-- Expiring table (desktop). -->
+  <data name="Et_Title" xml:space="preserve"><value>Expiring Soon</value></data>
+  <data name="Et_Description" xml:space="preserve"><value>Items needing attention in the next 7 days</value></data>
+  <data name="Et_GridAria" xml:space="preserve"><value>Items expiring soon</value></data>
+  <data name="Et_ColItem" xml:space="preserve"><value>Item</value></data>
+  <data name="Et_ColQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="Et_ColLocation" xml:space="preserve"><value>Location</value></data>
+  <data name="Et_ColExpiration" xml:space="preserve"><value>Expiration</value></data>
+  <data name="Et_ColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Et_ColQuickAction" xml:space="preserve"><value>Quick Action</value></data>
+  <data name="Et_FooterNote" xml:space="preserve"><value>Inventory counts reflect real-time physical stock</value></data>
+  <data name="Et_ViewAll" xml:space="preserve"><value>View all pantry items</value></data>
+  <!-- Pantry items list (mobile). -->
+  <data name="Pil_AddedBy" xml:space="preserve"><value>• Added by {0}</value></data>
+  <!-- Pantry stats (mobile). -->
+  <data name="Ps_TotalItems" xml:space="preserve"><value>Total Items</value></data>
+  <data name="Ps_AcrossLocations" xml:space="preserve"><value>Across {0} storage locations</value></data>
+  <data name="Ps_ExpiringSoon" xml:space="preserve"><value>Expiring Soon</value></data>
+  <data name="Ps_Within7Days" xml:space="preserve"><value>Within 7 days</value></data>
+  <data name="Ps_PriorityConsumption" xml:space="preserve"><value>Requires priority consumption</value></data>
+  <data name="Ps_CriticalBadge" xml:space="preserve"><value>Critical</value></data>
+  <data name="Ps_NeedsAttention" xml:space="preserve"><value>Needs immediate attention</value></data>
+  <data name="Ps_MobileToday" xml:space="preserve"><value>Today</value></data>
+  <data name="Ps_MobileSoon" xml:space="preserve"><value>Soon</value></data>
+  <!-- Barcode scanner. -->
+  <data name="Bc_PreviewAria" xml:space="preserve"><value>Barcode scanner preview</value></data>
+  <data name="Bc_PointHint" xml:space="preserve"><value>Point the camera at the barcode</value></data>
+  <data name="Bc_NotFound" xml:space="preserve"><value>Product not found. Try again or enter details manually.</value></data>
+  <data name="Bc_ScanAgain" xml:space="preserve"><value>Scan again</value></data>
+  <data name="Bc_NoCamera" xml:space="preserve"><value>Camera scanning isn't supported in this browser. Enter the barcode instead.</value></data>
+  <data name="Bc_ManualPlaceholder" xml:space="preserve"><value>e.g. 5449000000996</value></data>
+  <data name="Bc_ManualAria" xml:space="preserve"><value>Barcode</value></data>
+  <data name="Bc_Lookup" xml:space="preserve"><value>Look up</value></data>
+  <data name="Bc_LookupFailed" xml:space="preserve"><value>Can't look up the product.</value></data>
+  <!-- Pantry filter bar. -->
+  <data name="Pl_LocCount" xml:space="preserve"><value>{0} ({1})</value></data>
+  <!-- Inventory table (desktop). -->
+  <data name="It_GridAria" xml:space="preserve"><value>Pantry inventory</value></data>
+  <data name="It_ColItemName" xml:space="preserve"><value>Item Name</value></data>
+  <data name="It_ColQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="It_ColLocation" xml:space="preserve"><value>Location</value></data>
+  <data name="It_ColExpirationDate" xml:space="preserve"><value>Expiration Date</value></data>
+  <data name="It_ColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="It_ColActions" xml:space="preserve"><value>Actions</value></data>
+  <!-- Pantry summary (mobile). -->
+  <data name="Psy_Tracked" xml:space="preserve"><value>Tracked</value></data>
+  <data name="Psy_TrackedUnit" xml:space="preserve"><value>items</value></data>
+  <data name="Psy_Critical" xml:space="preserve"><value>Critical (≤ Today)</value></data>
+  <data name="Psy_Urgent" xml:space="preserve"><value>Urgent</value></data>
+  <data name="Psy_SoonUnit" xml:space="preserve"><value>soon</value></data>
+  <data name="Psy_PastDue" xml:space="preserve"><value>Past Due</value></data>
+  <data name="Psy_PastDueUnit" xml:space="preserve"><value>items</value></data>
+  <data name="Psy_Expiring7d" xml:space="preserve"><value>Expiring 7d</value></data>
+  <!-- Pantry tip. -->
+  <data name="Pt_Title" xml:space="preserve"><value>Pantry Tip</value></data>
+  <data name="Pt_Body" xml:space="preserve"><value>Separate apples and avocados from other produce to slow down natural ripening.</value></data>
+  <!-- Urgent list (mobile). -->
+  <data name="Pu_MarkUsedAria" xml:space="preserve"><value>Mark {0} as used</value></data>
+  <data name="Pu_ActionsAria" xml:space="preserve"><value>Actions for {0}</value></data>
+  <data name="Pu_ActionsTitle" xml:space="preserve"><value>Pantry item actions</value></data>
+  <data name="Pu_ActionsDescription" xml:space="preserve"><value>Select what you want to do with this item</value></data>
+  <data name="Pu_UseByTonight" xml:space="preserve"><value>Use by 11:59 PM</value></data>
+  <!-- Notification sentences (shared server/client formatter). -->
+  <data name="Notif_ExpiredYesterday" xml:space="preserve"><value>{0} expired yesterday.</value></data>
+  <data name="Notif_ExpiredDaysAgo" xml:space="preserve"><value>{0} expired {1} days ago.</value></data>
+  <data name="Notif_ExpiresToday" xml:space="preserve"><value>{0} expires today.</value></data>
+  <data name="Notif_ExpiresTomorrow" xml:space="preserve"><value>{0} expires tomorrow.</value></data>
+  <data name="Notif_ExpiresInDays" xml:space="preserve"><value>{0} expires in {1} days.</value></data>
+  <!-- Validation messages (DataAnnotations + manual checks). -->
+  <data name="V_MemberNameRequired" xml:space="preserve"><value>Name is required.</value></data>
+  <data name="V_MemberNameLength" xml:space="preserve"><value>Name must be 30 characters or fewer.</value></data>
+  <data name="V_MemberColorLength" xml:space="preserve"><value>Color must be 30 characters or fewer.</value></data>
+  <data name="V_ItemNameRequired" xml:space="preserve"><value>Name is required.</value></data>
+  <data name="V_ItemNameLength" xml:space="preserve"><value>Name must be 100 characters or fewer.</value></data>
+  <data name="V_QuantityRange" xml:space="preserve"><value>Quantity must be between 0.01 and 9999.</value></data>
+  <data name="V_UnitRequired" xml:space="preserve"><value>Unit is required.</value></data>
+  <data name="V_UnitLength" xml:space="preserve"><value>Unit must be 30 characters or fewer.</value></data>
+  <data name="V_LocationRequired" xml:space="preserve"><value>Location is required.</value></data>
+  <data name="V_LocationLength" xml:space="preserve"><value>Location must be 60 characters or fewer.</value></data>
+  <data name="V_NotesLength" xml:space="preserve"><value>Notes must be 500 characters or fewer.</value></data>
+  <data name="V_BarcodeRequired" xml:space="preserve"><value>A barcode query value is required.</value></data>
+  <data name="V_BarcodeFormat" xml:space="preserve"><value>Barcode must be 8, 12 or 13 digits.</value></data>
+  <data name="V_ExpirationRequired" xml:space="preserve"><value>Expiration date is required.</value></data>
+  <data name="V_EndpointRequired" xml:space="preserve"><value>Endpoint is required.</value></data>
+  <data name="V_EndpointLength" xml:space="preserve"><value>Endpoint must be 2000 characters or fewer.</value></data>
+  <data name="V_P256dhRequired" xml:space="preserve"><value>P256dh is required.</value></data>
+  <data name="V_P256dhLength" xml:space="preserve"><value>P256dh must be 500 characters or fewer.</value></data>
+  <data name="V_AuthRequired" xml:space="preserve"><value>Auth is required.</value></data>
+  <data name="V_AuthLength" xml:space="preserve"><value>Auth must be 500 characters or fewer.</value></data>
+  <data name="V_LanguageSupported" xml:space="preserve"><value>Language must be a supported language code.</value></data>
+  <!-- Language switcher. -->
+  <data name="Lang_SwitchAria" xml:space="preserve"><value>Switch language</value></data>
+  <!-- BlazorBlueprint component chrome (applied at startup for the current culture). -->
+  <data name="Bb_DialogClose" xml:space="preserve"><value>Close</value></data>
+  <data name="Bb_CalendarPrev" xml:space="preserve"><value>Go to previous month</value></data>
+  <data name="Bb_CalendarNext" xml:space="preserve"><value>Go to next month</value></data>
+  <data name="Bb_DatePickerPlaceholder" xml:space="preserve"><value>Pick a date</value></data>
+  <data name="Bb_DatePickerOpen" xml:space="preserve"><value>Open calendar</value></data>
+  <data name="Bb_Pagination" xml:space="preserve"><value>Pagination</value></data>
+  <data name="Bb_PaginationPrev" xml:space="preserve"><value>Previous</value></data>
+  <data name="Bb_PaginationNext" xml:space="preserve"><value>Next</value></data>
+  <data name="Bb_PaginationMore" xml:space="preserve"><value>More pages</value></data>
+  <data name="Bb_PaginationFirst" xml:space="preserve"><value>Go to first page</value></data>
+  <data name="Bb_PaginationLast" xml:space="preserve"><value>Go to last page</value></data>
+  <data name="Bb_PaginationRows" xml:space="preserve"><value>Rows per page</value></data>
+  <data name="Bb_PaginationShowing" xml:space="preserve"><value>Showing {0}-{1} of {2}</value></data>
+  <data name="Bb_PaginationPage" xml:space="preserve"><value>Page {0} of {1}</value></data>
+  <data name="Bb_PaginationEmpty" xml:space="preserve"><value>No items</value></data>
+  <data name="Bb_GridLoading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="Bb_GridNoResults" xml:space="preserve"><value>No results found</value></data>
+</root>
