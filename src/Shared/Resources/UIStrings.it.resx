@@ -8,6 +8,7 @@
   <data name="Common_AddItem" xml:space="preserve"><value>Aggiungi articolo</value></data>
   <data name="Common_AddItemAria" xml:space="preserve"><value>Aggiungi articolo</value></data>
   <data name="Common_AddNewItem" xml:space="preserve"><value>Aggiungi nuovo articolo</value></data>
+  <data name="Common_AddDialogTitle" xml:space="preserve"><value>Aggiungi articolo</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Indietro</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Annulla</value></data>
   <data name="Common_ClearFilters" xml:space="preserve"><value>Cancella filtri</value></data>

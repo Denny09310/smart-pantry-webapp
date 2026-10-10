@@ -1,11 +1,12 @@
 @namespace Client.Components.Shared.Pantry
 @using DataGridPrimitives = BlazorBlueprint.Primitives.DataGrid
+@inject IStringLocalizer<UIStrings> L
 
 <BbCard>
     <BbDataGrid TData="PantryItemDto" ItemsProvider="@ProvidePageAsync" ShowPagination="true" InitialPageSize="10"
-                TableContainerClass="overflow-x-auto" AriaLabel="Pantry inventory" @ref="_grid">
+                TableContainerClass="overflow-x-auto" AriaLabel="@L["It_GridAria"]" @ref="_grid">
         <Columns>
-            <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item Name">
+            <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["It_ColItemName"]">
                 <ChildContent Context="item">
                     <span class="font-medium">@item.Name</span>
                     @if (!string.IsNullOrWhiteSpace(item.Notes))
@@ -14,41 +15,41 @@
                     }
                 </ChildContent>
             </BbDataGridTemplateColumn>
-            <BbDataGridTemplateColumn TData="PantryItemDto" Title="Quantity">
+            <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["It_ColQuantity"]">
                 <ChildContent Context="item">
                     <span class="text-muted-foreground">@item.FormatQuantity()</span>
                 </ChildContent>
             </BbDataGridTemplateColumn>
-            <BbDataGridTemplateColumn TData="PantryItemDto" Title="Location">
+            <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["It_ColLocation"]">
                 <ChildContent Context="item">
                     <BbBadge Variant="BadgeVariant.Outline">@item.GetDisplayLocation()</BbBadge>
                 </ChildContent>
             </BbDataGridTemplateColumn>
-            <BbDataGridTemplateColumn TData="PantryItemDto" Title="Expiration Date" Sortable="true"
+            <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["It_ColExpirationDate"]" Sortable="true"
                                       SortBy="@(i => i.ExpirationDate)">
                 <ChildContent Context="item">
-                    <span class="text-muted-foreground">@item.FormatExpiration()</span>
+                    <span class="text-muted-foreground">@item.FormatExpiration(L)</span>
                 </ChildContent>
             </BbDataGridTemplateColumn>
-            <BbDataGridTemplateColumn TData="PantryItemDto" Title="Status">
+            <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["It_ColStatus"]">
                 <ChildContent Context="item">
-                    <BbBadge Variant="@item.GetBadgeVariant()">@item.GetLabel()</BbBadge>
+                    <BbBadge Variant="@item.GetBadgeVariant()">@item.GetLabel(L)</BbBadge>
                 </ChildContent>
             </BbDataGridTemplateColumn>
-            <BbDataGridTemplateColumn TData="PantryItemDto" Title="Actions">
+            <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["It_ColActions"]">
                 <ChildContent Context="item">
                     <span class="inline-flex items-center gap-1">
                         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
-                                  AriaLabel="@($"Edit {item.Name}")" Loading="@IsBusy(item)"
+                                  AriaLabel="@L["Common_EditAria", item.Name]" Loading="@IsBusy(item)"
                                   OnClick="@(() => OnEdit.InvokeAsync(item))">
                             <LucideIcon Name="pencil" Size="14" />
-                            Edit
+                            @L["Common_Edit"]
                         </BbButton>
                         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="text-destructive"
-                                  AriaLabel="@($"Delete {item.Name}")" Loading="@IsBusy(item)"
+                                  AriaLabel="@L["Common_DeleteAria", item.Name]" Loading="@IsBusy(item)"
                                   OnClick="@(() => OnDelete.InvokeAsync(item))">
                             <LucideIcon Name="trash-2" Size="14" />
-                            Delete
+                            @L["Common_Delete"]
                         </BbButton>
                     </span>
                 </ChildContent>

@@ -1,43 +1,44 @@
 @namespace Client.Components.Shared.Home
+@inject IStringLocalizer<UIStrings> L
 
 @* Desktop stat cards *@
 <div class="hidden gap-4 md:grid md:grid-cols-3">
     <BbCard>
         <BbCardHeader>
-            <BbCardTitle Class="text-sm font-medium text-muted-foreground">Total Items</BbCardTitle>
+            <BbCardTitle Class="text-sm font-medium text-muted-foreground">@L["Ps_TotalItems"]</BbCardTitle>
             <BbCardAction>
                 <LucideIcon Name="package" Size="18" Class="text-muted-foreground" />
             </BbCardAction>
         </BbCardHeader>
         <BbCardContent>
             <p class="text-3xl font-semibold">@TotalItems</p>
-            <p class="mt-1 text-sm text-muted-foreground">Across @LocationsCount storage locations</p>
+            <p class="mt-1 text-sm text-muted-foreground">@L["Ps_AcrossLocations", LocationsCount]</p>
         </BbCardContent>
     </BbCard>
 
     <BbCard>
         <BbCardHeader>
-            <BbCardTitle Class="text-sm font-medium text-muted-foreground">Expiring Soon</BbCardTitle>
+            <BbCardTitle Class="text-sm font-medium text-muted-foreground">@L["Ps_ExpiringSoon"]</BbCardTitle>
             <BbCardAction>
-                <BbBadge Variant="BadgeVariant.SoftWarning">Within 7 days</BbBadge>
+                <BbBadge Variant="BadgeVariant.SoftWarning">@L["Ps_Within7Days"]</BbBadge>
             </BbCardAction>
         </BbCardHeader>
         <BbCardContent>
             <p class="text-3xl font-semibold">@SoonCount</p>
-            <p class="mt-1 text-sm text-muted-foreground">Requires priority consumption</p>
+            <p class="mt-1 text-sm text-muted-foreground">@L["Ps_PriorityConsumption"]</p>
         </BbCardContent>
     </BbCard>
 
     <BbCard>
         <BbCardHeader>
-            <BbCardTitle Class="text-sm font-medium text-muted-foreground">Expired</BbCardTitle>
+            <BbCardTitle Class="text-sm font-medium text-muted-foreground">@L["Common_StatusExpired"]</BbCardTitle>
             <BbCardAction>
-                <BbBadge Variant="BadgeVariant.SoftDestructive">Critical</BbBadge>
+                <BbBadge Variant="BadgeVariant.SoftDestructive">@L["Ps_CriticalBadge"]</BbBadge>
             </BbCardAction>
         </BbCardHeader>
         <BbCardContent>
             <p class="text-3xl font-semibold">@ExpiredCount</p>
-            <p class="mt-1 text-sm text-muted-foreground">Needs immediate attention</p>
+            <p class="mt-1 text-sm text-muted-foreground">@L["Ps_NeedsAttention"]</p>
         </BbCardContent>
     </BbCard>
 </div>
@@ -47,21 +48,21 @@
     <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
         <LucideIcon Name="triangle-alert" Size="18" Class="shrink-0 text-destructive" />
         <div class="leading-tight">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Expired</p>
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">@L["Common_StatusExpired"]</p>
             <p class="text-base font-semibold">@ExpiredCount</p>
         </div>
     </div>
     <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
         <LucideIcon Name="clock" Size="18" Class="shrink-0 text-amber-600" />
         <div class="leading-tight">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">@L["Ps_MobileToday"]</p>
             <p class="text-base font-semibold">@TodayCount</p>
         </div>
     </div>
     <div class="flex items-center gap-2 rounded-lg border bg-card p-2">
         <LucideIcon Name="hourglass" Size="18" Class="shrink-0 text-sky-600" />
         <div class="leading-tight">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Soon</p>
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">@L["Ps_MobileSoon"]</p>
             <p class="text-base font-semibold">@SoonCount</p>
         </div>
     </div>

@@ -3,6 +3,7 @@
 @inject ToastService Toast
 @inject DialogService Dialog
 @inject BottomSheetService BottomSheet
+@inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
 <div class="space-y-1">
@@ -17,13 +18,13 @@
             <button type="button" class="min-w-0 flex-1 text-left" @onclick="@(() => SelectAsync(member.Id))">
                 <p class="truncate text-sm font-medium">@member.Name</p>
                 <p class="text-xs text-muted-foreground">
-                    @(member.Id == Members.CurrentMemberId ? "Current" : "Tap to switch")
+                    @(member.Id == Members.CurrentMemberId ? L["Ms_Current"] : L["Ms_TapToSwitch"])
                 </p>
             </button>
             @if (Members.Members.Count > 1)
             {
                 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                          AriaLabel="@($"Remove {member.Name}")"
+                          AriaLabel="@L["Ms_RemoveAria", member.Name]"
                           OnClick="@(() => RemoveAsync(member.Id, member.Name))">
                     <LucideIcon Name="trash-2" Size="16" />
                 </BbButton>
@@ -34,7 +35,7 @@
     <div class="border-t pt-3">
         <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="CreateAsync">
             <LucideIcon Name="plus" Size="16" />
-            Add member
+            @L["Ms_AddButton"]
         </BbButton>
     </div>
 </div>
@@ -43,10 +44,10 @@
     [CascadingParameter]
     public IDialogReference Reference { get; set; } = default!;
 
-    private static readonly DialogOpenOptions CreateOptions = new()
+    private DialogOpenOptions CreateOptions() => new()
     {
-        Title = "New member",
-        Description = "Who shares this pantry?",
+        Title = L["Ms_NewTitle"],
+        Description = L["Ms_NewDescription"],
         Size = DialogSize.Small,
     };
 
@@ -72,14 +73,14 @@
         await Reference.CloseAsync(DialogResult.Ok(id));
     }
 
-    private Task CreateAsync() => BottomSheet.OpenAsync<CreateMemberDialog>(CreateOptions);
+    private Task CreateAsync() => BottomSheet.OpenAsync<CreateMemberDialog>(CreateOptions());
 
     private async Task RemoveAsync(string id, string name)
     {
         var confirm = await Dialog.ConfirmAsync(
-            $"Remove {name}?",
-            "Their items stay in the pantry.",
-            new ConfirmDialogOptions { ConfirmText = "Remove", Destructive = true });
+            L["Ms_RemoveTitle", name],
+            L["Ms_RemoveDescription"],
+            new ConfirmDialogOptions { ConfirmText = L["Ms_RemoveButton"], CancelText = L["Common_Cancel"], Destructive = true });
 
         if (!confirm.Confirmed)
             return;

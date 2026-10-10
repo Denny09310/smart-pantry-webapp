@@ -8,6 +8,7 @@
 @inject NavigationManager Nav
 @inject MemberService Members
 @inject ILogger<Home> Log
+@inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
 <div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
@@ -16,7 +17,7 @@
             <h1 class="text-xl font-semibold">Smart Pantry</h1>
             <div class="flex items-center gap-1">
                 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                          AriaLabel="Switch member" OnClick="SwitchMemberAsync">
+                          AriaLabel="@L["Common_SwitchMemberAria"]" OnClick="SwitchMemberAsync">
                     <BbAvatar Class="h-6 w-6">
                         <BbAvatarFallback Class="text-[10px]"
                                           style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
@@ -25,7 +26,7 @@
                     </BbAvatar>
                 </BbButton>
                 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                          AriaLabel="Add item" OnClick="CreateItemAsync">
+                          AriaLabel="@L["Common_AddItemAria"]" OnClick="CreateItemAsync">
                     <LucideIcon Name="plus" Size="18" />
                 </BbButton>
             </div>
@@ -33,13 +34,13 @@
         <div class="hidden items-end justify-between gap-2 md:flex">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Household Pantry • Live Status
+                    @L["Home_Eyebrow"]
                 </p>
-                <h1 class="text-2xl font-semibold">Overview &amp; Action Board</h1>
+                <h1 class="text-2xl font-semibold">@L["Home_Heading"]</h1>
             </div>
             <BbBadge Variant="BadgeVariant.SoftSuccess">
                 <BbBadgeIcon Name="circle-dot" />
-                Stock active • @LocationsCount locations
+                @L["Home_StockBadge", LocationsCount]
             </BbBadge>
         </div>
     </header>
@@ -56,7 +57,7 @@
     }
     else if (VisibleItems.Count == 0 && TotalCount == 0)
     {
-        <BbEmpty Title="No items in the pantry yet" Description="Track a new pantry batch and expiration date."
+        <BbEmpty Title="@L["Common_EmptyTitle"]" Description="@L["Common_EmptyDescription"]"
                  Size="EmptySize.Default">
             <Icon>
                 <LucideIcon Name="package" Size="28" />
@@ -64,20 +65,20 @@
             <ChildContent>
                 <BbButton Size="ButtonSize.Small" OnClick="CreateItemAsync">
                     <LucideIcon Name="plus" Size="14" />
-                    Add item
+                    @L["Common_AddItem"]
                 </BbButton>
             </ChildContent>
         </BbEmpty>
     }
     else if (VisibleItems.Count == 0)
     {
-        <BbEmpty Title="No matches" Description="Try adjusting your search or filter criteria." Size="EmptySize.Default">
+        <BbEmpty Title="@L["Common_NoMatches"]" Description="@L["Common_NoMatchesHint"]" Size="EmptySize.Default">
             <Icon>
                 <LucideIcon Name="search" Size="28" />
             </Icon>
             <ChildContent>
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ClearFilters">
-                    Clear filters
+                    @L["Common_ClearFilters"]
                 </BbButton>
             </ChildContent>
         </BbEmpty>
@@ -97,7 +98,7 @@
         else
         {
             <div class="hidden md:block">
-                <BbEmpty Title="All fresh" Description="Nothing needs attention right now." Size="EmptySize.Default">
+                <BbEmpty Title="@L["Home_AllFreshTitle"]" Description="@L["Home_AllFreshDescription"]" Size="EmptySize.Default">
                     <Icon>
                         <LucideIcon Name="badge-check" Size="28" />
                     </Icon>
@@ -113,7 +114,7 @@
         <div class="flex flex-col gap-2 md:hidden">
             <BbButton Class="w-full" OnClick="CreateItemAsync">
                 <LucideIcon Name="plus" Size="14" />
-                Add new item
+                @L["Common_AddNewItem"]
             </BbButton>
         </div>
     }
@@ -122,17 +123,17 @@
 
 @code
 {
-    private static readonly DialogOpenOptions Options = new()
+    private DialogOpenOptions AddItemOptions() => new()
     {
-        Title = "Add pantry item",
-        Description = "Track a new pantry batch and expiration date",
+        Title = L["Common_AddDialogTitle"],
+        Description = L["Common_EmptyDescription"],
         Size = DialogSize.Large
     };
 
-    private static readonly DialogOpenOptions SwitcherOptions = new()
+    private DialogOpenOptions SwitcherOptions() => new()
     {
-        Title = "Who's using the app?",
-        Description = "Attribution for new items",
+        Title = L["Common_SwitcherTitle"],
+        Description = L["Common_SwitcherDescription"],
         Size = DialogSize.Small
     };
 
@@ -191,7 +192,7 @@
         }
     }
 
-    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
 
     private bool MatchesFilters(PantryItemDto item)
     {
@@ -218,7 +219,7 @@
 
             if (!response.IsSuccessfulWithContent)
             {
-                Toast.Error("Can't retrieve data.");
+                Toast.Error(L["Common_LoadError"]);
                 return;
             }
 
@@ -227,7 +228,7 @@
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Pantry load failed.");
-            Toast.Error("Can't retrieve data.");
+            Toast.Error(L["Common_LoadError"]);
         }
     }
 
@@ -260,7 +261,7 @@
 
     private async Task CreateItemAsync()
     {
-        var result = await BottomSheet.OpenAsync<CreatePantryItemDialog>(Options);
+        var result = await BottomSheet.OpenAsync<CreatePantryItemDialog>(AddItemOptions());
 
         if (result.Cancelled)
             return;
@@ -272,13 +273,13 @@
 
         if (!response.IsSuccessfulWithContent)
         {
-            Toast.Error("Can't create new item.");
+            Toast.Error(L["Common_CreateError"]);
             return;
         }
 
         var createdId = response.Content?.Id;
 
-        Toast.Success("Item added to the pantry.");
+        Toast.Success(L["Common_Created"]);
         await LoadAsync();
         _highlightId = createdId;
     }
@@ -286,9 +287,9 @@
     private async Task DeleteItemAsync(PantryItemDto item)
     {
         var confirm = await Dialog.ConfirmAsync(
-            $"Delete {item.Name}?",
-            "This action cannot be undone.",
-            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
+            L["Home_DeleteTitle", item.Name],
+            L["Common_DeleteUndone"],
+            new ConfirmDialogOptions { ConfirmText = L["Common_Delete"], CancelText = L["Common_Cancel"], Destructive = true });
 
         if (!confirm.Confirmed)
             return;
@@ -302,12 +303,12 @@
 
             if (!response.IsSuccessStatusCode)
             {
-                Toast.Error("Can't delete item.");
+                Toast.Error(L["Common_DeleteError"]);
                 return;
             }
 
             _items?.RemoveAll(i => i.Id == item.Id);
-            Toast.Success($"Removed {item.Name}.");
+            Toast.Success(L["Common_Removed", item.Name]);
         }
         finally
         {

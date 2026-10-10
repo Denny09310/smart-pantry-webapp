@@ -1,21 +1,22 @@
 @namespace Client.Components.Shared
 @inject BottomSheetService BottomSheet
+@inject IStringLocalizer<UIStrings> L
 
 <div class="fixed inset-x-4 z-50 md:hidden"
     style="view-transition-name: bottom-nav; bottom: calc(1rem + env(safe-area-inset-bottom, 0px));">
     <BbCard Class="rounded-2xl">
-        <nav class="flex items-center justify-around px-2 py-2" aria-label="Primary">
+        <nav class="flex items-center justify-around px-2 py-2" aria-label="@L["Nav_PrimaryAria"]">
             <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="bg-secondary" class="@LinkClass">
                 <LucideIcon Name="layout-dashboard" Size="20" />
-                <span>Dashboard</span>
+                <span>@L["Nav_Dashboard"]</span>
             </NavLink>
             <NavLink href="/pantry" ActiveClass="bg-secondary" class="@LinkClass">
                 <LucideIcon Name="refrigerator" Size="20" />
-                <span>Pantry</span>
+                <span>@L["Nav_Pantry"]</span>
             </NavLink>
             <button type="button" class="@LinkClass" @onclick="NotifyAsync">
                 <LucideIcon Name="bell" Size="20" />
-                <span>Notifications</span>
+                <span>@L["Common_NotificationsTitle"]</span>
             </button>
         </nav>
     </BbCard>
@@ -25,12 +26,12 @@
 {
     private const string LinkClass = "flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 text-[10px] font-medium text-muted-foreground";
 
-    private static readonly DialogOpenOptions NotificationsOptions = new()
+    private DialogOpenOptions NotificationsOptions() => new()
     {
-        Title = "Notifications",
-        Description = "Items approaching expiration",
+        Title = L["Common_NotificationsTitle"],
+        Description = L["Common_NotificationsDescription"],
         Size = DialogSize.Default,
     };
 
-    private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
+    private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions());
 }

@@ -3,6 +3,7 @@
 @typeparam T
 @inject IJSRuntime JS
 @inject Bit.Butil.Dom Dom
+@inject IStringLocalizer<UIStrings> L
 @implements IAsyncDisposable
 
 @foreach (var item in _visible)
@@ -17,7 +18,7 @@
         @if (_observerFailed)
         {
             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ShowMore">
-                @TriggerButtonText
+                @(TriggerButtonText ?? L["Is_ShowMore"])
             </BbButton>
         }
     </div>
@@ -34,7 +35,7 @@
     public int PageSize { get; set; } = 20;
 
     [Parameter]
-    public string TriggerButtonText { get; set; } = "Show more";
+    public string? TriggerButtonText { get; set; }
 
     /// <summary>
     /// Optional id the list must reveal: expands the window past its index

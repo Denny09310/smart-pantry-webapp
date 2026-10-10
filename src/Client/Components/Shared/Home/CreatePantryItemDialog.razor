@@ -1,5 +1,6 @@
 @using System.ComponentModel.DataAnnotations
 @using Client.Components.Shared.Pantry
+@inject IStringLocalizer<UIStrings> L
 
 @if (_scanning)
 {
@@ -13,18 +14,18 @@ else
     <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-none pr-1">
         <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartScan">
             <LucideIcon Name="barcode" Size="16" />
-            Scan barcode
+            @L["Cd_ScanBarcode"]
         </BbButton>
         @* Item name *@
         <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
             <div class="flex items-center justify-between">
-                <BbFieldLabel For="item-name" Class="text-sm font-medium">Item Name *</BbFieldLabel>
-                <span class="text-xs text-muted-foreground">Required</span>
+                <BbFieldLabel For="item-name" Class="text-sm font-medium">@L["Cd_ItemNameLabel"]</BbFieldLabel>
+                <span class="text-xs text-muted-foreground">@L["Cd_RequiredHint"]</span>
             </div>
             <BbFieldContent>
                 <BbInputGroup Class="bg-card">
                     <BbInputGroupInput Id="item-name" @bind-Value="Input.Name"
-                                       Placeholder="e.g. Tomato sauce, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
+                                       Placeholder="@L["Cd_ItemNamePlaceholder"]" UpdateTiming="UpdateTiming.Immediate" />
                 </BbInputGroup>
                 <BbFieldError Errors="@context.GetValidationMessages(() => Input.Name)" />
             </BbFieldContent>
@@ -33,12 +34,12 @@ else
         @* Quantity & measure *@
         <div class="space-y-2">
             <div class="flex items-center justify-between">
-                <BbLabel Class="text-sm font-medium">Quantity &amp; Measure</BbLabel>
-                <span class="text-xs text-sky-600">Step counter</span>
+                <BbLabel Class="text-sm font-medium">@L["Cd_QuantityMeasureLabel"]</BbLabel>
+                <span class="text-xs text-sky-600">@L["Cd_StepCounterHint"]</span>
             </div>
 
             <div class="flex items-center justify-between rounded-lg bg-muted p-1">
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="Decrease quantity"
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@L["Cd_DecreaseAria"]"
                           OnClick="DecrementQuantity">
                     <LucideIcon Name="minus" Size="16" />
                 </BbButton>
@@ -46,7 +47,7 @@ else
                     <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
                     <span class="text-xs text-muted-foreground">@Input.Unit</span>
                 </div>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="Increase quantity"
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@L["Cd_IncreaseAria"]"
                           OnClick="IncrementQuantity">
                     <LucideIcon Name="plus" Size="16" />
                 </BbButton>
@@ -54,37 +55,37 @@ else
             <ValidationMessage For="@(() => Input.Quantity)" class="text-sm text-destructive" />
 
             <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
-                <BbChip Value="@("pcs")">pcs</BbChip>
-                <BbChip Value="@("jar")">jar</BbChip>
-                <BbChip Value="@("can")">can</BbChip>
-                <BbChip Value="@("box")">box</BbChip>
-                <BbChip Value="@("kg")">kg</BbChip>
-                <BbChip Value="@("g")">g</BbChip>
-                <BbChip Value="@("litre")">litre</BbChip>
+                <BbChip Value="@("pcs")">@L["Cd_UnitPcs"]</BbChip>
+                <BbChip Value="@("jar")">@L["Cd_UnitJar"]</BbChip>
+                <BbChip Value="@("can")">@L["Cd_UnitCan"]</BbChip>
+                <BbChip Value="@("box")">@L["Cd_UnitBox"]</BbChip>
+                <BbChip Value="@("kg")">@L["Cd_UnitKg"]</BbChip>
+                <BbChip Value="@("g")">@L["Cd_UnitGram"]</BbChip>
+                <BbChip Value="@("litre")">@L["Cd_UnitLitre"]</BbChip>
             </BbChipSet>
             <ValidationMessage For="@(() => Input.Unit)" class="text-sm text-destructive" />
         </div>
 
         @* Storage location *@
         <div class="space-y-2">
-            <BbLabel Class="text-sm font-medium">Storage Location</BbLabel>
+            <BbLabel Class="text-sm font-medium">@L["Cd_StorageLocationLabel"]</BbLabel>
             <BbToggleGroup @bind-Value="Input.Location" Type="ToggleGroupType.Single" Required="true"
                            Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
                 <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
                     <LucideIcon Name="package" Size="20" />
-                    <span class="text-xs font-medium">Pantry</span>
+                    <span class="text-xs font-medium">@L["Common_LocationPantry"]</span>
                 </BbToggleGroupItem>
                 <BbToggleGroupItem Value="@("fridge")" Class="h-auto flex-col gap-1 py-2">
                     <LucideIcon Name="refrigerator" Size="20" />
-                    <span class="text-xs font-medium">Fridge</span>
+                    <span class="text-xs font-medium">@L["Common_LocationFridge"]</span>
                 </BbToggleGroupItem>
                 <BbToggleGroupItem Value="@("freezer")" Class="h-auto flex-col gap-1 py-2">
                     <LucideIcon Name="snowflake" Size="20" />
-                    <span class="text-xs font-medium">Freezer</span>
+                    <span class="text-xs font-medium">@L["Common_LocationFreezer"]</span>
                 </BbToggleGroupItem>
                 <BbToggleGroupItem Value="@("cabinet")" Class="h-auto flex-col gap-1 py-2">
                     <LucideIcon Name="archive" Size="20" />
-                    <span class="text-xs font-medium">Cabinet</span>
+                    <span class="text-xs font-medium">@L["Common_LocationCabinet"]</span>
                 </BbToggleGroupItem>
             </BbToggleGroup>
             <ValidationMessage For="@(() => Input.Location)" class="text-sm text-destructive" />
@@ -92,28 +93,28 @@ else
 
         @* Shelf life & expiry *@
         <BbField>
-            <BbFieldLabel Class="text-sm font-medium">Shelf Life &amp; Expiry</BbFieldLabel>
+            <BbFieldLabel Class="text-sm font-medium">@L["Cd_ShelfLifeLabel"]</BbFieldLabel>
             <BbFieldContent>
                 <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(_editingId is null ? DateTime.Today : null)" DateFormat="dd/MM/yyyy"
-                              Placeholder="Pick a date" Class="w-full" />
+                              Placeholder="@L["Cd_ExpiryPlaceholder"]" Class="w-full" />
                 <ValidationMessage For="@(() => Input.ExpirationDate)" class="text-sm text-destructive" />
             </BbFieldContent>
         </BbField>
 
         <div class="space-y-2">
-            <span class="text-xs text-muted-foreground">Add shortcuts</span>
+            <span class="text-xs text-muted-foreground">@L["Cd_AddShortcuts"]</span>
             <div class="flex flex-wrap gap-1.5">
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(3))">
-                    +3 days
+                    @L["Cd_Plus3Days"]
                 </BbButton>
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(7))">
-                    +1 week
+                    @L["Cd_Plus1Week"]
                 </BbButton>
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(30))">
-                    +1 month
+                    @L["Cd_Plus1Month"]
                 </BbButton>
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(180))">
-                    +6 months
+                    @L["Cd_Plus6Months"]
                 </BbButton>
             </div>
             @if (DaysRemaining is not null)
@@ -128,10 +129,10 @@ else
         @* Batch notes *@
         <div class="space-y-2">
             <div class="flex items-center justify-between">
-                <BbLabel For="batch-notes" Class="text-sm font-medium">Batch Notes</BbLabel>
-                <span class="text-xs text-muted-foreground">Optional</span>
+                <BbLabel For="batch-notes" Class="text-sm font-medium">@L["Cd_BatchNotesLabel"]</BbLabel>
+                <span class="text-xs text-muted-foreground">@L["Cd_OptionalHint"]</span>
             </div>
-            <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened"
+            <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="@L["Cd_BatchNotesPlaceholder"]"
                         rows="2" />
         </div>
 
@@ -143,10 +144,10 @@ else
             <Icon>
                 <LucideIcon Name="save" Size="16" />
             </Icon>
-            <ChildContent>@(_editingId is null ? "Save Item" : "Save Changes")</ChildContent>
+            <ChildContent>@(_editingId is null ? L["Cd_SaveItem"] : L["Cd_SaveChanges"])</ChildContent>
         </BbButton>
         <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
-            Cancel
+            @L["Common_Cancel"]
         </BbButton>
     </div>
 </EditForm>
@@ -197,10 +198,10 @@ else
     private string FreshnessText => (Freshness, DaysRemaining) switch
     {
         (null, _) => string.Empty,
-        (ExpiryStatus.Expired, var days) => $"Expired {-days} days ago",
-        (ExpiryStatus.Today, _) => "Expires today",
-        (ExpiryStatus.Soon, var days) => $"Use soon · {days} days left",
-        (_, var days) => $"Fresh & Stable · {days} days remaining",
+        (ExpiryStatus.Expired, var days) => L["Common_ExpiredDaysAgo", -days],
+        (ExpiryStatus.Today, _) => L["Common_ExpiresToday"],
+        (ExpiryStatus.Soon, var days) => L["Cd_UseSoon", days],
+        (_, var days) => L["Cd_FreshStable", days],
     };
 
     private BadgeVariant FreshnessVariant => Freshness switch
@@ -272,7 +273,7 @@ else
 
     private sealed class InputModel
     {
-        [Required(ErrorMessage = "Give the batch a name.")]
+        [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.Cd_NameRequired))]
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
@@ -285,7 +286,7 @@ else
         [Required]
         public string Location { get; set; } = "pantry";
 
-        [Required(ErrorMessage = "Pick an expiry date.")]
+        [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.Cd_ExpiryRequired))]
         public DateTime? ExpirationDate { get; set; } = DateTime.Today.AddDays(7);
 
         [StringLength(500)]

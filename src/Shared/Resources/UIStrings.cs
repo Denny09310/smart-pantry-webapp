@@ -32,6 +32,7 @@ public class UIStrings
     public static string Common_AddItem => Get(nameof(Common_AddItem));
     public static string Common_AddItemAria => Get(nameof(Common_AddItemAria));
     public static string Common_AddNewItem => Get(nameof(Common_AddNewItem));
+    public static string Common_AddDialogTitle => Get(nameof(Common_AddDialogTitle));
     public static string Common_Back => Get(nameof(Common_Back));
     public static string Common_Cancel => Get(nameof(Common_Cancel));
     public static string Common_ClearFilters => Get(nameof(Common_ClearFilters));
