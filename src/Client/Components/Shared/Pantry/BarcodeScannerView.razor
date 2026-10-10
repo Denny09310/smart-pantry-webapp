@@ -121,10 +121,20 @@ else
 
             try
             {
+                // Ask for HD with continuous autofocus: the defaults are often
+                // 640x480, which looks blurry stretched full-width and starves
+                // the detector of pixels. All ideals, so weaker cameras still
+                // start instead of failing constraint resolution (null).
                 _stream = await MediaDevices.GetUserMedia(
                     audio: false,
                     video: true,
-                    videoConstraints: new { facingMode = "environment" });
+                    videoConstraints: new
+                    {
+                        facingMode = "environment",
+                        width = new { ideal = 1920 },
+                        height = new { ideal = 1080 },
+                        focusMode = "continuous",
+                    });
 
                 if (_stream is null)
                 {
