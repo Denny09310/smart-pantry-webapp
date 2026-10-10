@@ -1,0 +1,23 @@
+@inject ThemeService Themes
+@inject ILogger<ThemeInitializer> Log
+
+@code {
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        _started = true;
+
+        try
+        {
+            await Themes.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Theme initialization failed.");
+        }
+    }
+}
