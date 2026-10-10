@@ -99,20 +99,20 @@ lists, no saving recipes.
 
 ### Tasks
 
-- [ ] Add a server-side recipe lookup proxied through
+- [x] Add a server-side recipe lookup proxied through
   `GET /api/recipes/suggestions` (takes the expiring item names, queries
   TheMealDB `filter.php?i=` per ingredient, looks up the top candidates via
   `lookup.php?i=`, ranks meals by how many expiring ingredients they cover,
   returns the top handful with name, thumbnail, and source/video links;
   tolerant timeout — lookup failure hides the section instead of breaking
   the page).
-- [ ] Cache suggestion responses server-side with a ~24h TTL (recipe data is
+- [x] Cache suggestion responses server-side with a ~24h TTL (recipe data is
   shared, not household-specific, so an in-memory cache is enough — no table).
-- [ ] Add a "Use it up" section on the dashboard under the attention list:
+- [x] Add a "Use it up" section on the dashboard under the attention list:
   recipe cards showing the meal thumbnail, which expiring items each recipe
   covers, and a link out to the full recipe (TheMealDB meal page). Empty when
   nothing relevant is found.
-- [ ] Add tests: ingredient matching/ranking, TheMealDB mapping (stubbed HTTP
+- [x] Add tests: ingredient matching/ranking, TheMealDB mapping (stubbed HTTP
   handler, no live network in tests), cache-hit behavior, failure hides the
   section.
 
