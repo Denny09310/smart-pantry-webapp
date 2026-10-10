@@ -203,6 +203,7 @@
   <data name="Bc_ManualPlaceholder" xml:space="preserve"><value>es. 5449000000996</value></data>
   <data name="Bc_ManualAria" xml:space="preserve"><value>Codice a barre</value></data>
   <data name="Bc_Lookup" xml:space="preserve"><value>Cerca</value></data>
+  <data name="Bc_LookingUp" xml:space="preserve"><value>Ricerca prodotto…</value></data>
   <data name="Bc_LookupFailed" xml:space="preserve"><value>Impossibile cercare il prodotto.</value></data>
   <!-- Barra filtri. -->
   <data name="Pl_LocCount" xml:space="preserve"><value>{0} ({1})</value></data>
