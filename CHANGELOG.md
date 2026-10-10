@@ -1,3 +1,36 @@
+## [0.6.0] - 2026-10-10
+
+### 🚀 Features
+
+- Shared UIStrings resources and localized validation
+- Structured notifications with per-language push
+- Convert client UI to IStringLocalizer with language switcher
+- Move language selection to settings page
+- Settings page with BbSelect language picker
+
+### 🐛 Bug Fixes
+
+- Request HD capture with continuous autofocus for barcode scan
+- Splash layout in plain CSS and sync theme-color via ThemeService
+- Remove scroll-into-view and long-press interactions
+- Remove nullable annotation warnings in freshness text
+- Drop redundant card content on settings
+
+### 🛼 Refactor
+
+- Replace theme-color sync with ThemeInitializer
+
+### 📚 Documentation
+
+- Plan TheMealDB recipe suggestions for expiring items
+- Record verified TheMealDB API notes for recipe suggestions
+
+### 💼 Other
+
+- Refactor/pwa-polish into develop
+- Feature/localization into develop
+- Bugfix/remove-scroll-reveal into develop
+
 ## [0.5.0] - 2026-10-10
 
 ### 🛼 Refactor
