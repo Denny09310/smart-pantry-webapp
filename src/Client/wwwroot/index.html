@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,7 +18,6 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="css/tailwind.min.css" />
     <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
-    <link rel="stylesheet" href="_content/Bit.Bswup/bit-bswup.progress.css" />
     <link rel="stylesheet" href="Client.styles.css" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
@@ -35,28 +35,7 @@
         <div class="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
             <img src="icon-192.png" alt="" class="h-16 w-16 rounded-2xl" />
             <p class="text-sm font-medium">Smart Pantry</p>
-            <p class="bswup-boot-text text-xs text-muted-foreground"></p>
-        </div>
-    </div>
-
-    <div id="bit-bswup" data-bit-bswup-config="true" data-bit-bswup-auto-reload="false"
-        data-bit-bswup-show-on-update="false" data-bit-bswup-hide-app="true" data-bit-bswup-auto-hide="true"
-        data-bit-bswup-handler="smartPantryBswupHandler" style="background-color: var(--background);">
-        <div class="bit-bswup-container mx-auto flex min-h-dvh w-full max-w-xs flex-col items-center justify-center gap-3 p-6 text-center">
-            <img src="icon-192.png" alt="Smart Pantry" class="h-16 w-16 rounded-2xl" />
-            <p class="bit-bswup-title text-xl font-semibold">Smart Pantry</p>
-            <p class="bit-bswup-description text-sm text-muted-foreground">Installing the app&hellip;</p>
-            <div class="bit-bswup-progress w-full">
-                <div id="bit-bswup-progress-bar" role="progressbar" aria-label="Install download progress"
-                    aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width: 0%"></div>
-            </div>
-            <p id="bit-bswup-percent" class="text-sm text-muted-foreground">0%</p>
-            <div id="bit-bswup-error" class="bit-bswup-error" style="display: none;" role="alert">
-                <p class="bit-bswup-error-title">Update failed to install</p>
-                <p id="bit-bswup-error-message" class="bit-bswup-error-message"></p>
-                <pre id="bit-bswup-error-details" class="bit-bswup-error-details"></pre>
-                <button id="bit-bswup-error-retry" type="button">Retry</button>
-            </div>
+            <p class="boot-text text-xs text-muted-foreground"></p>
         </div>
     </div>
 
@@ -67,9 +46,8 @@
     </div>
 
     <script src="_content/Bit.Butil/bit-butil.js"></script>
-    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
-    <script src="_content/Bit.Bswup/bit-bswup.js" scope="/" sw="service-worker.js" updateOnVisibility="true"></script>
-    <script src="_content/Bit.Bswup/bit-bswup.progress.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
 </body>
 
 </html>

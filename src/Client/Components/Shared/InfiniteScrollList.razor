@@ -2,6 +2,7 @@
 @using Bit.Butil
 @typeparam T
 @inject IJSRuntime JS
+@inject Bit.Butil.Dom Dom
 @implements IAsyncDisposable
 
 @foreach (var item in _visible)
@@ -92,7 +93,7 @@
         if (EnsureVisibleId is not null && EnsureVisibleId != _scrolledFor)
         {
             _scrolledFor = EnsureVisibleId;
-            await PantryScroll.ScrollToAsync(JS, EnsureVisibleId);
+            await PantryScroll.ScrollToAsync(Dom, EnsureVisibleId);
         }
     }
 

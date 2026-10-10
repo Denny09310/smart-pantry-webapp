@@ -1,4 +1,4 @@
-using Microsoft.JSInterop;
+using Bit.Butil;
 
 namespace Client.Services;
 
@@ -8,12 +8,25 @@ namespace Client.Services;
 /// </summary>
 internal static class PantryScroll
 {
-    public static async Task ScrollToAsync(IJSRuntime js, string itemId)
+    public static async Task ScrollToAsync(Dom dom, string itemId)
     {
         try
         {
-            await using var module = await js.InvokeAsync<IJSObjectReference>("import", "/js/scroll-helper.js");
-            await module.InvokeVoidAsync("scrollToItem", itemId);
+            await using var handle = await dom.ById($"pantry-item-{itemId}");
+
+            if (handle is null)
+                return;
+
+            var reference = await handle.AsElementReference();
+
+            if (reference is null)
+                return;
+
+            await reference.Value.ScrollIntoView(new ScrollIntoViewOptions
+            {
+                Behavior = ScrollBehavior.Smooth,
+                Block = ScrollLogicalPosition.Nearest,
+            });
         }
         catch (Exception)
         {

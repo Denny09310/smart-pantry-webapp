@@ -20,6 +20,17 @@ namespace Server.Tests;
 /// </summary>
 public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContext>
 {
+    private const string TestConnectionString =
+        "Server=localhost;Database=smart_pantry_tests;Uid=postgres;Pwd=mypassword123";
+
+    public PantryApiFactory()
+    {
+        // Program.Main reads the connection string eagerly, before the test
+        // host applies its own configuration, so it must already be visible
+        // through the environment when the host builds.
+        Environment.SetEnvironmentVariable("ConnectionStrings__Default", TestConnectionString);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -29,7 +40,7 @@ public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContex
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(
             new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Default"] = "Server=localhost;Database=smart_pantry_tests;Uid=postgres;Pwd=mypassword123",
+                ["ConnectionStrings:Default"] = TestConnectionString,
                 ["Vapid:PublicKey"] = TestVapidKeys.PublicKey,
                 ["Vapid:PrivateKey"] = TestVapidKeys.PrivateKey,
             }));
@@ -39,6 +50,12 @@ public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContex
             services.AddSingleton(stub);
             services.AddSingleton<IHttpClientFactory>(_ => new StubHttpClientFactory(stub));
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Environment.SetEnvironmentVariable("ConnectionStrings__Default", null);
+        base.Dispose(disposing);
     }
 }
 

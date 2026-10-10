@@ -46,8 +46,10 @@ These roadmap items are already implemented and verified — they are not
 planned work:
 
 - **Installable PWA:** web manifest, RealFaviconGenerator icons,
-  Bswup service-worker engine (`service-worker.published.js`), network-only
-  dev stub, branded splash + progress UI, `UpdateNotifier` toast flow.
+  stock Blazor offline worker (`service-worker.published.js`, cache follows
+  `service-worker-assets.js`), network-only dev stub, branded splash,
+  `UpdateNotifier` toast flow driven by Bit.Butil `ServiceWorker`
+  (register, update check, `skipWaiting` + reload on accept).
 - **Push subscription management:** `PushSubscription` entity + migration,
   `/api/push` endpoints (public key, idempotent subscribe/unsubscribe),
   `NotificationsPanel` enable/disable UI via Bit.Butil `Push`, minimal
