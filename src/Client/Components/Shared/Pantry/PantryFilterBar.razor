@@ -2,6 +2,7 @@
 @using Client.Components.Shared.Members
 @inject MemberService Members
 @inject BottomSheetService BottomSheet
+@inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
 <div class="space-y-2">
@@ -14,11 +15,11 @@
                                ValueChanged="@OnSearchValueChanged"
                                UpdateTiming="UpdateTiming.Immediate"
                                DebounceInterval="250"
-                               Placeholder="Search items by name or notes..."
-                               AriaLabel="Search pantry items" />
+                               Placeholder="@L["Common_SearchPlaceholder"]"
+                               AriaLabel="@L["Common_SearchAria"]" />
         </BbInputGroup>
         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Class="shrink-0 md:hidden"
-                  AriaLabel="Switch member" OnClick="SwitchMemberAsync">
+                  AriaLabel="@L["Common_SwitchMemberAria"]" OnClick="SwitchMemberAsync">
             <BbAvatar Class="h-6 w-6">
                 <BbAvatarFallback Class="text-[10px]"
                                   style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
@@ -26,25 +27,25 @@
                 </BbAvatarFallback>
             </BbAvatar>
         </BbButton>
-        <BbButton OnClick="@(() => OnAdd.InvokeAsync())" Class="shrink-0" AriaLabel="Add item">
+        <BbButton OnClick="@(() => OnAdd.InvokeAsync())" Class="shrink-0" AriaLabel="@L["Common_AddItemAria"]">
             <LucideIcon Name="plus" Size="14" />
-            <span class="hidden md:inline">Add Item</span>
+            <span class="hidden md:inline">@L["Common_AddItem"]</span>
         </BbButton>
     </div>
 
     <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false" Class="scrollbar-none!">
-        <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Expired">Expired (@ExpiredCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Fresh">Fresh (@FreshCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.All">@L["Common_FilterAll", TotalCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Soon">@L["Common_FilterSoon", SoonCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Today">@L["Common_FilterToday", TodayCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Expired">@L["Common_FilterExpired", ExpiredCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Fresh">@L["Common_FilterFresh", FreshCount]</BbChip>
     </BbChipSet>
 
     <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false" Class="scrollbar-none!">
-        <BbChip Value="@("all")">All (@TotalCount)</BbChip>
+        <BbChip Value="@("all")">@L["Common_FilterAll", TotalCount]</BbChip>
         @foreach (var location in Locations)
         {
-            <BbChip Value="@location">@DisplayName(location) (@LocationCount(location))</BbChip>
+            <BbChip Value="@location">@L["Pl_LocCount", DisplayName(location), LocationCount(location)]</BbChip>
         }
     </BbChipSet>
 </div>
@@ -92,10 +93,10 @@
     [Parameter]
     public EventCallback OnAdd { get; set; }
 
-    private static readonly DialogOpenOptions SwitcherOptions = new()
+    private DialogOpenOptions SwitcherOptions() => new()
     {
-        Title = "Who's using the app?",
-        Description = "Attribution for new items",
+        Title = L["Common_SwitcherTitle"],
+        Description = L["Common_SwitcherDescription"],
         Size = DialogSize.Small
     };
 
@@ -115,7 +116,7 @@
         }
     }
 
-    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
 
     private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
 

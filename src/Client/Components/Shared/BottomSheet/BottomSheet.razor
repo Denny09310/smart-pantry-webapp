@@ -1,6 +1,7 @@
 @namespace Client.Components.Shared
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IStringLocalizer<UIStrings> L
 
 @if (_visible)
 {
@@ -28,7 +29,7 @@
                 </div>
                 @if (ShowCloseButton)
                 {
-                    <button type="button" class="bs-close" @onclick="DismissAsync" aria-label="Close sheet">
+                    <button type="button" class="bs-close" @onclick="DismissAsync" aria-label="@L["Bs_CloseAria"]">
                         <LucideIcon Name="x" Size="18" />
                     </button>
                 }

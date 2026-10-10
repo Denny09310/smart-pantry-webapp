@@ -1,26 +1,34 @@
 using System.ComponentModel.DataAnnotations;
 
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Validation;
+
+using Shared.Resources;
 
 namespace Shared.Models;
 
 [ValidatableType]
 public record UpdatePantryItemRequest(
-    [Required(ErrorMessage = "Name is required.")]
-    [StringLength(100, ErrorMessage = "Name must be 100 characters or fewer.")]
+    [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_ItemNameRequired))]
+    [StringLength(100, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_ItemNameLength))]
     string Name,
-    [Range(0.01, 9999, ErrorMessage = "Quantity must be between 0.01 and 9999.")]
+    [Range(0.01, 9999, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_QuantityRange))]
     double Quantity,
-    [Required(ErrorMessage = "Unit is required.")]
-    [StringLength(30, ErrorMessage = "Unit must be 30 characters or fewer.")]
+    [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_UnitRequired))]
+    [StringLength(30, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_UnitLength))]
     string Unit,
-    [Required(ErrorMessage = "Location is required.")]
-    [StringLength(60, ErrorMessage = "Location must be 60 characters or fewer.")]
+    [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_LocationRequired))]
+    [StringLength(60, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_LocationLength))]
     string Location,
-    [StringLength(500, ErrorMessage = "Notes must be 500 characters or fewer.")]
+    [StringLength(500, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_NotesLength))]
     string? Notes,
     DateOnly ExpirationDate) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        => PantryItemRules.Validate(Name, Unit, Location, ExpirationDate);
+        => PantryItemRules.Validate(
+            Name,
+            Unit,
+            Location,
+            ExpirationDate,
+            validationContext.GetService(typeof(IStringLocalizer<UIStrings>)) as IStringLocalizer<UIStrings>);
 }

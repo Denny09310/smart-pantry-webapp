@@ -1,0 +1,30 @@
+@namespace Client.Components.Pages
+@inject LanguageService Languages
+@inject IStringLocalizer<UIStrings> L
+
+<div class="mx-auto w-full max-w-6xl space-y-4 p-4 md:space-y-6">
+    <header>
+        <h1 class="text-xl font-semibold md:text-2xl">@L["Settings_Title"]</h1>
+    </header>
+
+    <BbCard Class="space-y-3 p-4 md:p-6">
+        <BbLabel Class="text-base">@L["Settings_LanguageLabel"]</BbLabel>
+        <BbSelect TValue="string"
+                  Class="w-full text-base"
+                  AriaLabel="@L["Settings_LanguageLabel"]"
+                  Value="@Languages.Current"
+                  ValueChanged="@OnLanguageChanged"
+                  Options="@_options" />
+    </BbCard>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<SelectOption<string>> _options =
+    [
+        new("en", "English"),
+        new("it", "Italiano"),
+    ];
+
+    private Task OnLanguageChanged(string? value)
+        => Languages.SetAsync(value ?? UIStrings.DefaultLanguage);
+}

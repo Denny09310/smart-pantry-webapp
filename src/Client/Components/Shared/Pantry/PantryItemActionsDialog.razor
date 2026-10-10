@@ -1,13 +1,15 @@
+@inject IStringLocalizer<UIStrings> L
+
 <div class="flex flex-col gap-2">
-    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Secondary" AriaLabel="@($"Edit {Item.Name}")"
+    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Secondary" AriaLabel="@L["Common_EditAria", Item.Name]"
               @onclick="SelectEditAsync">
         <LucideIcon Name="pencil" Size="14" />
-        Edit
+        @L["Common_Edit"]
     </BbButton>
-    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Destructive" AriaLabel="@($"Delete {Item.Name}")"
+    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Destructive" AriaLabel="@L["Common_DeleteAria", Item.Name]"
               @onclick="SelectDeleteAsync">
         <LucideIcon Name="trash-2" Size="14" />
-        Delete
+        @L["Common_Delete"]
     </BbButton>
 </div>
 

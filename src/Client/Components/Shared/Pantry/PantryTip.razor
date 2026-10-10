@@ -1,12 +1,13 @@
 @namespace Client.Components.Shared.Pantry
+@inject IStringLocalizer<UIStrings> L
 
 <BbCard Class="border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950">
     <BbCardContent Class="flex gap-3 p-3">
         <LucideIcon Name="info" Size="18" Class="shrink-0 text-sky-600 dark:text-sky-400" />
         <div>
-            <p class="text-sm font-semibold">Pantry Tip</p>
+            <p class="text-sm font-semibold">@L["Pt_Title"]</p>
             <p class="text-xs text-muted-foreground">
-                Separate apples and avocados from other produce to slow down natural ripening.
+                @L["Pt_Body"]
             </p>
         </div>
     </BbCardContent>
