@@ -2,6 +2,7 @@
 @inject ToastService Toast
 @inject BottomSheetService BottomSheet
 @inject MemberService Members
+@inject NavigationManager Nav
 @inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
@@ -33,7 +34,12 @@
                       OnClick="NotifyAsync">
                 <LucideIcon Name="bell" Size="18" />
             </BbButton>
-            <LanguageSwitcher />
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.IconSmall"
+                      AriaLabel="@L["Settings_OpenAria"]"
+                      OnClick="@(() => Nav.NavigateTo("/settings"))">
+                <LucideIcon Name="settings" Size="18" />
+            </BbButton>
         </div>
     </header>
 </BbResponsiveNavProvider>

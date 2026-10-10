@@ -264,6 +264,9 @@ public class UIStrings
     public static string V_AuthLength => Get(nameof(V_AuthLength));
     public static string V_LanguageSupported => Get(nameof(V_LanguageSupported));
     public static string Lang_SwitchAria => Get(nameof(Lang_SwitchAria));
+    public static string Settings_Title => Get(nameof(Settings_Title));
+    public static string Settings_LanguageLabel => Get(nameof(Settings_LanguageLabel));
+    public static string Settings_OpenAria => Get(nameof(Settings_OpenAria));
     public static string Bb_DialogClose => Get(nameof(Bb_DialogClose));
     public static string Bb_CalendarPrev => Get(nameof(Bb_CalendarPrev));
     public static string Bb_CalendarNext => Get(nameof(Bb_CalendarNext));

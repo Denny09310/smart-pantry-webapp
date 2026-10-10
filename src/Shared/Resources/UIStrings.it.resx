@@ -262,6 +262,10 @@
   <data name="V_LanguageSupported" xml:space="preserve"><value>La lingua deve essere un codice supportato.</value></data>
   <!-- Selettore lingua. -->
   <data name="Lang_SwitchAria" xml:space="preserve"><value>Cambia lingua</value></data>
+  <!-- Pagina impostazioni. -->
+  <data name="Settings_Title" xml:space="preserve"><value>Impostazioni</value></data>
+  <data name="Settings_LanguageLabel" xml:space="preserve"><value>Lingua</value></data>
+  <data name="Settings_OpenAria" xml:space="preserve"><value>Apri impostazioni</value></data>
   <!-- Chrome dei componenti BlazorBlueprint (applicato all'avvio per la cultura corrente). -->
   <data name="Bb_DialogClose" xml:space="preserve"><value>Chiudi</value></data>
   <data name="Bb_CalendarPrev" xml:space="preserve"><value>Vai al mese precedente</value></data>
