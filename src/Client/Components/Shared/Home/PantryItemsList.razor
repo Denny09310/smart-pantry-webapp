@@ -3,9 +3,9 @@
 
 <BbCard>
     <BbCardContent Class="p-0">
-        <InfiniteScrollList T="PantryItemDto" Items="@Items" KeySelector="@(i => i.Id)" EnsureVisibleId="@HighlightId">
+        <InfiniteScrollList T="PantryItemDto" Items="@Items">
             <ItemTemplate Context="item">
-                <div id="@($"pantry-item-{item.Id}")" class="flex items-center gap-3 border-b p-3 last:border-0 @(item.Id == HighlightId ? "bg-muted" : "")">
+                <div class="flex items-center gap-3 border-b p-3 last:border-0 @(item.Id == HighlightId ? "bg-muted" : "")">
                     <BbAvatar>
                         <BbAvatarFallback>@item.GetInitials()</BbAvatarFallback>
                     </BbAvatar>
