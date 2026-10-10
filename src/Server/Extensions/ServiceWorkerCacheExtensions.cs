@@ -6,7 +6,7 @@ namespace Server.Extensions;
 public static class ServiceWorkerCacheExtensions
 {
     /// <summary>
-    /// Prevents HTTP caching of the service worker scripts and the Bswup engine.
+    /// Prevents HTTP caching of the service worker scripts.
     /// A cached worker pins clients to an old version.
     /// </summary>
     public static IApplicationBuilder UseServiceWorkerNoCache(this IApplicationBuilder app)
@@ -18,8 +18,7 @@ public static class ServiceWorkerCacheExtensions
             context.Response.OnStarting(() =>
             {
                 var path = context.Request.Path.Value;
-                if (path is "/service-worker.js" or "/service-worker.published.js"
-                    || (path is not null && path.StartsWith("/_content/Bit.Bswup/", StringComparison.Ordinal)))
+                if (path is "/service-worker.js" or "/service-worker.published.js")
                 {
                     context.Response.Headers.CacheControl = "no-cache";
                 }

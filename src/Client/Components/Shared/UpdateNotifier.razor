@@ -1,35 +1,69 @@
-@inject IJSRuntime JS
+@inject Bit.Butil.ServiceWorker Worker
+@inject NavigationManager Nav
 @inject ToastService Toast
 @inject ILogger<UpdateNotifier> Log
 @implements IAsyncDisposable
 
-@code
-{
-    private BswupUpdateInterop? _interop;
-    private DotNetObjectReference<UpdateNotifier>? _instance;
+@code {
+    private Bit.Butil.ButilSubscription? _controllerChange;
     private bool _toastShown;
+    private bool _started;
+    private bool _reloading;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (!firstRender || _started)
             return;
+
+        _started = true;
 
         try
         {
-            _interop = new BswupUpdateInterop(JS);
-            _instance = DotNetObjectReference.Create(this);
-            await _interop.RegisterAsync(_instance);
+            if (!await Worker.IsSupported())
+                return;
+
+            // Registration also triggers the browser's update check; force one
+            // anyway so a newly deployed worker is found promptly.
+            await Worker.Register("service-worker.js", "/");
+            await Worker.Update();
+
+            _controllerChange = await Worker.SubscribeControllerChange(OnControllerChange);
+
+            var registration = await Worker.GetRegistration();
+
+            if (registration.IsRegistered && registration.WaitingState is not null)
+                await ShowUpdateToastAsync();
         }
         catch (Exception ex)
         {
-            // Missing module, cancelled import, or dead circuit: updates fall
-            // back to the built-in Bswup UI instead of breaking the page.
-            Log.LogWarning(ex, "Update handler registration failed.");
+            Log.LogWarning(ex, "Service worker registration failed.");
         }
     }
 
-    [JSInvokable]
-    public async Task OnUpdateReady()
+    private async void OnControllerChange()
+    {
+        try
+        {
+            await InvokeAsync(ReloadAsync);
+        }
+        catch (Exception)
+        {
+            // Page is going away; nothing left to render.
+        }
+    }
+
+    private Task ReloadAsync()
+    {
+        if (_reloading)
+            return Task.CompletedTask;
+
+        _reloading = true;
+        Nav.NavigateTo(Nav.Uri, forceLoad: true);
+
+        return Task.CompletedTask;
+    }
+
+    private async Task ShowUpdateToastAsync()
     {
         if (_toastShown)
             return;
@@ -49,39 +83,25 @@
 
     private async Task ActivateAsync()
     {
-        if (_interop is null)
-            return;
-
         try
         {
-            await _interop.ActivateAsync();
-        }
-        catch (JSDisconnectedException)
-        {
-            // Page is going away anyway.
+            await Worker.SkipWaiting();
         }
         catch (Exception ex)
         {
-            // The click must never die silently: log, tell the user,
-            // and fall back to a plain reload.
-            Log.LogError(ex, "Update activation failed; forcing reload.");
-            Toast.Error("Update couldn't activate. Reloading…");
-
-            try
-            {
-                await _interop.ForceReloadAsync();
-            }
-            catch (JSDisconnectedException)
-            {
-            }
+            Log.LogWarning(ex, "Update activation failed; reloading.");
         }
+
+        // The click must never die silently: if no controller change arrives
+        // (no waiting worker, stuck activation), reload anyway.
+        await Task.Delay(4000);
+        await ReloadAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_interop is not null)
-            await _interop.DisposeAsync();
-
-        _instance?.Dispose();
+        // The injected worker service is shared: only the subscription is ours.
+        if (_controllerChange is not null)
+            await _controllerChange.DisposeAsync();
     }
 }
