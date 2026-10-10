@@ -270,6 +270,41 @@ No instructions are stored or rendered — the app links out to the recipe.
   nothing else breaks.
 - [ ] Recipe links open the full instructions outside the app.
 
+## Phase 6 — Realtime updates via SignalR hub (planned)
+
+**Goal:** When one device adds, edits, or removes an item, every other open
+device updates live instead of showing stale lists until its next reload.
+
+### Tasks
+
+- [ ] Add a SignalR hub on the server (e.g. `/hubs/pantry`) broadcasting
+  item-created, item-updated, and item-removed events from the pantry
+  endpoints (create, update, delete, mark-used).
+- [ ] Connect from the Blazor client
+  (`Microsoft.AspNetCore.SignalR.Client`), reload the visible queries on
+  broadcast, and reconnect with backoff on drops.
+- [ ] Keep the current manual reload as the fallback: broadcasts are
+  progressive enhancement, never required for correctness.
+- [ ] Add tests: hub broadcasts on write paths (test client), no broadcast
+  on validation failure.
+
+### Design notes
+
+Single server, trusted LAN, no auth by design — the hub inherits that: no
+groups per user, no authorization, one broadcast channel for the whole
+household. No backplane (one server instance only). Payloads stay tiny
+(item id + kind of change); clients re-query instead of applying patches,
+so the existing endpoints remain the source of truth.
+
+### Acceptance criteria
+
+- [ ] Adding an item on one phone makes it appear on another open device
+  without manual reload.
+- [ ] Removing an item disappears everywhere without manual reload.
+- [ ] A dropped connection recovers and the UI converges on the next
+  broadcast or reload.
+- [ ] Everything still works with the hub unreachable (fallback path).
+
 ## Release definition of done
 
 The release is complete when:
@@ -314,3 +349,4 @@ Do not implement these as part of this release:
 3. Reliability, security, and release testing.
 4. Operations (health checks, worker run logging).
 5. Recipe suggestions for expiring items.
+6. Realtime add/remove updates via SignalR hub.
