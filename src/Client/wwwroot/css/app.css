@@ -45,6 +45,54 @@ h1:focus {
         content: "An error has occurred."
     }
 
+/* PWA shell: theme the OS bars and unify the boot splashes. */
+:root {
+    color-scheme: light dark;
+}
+
+html {
+    background-color: var(--background);
+}
+
+body {
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+}
+
+/* Installed PWA (edge-to-edge): keep content clear of the status bar. */
+@media (display-mode: standalone) {
+    body {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+}
+
+/* Bswup overlay: same centered splash as #app, never scrollable. */
+#bit-bswup {
+    overflow: hidden;
+    background-color: var(--background);
+}
+
+#bit-bswup .bit-bswup-container {
+    width: 100%;
+    margin: 0 auto;
+}
+
+#bit-bswup .bit-bswup-description {
+    margin-bottom: 0;
+}
+
+#bit-bswup-percent {
+    margin-top: 0;
+}
+
+.bit-bswup-progress {
+    background-color: var(--muted);
+}
+
+#bit-bswup-progress-bar {
+    background-color: var(--primary);
+}
+
 /* Boot-phase progress text, driven by Blazor itself: it sets
    --blazor-load-percentage-text on :root while downloading boot resources.
    Falls back to a static label before boot starts. */

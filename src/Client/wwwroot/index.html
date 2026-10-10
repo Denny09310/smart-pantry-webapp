@@ -3,7 +3,13 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Smart Pantry" />
     <title>Smart Pantry</title>
     <base href="/" />
@@ -26,7 +32,7 @@
 
 <body>
     <div id="app">
-        <div class="flex min-h-screen flex-col items-center justify-center gap-3">
+        <div class="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
             <img src="icon-192.png" alt="" class="h-16 w-16 rounded-2xl" />
             <p class="text-sm font-medium">Smart Pantry</p>
             <p class="bswup-boot-text text-xs text-muted-foreground"></p>
@@ -36,16 +42,15 @@
     <div id="bit-bswup" data-bit-bswup-config="true" data-bit-bswup-auto-reload="false"
         data-bit-bswup-show-on-update="false" data-bit-bswup-hide-app="true" data-bit-bswup-auto-hide="true"
         data-bit-bswup-handler="smartPantryBswupHandler" style="background-color: var(--background);">
-        <div
-            class="bit-bswup-container mx-auto flex max-w-sm flex-col items-center rounded-2xl border bg-card p-8 shadow-xl">
+        <div class="bit-bswup-container mx-auto flex min-h-dvh w-full max-w-xs flex-col items-center justify-center gap-3 p-6 text-center">
             <img src="icon-192.png" alt="Smart Pantry" class="h-16 w-16 rounded-2xl" />
-            <p class="bit-bswup-title mt-4 text-xl font-semibold">Smart Pantry</p>
-            <p class="bit-bswup-description mt-1 text-sm text-muted-foreground">Installing the app&hellip;</p>
-            <div class="bit-bswup-progress mt-6 w-full">
+            <p class="bit-bswup-title text-xl font-semibold">Smart Pantry</p>
+            <p class="bit-bswup-description text-sm text-muted-foreground">Installing the app&hellip;</p>
+            <div class="bit-bswup-progress w-full">
                 <div id="bit-bswup-progress-bar" role="progressbar" aria-label="Install download progress"
                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width: 0%"></div>
             </div>
-            <p id="bit-bswup-percent">0%</p>
+            <p id="bit-bswup-percent" class="text-sm text-muted-foreground">0%</p>
             <div id="bit-bswup-error" class="bit-bswup-error" style="display: none;" role="alert">
                 <p class="bit-bswup-error-title">Update failed to install</p>
                 <p id="bit-bswup-error-message" class="bit-bswup-error-message"></p>
