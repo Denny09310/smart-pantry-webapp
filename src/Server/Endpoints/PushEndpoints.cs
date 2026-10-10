@@ -8,6 +8,7 @@ using Server.Data.Entities;
 using Server.Services;
 
 using Shared.Models;
+using Shared.Resources;
 
 namespace Server.Endpoints;
 
@@ -33,6 +34,7 @@ internal class PushEndpoints(ApplicationDbContext db, IOptions<PushOptions> opti
         {
             existing.P256dh = request.P256dh;
             existing.Auth = request.Auth;
+            existing.Language = UIStrings.Normalize(request.Language);
             await db.SaveChangesAsync(ct);
             return TypedResults.Ok(ToDto(existing));
         }
@@ -42,6 +44,7 @@ internal class PushEndpoints(ApplicationDbContext db, IOptions<PushOptions> opti
             Endpoint = request.Endpoint,
             P256dh = request.P256dh,
             Auth = request.Auth,
+            Language = UIStrings.Normalize(request.Language),
         };
 
         db.PushSubscriptions.Add(entry);
@@ -64,6 +67,7 @@ internal class PushEndpoints(ApplicationDbContext db, IOptions<PushOptions> opti
 
             winner.P256dh = request.P256dh;
             winner.Auth = request.Auth;
+            winner.Language = UIStrings.Normalize(request.Language);
             await db.SaveChangesAsync(ct);
 
             return TypedResults.Ok(ToDto(winner));

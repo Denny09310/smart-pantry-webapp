@@ -1,4 +1,9 @@
+using System.Globalization;
+
+using Microsoft.Extensions.Localization;
+
 using Shared.Models;
+using Shared.Resources;
 
 namespace Client.Components.Shared;
 
@@ -17,12 +22,12 @@ public partial class NotificationsPanel
     private int UnreadCount => _items.Count(n => n.ReadAt == null);
 
     private string PushStatusText => !_pushChecked
-        ? "Checking push support…"
+        ? L["Np_PushChecking"]
         : _pushEnabled
-            ? "On for this browser"
+            ? L["Np_PushOn"]
             : _pushSupported
-                ? "Get expiry alerts even with the app closed"
-                : "Not supported in this browser";
+                ? L["Np_PushPromo"]
+                : L["Np_PushUnsupported"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,7 +70,7 @@ public partial class NotificationsPanel
 
             if (!key.IsSuccessfulWithContent)
             {
-                Toast.Error("Push is not configured on the server.");
+                Toast.Error(L["Np_PushNotConfigured"]);
                 return;
             }
 
@@ -77,20 +82,21 @@ public partial class NotificationsPanel
             catch (Exception ex)
             {
                 Log.LogWarning(ex, "Browser push subscription failed.");
-                Toast.Info("Push was blocked. Allow notifications to enable it.");
+                Toast.Info(L["Np_PushBlocked"]);
                 return;
             }
 
             if (!subscription.IsActive)
             {
-                Toast.Info("Push was blocked. Allow notifications to enable it.");
+                Toast.Info(L["Np_PushBlocked"]);
                 return;
             }
 
             using var saved = await Api.Push.SubscribeAsync(new PushSubscriptionRequest(
                 subscription.Endpoint,
                 subscription.P256dh,
-                subscription.Auth));
+                subscription.Auth,
+                CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
 
             if (!saved.IsSuccessfulWithContent)
             {
@@ -105,17 +111,17 @@ public partial class NotificationsPanel
                     Log.LogWarning(ex, "Push rollback unsubscribe failed.");
                 }
 
-                Toast.Error("Can't save push subscription.");
+                Toast.Error(L["Np_PushSaveFailed"]);
                 return;
             }
 
             _pushEnabled = true;
-            Toast.Success("Push notifications enabled.");
+            Toast.Success(L["Np_PushEnabled"]);
         }
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Enabling push notifications failed.");
-            Toast.Error("Can't enable push notifications.");
+            Toast.Error(L["Np_PushEnableFailed"]);
         }
         finally
         {
@@ -143,18 +149,18 @@ public partial class NotificationsPanel
                     // Browser is unsubscribed but the server still lists the
                     // endpoint: report it instead of claiming success.
                     _pushEnabled = (await Push.GetSubscription()).IsActive;
-                    Toast.Error("Can't remove push subscription from the server.");
+                    Toast.Error(L["Np_PushRemoveFailed"]);
                     return;
                 }
             }
 
             _pushEnabled = false;
-            Toast.Success("Push notifications disabled.");
+            Toast.Success(L["Np_PushDisabled"]);
         }
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Disabling push notifications failed.");
-            Toast.Error("Can't disable push notifications.");
+            Toast.Error(L["Np_PushDisableFailed"]);
         }
         finally
         {
@@ -171,7 +177,7 @@ public partial class NotificationsPanel
 
             if (!response.IsSuccessfulWithContent)
             {
-                Toast.Error("Can't retrieve notifications.");
+                Toast.Error(L["Np_LoadFailed"]);
                 return;
             }
 
@@ -181,7 +187,7 @@ public partial class NotificationsPanel
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Notifications load failed.");
-            Toast.Error("Can't retrieve notifications.");
+            Toast.Error(L["Np_LoadFailed"]);
         }
         finally
         {
@@ -200,7 +206,7 @@ public partial class NotificationsPanel
 
             if (!response.IsSuccessfulWithContent)
             {
-                Toast.Error("Can't update notification.");
+                Toast.Error(L["Np_MarkReadFailed"]);
                 return;
             }
 
@@ -226,7 +232,7 @@ public partial class NotificationsPanel
 
             if (!response.IsSuccessfulWithContent)
             {
-                Toast.Error("Can't update notifications.");
+                Toast.Error(L["Np_MarkAllReadFailed"]);
                 return;
             }
 

@@ -24,7 +24,7 @@ internal class NotificationEndpoints(ApplicationDbContext db)
                     n.Id,
                     n.PantryItemId,
                     i.Name,
-                    n.Message,
+                    i.ExpirationDate,
                     n.CreatedAt,
                     n.ReadAt))
             .Take(100)
@@ -50,16 +50,16 @@ internal class NotificationEndpoints(ApplicationDbContext db)
         entry.ReadAt ??= DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
 
-        var itemName = await db.Items.AsNoTracking()
+        var item = await db.Items.AsNoTracking()
             .Where(i => i.Id == entry.PantryItemId)
-            .Select(i => i.Name)
+            .Select(i => new { i.Name, i.ExpirationDate })
             .FirstOrDefaultAsync(ct);
 
         return TypedResults.Ok(new NotificationDto(
             entry.Id,
             entry.PantryItemId,
-            itemName ?? string.Empty,
-            entry.Message,
+            item?.Name ?? string.Empty,
+            item?.ExpirationDate ?? default,
             entry.CreatedAt,
             entry.ReadAt));
     }

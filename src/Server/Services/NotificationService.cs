@@ -24,7 +24,7 @@ internal sealed class NotificationService(ApplicationDbContext db)
 
         var candidates = await db.Items.AsNoTracking()
             .Where(i => i.ExpirationDate <= horizon)
-            .Select(i => new { i.Id, i.Name, i.ExpirationDate })
+            .Select(i => new { i.Id, i.ExpirationDate })
             .ToListAsync(ct);
 
         if (candidates.Count == 0)
@@ -49,7 +49,6 @@ internal sealed class NotificationService(ApplicationDbContext db)
             db.Notifications.Add(new Notification
             {
                 PantryItemId = candidate.Id,
-                Message = BuildMessage(candidate.Name, candidate.ExpirationDate, today),
                 CreatedAt = now,
             });
             created++;
@@ -59,17 +58,5 @@ internal sealed class NotificationService(ApplicationDbContext db)
             await db.SaveChangesAsync(ct);
 
         return new GenerationResult(created, candidates.Count);
-    }
-
-    internal static string BuildMessage(string name, DateOnly expirationDate, DateOnly today)
-    {
-        var days = expirationDate.DayNumber - today.DayNumber;
-        return days switch
-        {
-            < 0 => $"{name} expired {(-days == 1 ? "yesterday" : $"{-days} days ago")}.",
-            0 => $"{name} expires today.",
-            1 => $"{name} expires tomorrow.",
-            _ => $"{name} expires in {days} days.",
-        };
     }
 }

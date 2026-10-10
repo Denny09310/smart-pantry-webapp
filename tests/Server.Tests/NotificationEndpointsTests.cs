@@ -65,7 +65,7 @@ public sealed class NotificationEndpointsTests(PantryApiFactory factory)
 
             var mine = (await ListAsync()).Items.Where(n => n.PantryItemId == itemId).ToList();
             Assert.NotEmpty(mine);
-            Assert.Contains("expires tomorrow", mine[0].Message);
+            Assert.Equal(InDays(1), mine[0].ExpirationDate);
 
             // Second run creates nothing while the first is still unread.
             Assert.Equal(0, (await GenerateAsync(factory)).Created);

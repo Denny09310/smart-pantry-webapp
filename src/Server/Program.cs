@@ -14,6 +14,7 @@ builder.Services.AddEndpointHandlers();
 
 builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
+builder.Services.AddLocalization();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
@@ -50,6 +51,14 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/healthz");
 
 app.UseHttpsRedirection();
+
+// Validation messages follow the request's Accept-Language.
+app.UseRequestLocalization(options =>
+{
+    options.AddSupportedCultures("en", "it");
+    options.AddSupportedUICultures("en", "it");
+    options.SetDefaultCulture("en");
+});
 
 app.MapEndpointHandlers();
 

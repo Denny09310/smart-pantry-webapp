@@ -4,6 +4,6 @@ public record NotificationDto(
     string Id,
     string PantryItemId,
     string ItemName,
-    string Message,
+    DateOnly ExpirationDate,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ReadAt);
