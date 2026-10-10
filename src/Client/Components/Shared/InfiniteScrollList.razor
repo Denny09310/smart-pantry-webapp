@@ -2,7 +2,7 @@
 @using Bit.Butil
 @typeparam T
 @inject IJSRuntime JS
-@inject Bit.Butil.Dom Dom
+@inject IStringLocalizer<UIStrings> L
 @implements IAsyncDisposable
 
 @foreach (var item in _visible)
@@ -17,7 +17,7 @@
         @if (_observerFailed)
         {
             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ShowMore">
-                @TriggerButtonText
+                @(TriggerButtonText ?? L["Is_ShowMore"])
             </BbButton>
         }
     </div>
@@ -34,18 +34,7 @@
     public int PageSize { get; set; } = 20;
 
     [Parameter]
-    public string TriggerButtonText { get; set; } = "Show more";
-
-    /// <summary>
-    /// Optional id the list must reveal: expands the window past its index
-    /// and scrolls to <c>pantry-item-{id}</c> once rendered.
-    /// </summary>
-    [Parameter]
-    public string? EnsureVisibleId { get; set; }
-
-    /// <summary>Extracts the scroll/highlight id from an item.</summary>
-    [Parameter]
-    public Func<T, string>? KeySelector { get; set; }
+    public string? TriggerButtonText { get; set; }
 
     private List<T> _visible = [];
     private int _total;
@@ -54,7 +43,6 @@
     private Bit.Butil.ButilSubscription? _observation;
     private bool _observerFailed;
     private bool _restartObservation;
-    private string? _scrolledFor;
 
     protected override void OnParametersSet()
     {
@@ -63,17 +51,7 @@
 
         _renderedItems = Items;
         _total = Items.Count;
-
-        var count = PageSize;
-
-        if (EnsureVisibleId is not null && KeySelector is not null)
-        {
-            var index = Items.ToList().FindIndex(i => KeySelector(i) == EnsureVisibleId);
-            if (index >= 0)
-                count = Math.Max(count, index + 1);
-        }
-
-        _visible = Items.Take(count).ToList();
+        _visible = Items.Take(PageSize).ToList();
         _restartObservation = true;
     }
 
@@ -89,12 +67,6 @@
             await StartObservingAsync();
         else if (_visible.Count >= _total && _observation is not null)
             await StopObservingAsync();
-
-        if (EnsureVisibleId is not null && EnsureVisibleId != _scrolledFor)
-        {
-            _scrolledFor = EnsureVisibleId;
-            await PantryScroll.ScrollToAsync(Dom, EnsureVisibleId);
-        }
     }
 
     private async Task StartObservingAsync()

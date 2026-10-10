@@ -2,12 +2,13 @@
 @inject MemberService Members
 @inject ToastService Toast
 @inject BottomSheetService BottomSheet
+@inject IStringLocalizer<UIStrings> L
 
 @code {
-    private static readonly DialogOpenOptions FirstRunOptions = new()
+    private DialogOpenOptions FirstRunOptions() => new()
     {
-        Title = "Who's using this pantry?",
-        Description = "Create the first member to get started.",
+        Title = L["Mi_FirstRunTitle"],
+        Description = L["Mi_FirstRunDescription"],
         Size = DialogSize.Small,
     };
 
@@ -23,14 +24,14 @@
 
         if (Members.LoadFailed)
         {
-            Toast.Error("Can't reach the server. Check your connection and reload.");
+            Toast.Error(L["Mi_LoadFailed"]);
             return;
         }
 
         while (Members.Members.Count == 0 && !Members.LoadFailed)
         {
             var parameters = new Dictionary<string, object?> { [nameof(CreateMemberDialog.AllowCancel)] = false };
-            var result = await BottomSheet.OpenAsync<CreateMemberDialog>(parameters, FirstRunOptions);
+            var result = await BottomSheet.OpenAsync<CreateMemberDialog>(parameters, FirstRunOptions());
 
             // Creation failed server-side: retry instead of entering a memberless app.
             if (result.Cancelled)

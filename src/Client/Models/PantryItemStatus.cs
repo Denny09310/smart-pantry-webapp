@@ -2,7 +2,10 @@ using System.Globalization;
 
 using BlazorBlueprint.Components;
 
+using Microsoft.Extensions.Localization;
+
 using Shared.Models;
+using Shared.Resources;
 
 namespace Client.Models;
 
@@ -80,15 +83,15 @@ public static class PantryItemStatusExtensions
             _ => true,
         };
 
-    public static string GetLabel(this PantryItemDto item)
+    public static string GetLabel(this PantryItemDto item, IStringLocalizer<UIStrings> localizer)
         => item.GetStatus() switch
         {
-            PantryItemStatus.Expired => "Expired",
-            PantryItemStatus.Today => "Expires today",
+            PantryItemStatus.Expired => localizer["Common_StatusExpired"],
+            PantryItemStatus.Today => localizer["Common_ExpiresToday"],
             PantryItemStatus.Soon => item.DaysRemaining() == 1
-                ? "Expires in 1 day"
-                : $"Expires in {item.DaysRemaining()} days",
-            _ => "Fresh",
+                ? localizer["Common_ExpiresInOneDay"]
+                : localizer["Common_ExpiresInDays", item.DaysRemaining()],
+            _ => localizer["Common_StatusFresh"],
         };
 
     public static BadgeVariant GetBadgeVariant(this PantryItemDto item)
@@ -105,9 +108,9 @@ public static class PantryItemStatusExtensions
             ? item.Location
             : char.ToUpperInvariant(item.Location[0]) + item.Location[1..];
 
-    public static string FormatExpiration(this PantryItemDto item)
+    public static string FormatExpiration(this PantryItemDto item, IStringLocalizer<UIStrings> localizer)
         => item.GetStatus() is PantryItemStatus.Today
-            ? "Today"
+            ? localizer["Ps_MobileToday"]
             : item.ExpirationDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture);
 
     public static string FormatQuantity(this PantryItemDto item)

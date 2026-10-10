@@ -1,6 +1,7 @@
 @namespace Client.Components.Shared.Pantry
 @inject ServerApi Api
 @inject ToastService Toast
+@inject IStringLocalizer<UIStrings> L
 @inject Bit.Butil.MediaDevices MediaDevices
 @inject Bit.Butil.BarcodeDetector BarcodeDetector
 @inject ILogger<BarcodeScannerView> Log
@@ -15,8 +16,8 @@
 else if (_camera)
 {
     <div class="space-y-3">
-        <video @ref="_video" autoplay playsinline muted aria-label="Barcode scanner preview" class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
-        <p class="text-center text-xs text-muted-foreground">Point the camera at the barcode</p>
+        <video @ref="_video" autoplay playsinline muted aria-label="@L["Bc_PreviewAria"]" class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
+        <p class="text-center text-xs text-muted-foreground">@L["Bc_PointHint"]</p>
         @if (_lookingUp)
         {
             <div class="flex justify-center py-2">
@@ -26,31 +27,31 @@ else if (_camera)
         @if (_notFound)
         {
             <div class="space-y-2">
-                <p class="text-center text-sm">Product not found. Try again or enter details manually.</p>
+                <p class="text-center text-sm">@L["Bc_NotFound"]</p>
                 <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="RestartScanAsync">
-                    Scan again
+                    @L["Bc_ScanAgain"]
                 </BbButton>
             </div>
         }
         <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
-            Back
+            @L["Common_Back"]
         </BbButton>
     </div>
 }
 else
 {
     <div class="space-y-3">
-        <p class="text-sm text-muted-foreground">Camera scanning isn't supported in this browser. Enter the barcode instead.</p>
+        <p class="text-sm text-muted-foreground">@L["Bc_NoCamera"]</p>
         <BbInputGroup Class="bg-card">
             <BbInputGroupInput @bind-Value="_manualCode" Placeholder="e.g. 5449000000996"
                                UpdateTiming="UpdateTiming.Immediate" inputmode="numeric"
-                               AriaLabel="Barcode" />
+                               AriaLabel="@L["Bc_ManualAria"]" />
         </BbInputGroup>
         <BbButton Class="w-full" Loading="@_lookingUp" OnClick="LookupManualAsync">
-            Look up
+            @L["Bc_Lookup"]
         </BbButton>
         <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
-            Back
+            @L["Common_Back"]
         </BbButton>
     </div>
 }
@@ -121,10 +122,20 @@ else
 
             try
             {
+                // Ask for HD with continuous autofocus: the defaults are often
+                // 640x480, which looks blurry stretched full-width and starves
+                // the detector of pixels. All ideals, so weaker cameras still
+                // start instead of failing constraint resolution (null).
                 _stream = await MediaDevices.GetUserMedia(
                     audio: false,
                     video: true,
-                    videoConstraints: new { facingMode = "environment" });
+                    videoConstraints: new
+                    {
+                        facingMode = "environment",
+                        width = new { ideal = 1920 },
+                        height = new { ideal = 1080 },
+                        focusMode = "continuous",
+                    });
 
                 if (_stream is null)
                 {
@@ -197,7 +208,7 @@ else
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Product lookup failed.");
-            Toast.Error("Can't look up the product.");
+            Toast.Error(L["Bc_LookupFailed"]);
         }
         finally
         {

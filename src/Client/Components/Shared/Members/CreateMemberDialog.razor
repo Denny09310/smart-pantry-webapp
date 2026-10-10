@@ -2,27 +2,28 @@
 @using System.ComponentModel.DataAnnotations
 @inject MemberService Members
 @inject ToastService Toast
+@inject IStringLocalizer<UIStrings> L
 
 <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="space-y-4">
     <DataAnnotationsValidator />
 
     <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
-        <BbFieldLabel For="member-name" Class="text-sm font-medium">Name *</BbFieldLabel>
+        <BbFieldLabel For="member-name" Class="text-sm font-medium">@L["Cmd_NameLabel"]</BbFieldLabel>
         <BbFieldContent>
             <BbInputGroup Class="bg-card">
                 <BbInputGroupInput Id="member-name" @bind-Value="Input.Name"
-                                   Placeholder="e.g. Alex" UpdateTiming="UpdateTiming.Immediate" />
+                                   Placeholder="@L["Cmd_NamePlaceholder"]" UpdateTiming="UpdateTiming.Immediate" />
             </BbInputGroup>
             <BbFieldError Errors="@context.GetValidationMessages(() => Input.Name)" />
         </BbFieldContent>
     </BbField>
 
     <div class="space-y-2">
-        <BbLabel Class="text-sm font-medium">Color</BbLabel>
+        <BbLabel Class="text-sm font-medium">@L["Cmd_ColorLabel"]</BbLabel>
         <div class="flex flex-wrap gap-2">
             @foreach (var color in Palette)
             {
-                <button type="button" aria-label="@($"Pick color {color}")"
+                <button type="button" aria-label="@L["Cmd_PickColorAria", color]"
                         @onclick="@(() => Input.Color = color)"
                         class="@ColorClass(color)" style="background-color: @color">
                     @if (Input.Color == color)
@@ -36,12 +37,12 @@
 
     <div class="shrink-0 space-y-1 border-t pt-3">
         <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving">
-            <ChildContent>Save member</ChildContent>
+            <ChildContent>@L["Cmd_SaveMember"]</ChildContent>
         </BbButton>
         @if (AllowCancel)
         {
             <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
-                Cancel
+                @L["Common_Cancel"]
             </BbButton>
         }
     </div>
@@ -79,7 +80,7 @@
 
             if (created is null)
             {
-                Toast.Error("Can't create member.");
+                Toast.Error(L["Cmd_CreateFailed"]);
                 return;
             }
 
@@ -95,7 +96,7 @@
 
     private sealed class InputModel
     {
-        [Required(ErrorMessage = "Give the member a name.")]
+        [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.Cmd_NameRequired))]
         [StringLength(30)]
         public string Name { get; set; } = string.Empty;
 

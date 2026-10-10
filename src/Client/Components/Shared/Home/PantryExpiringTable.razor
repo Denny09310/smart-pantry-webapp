@@ -1,24 +1,25 @@
 @namespace Client.Components.Shared.Home
 @using DataGridPrimitives = BlazorBlueprint.Primitives.DataGrid
+@inject IStringLocalizer<UIStrings> L
 
 <BbCard>
     <BbCardHeader>
         <div>
-            <BbCardTitle>Expiring Soon</BbCardTitle>
-            <BbCardDescription>Items needing attention in the next 7 days</BbCardDescription>
+            <BbCardTitle>@L["Et_Title"]</BbCardTitle>
+            <BbCardDescription>@L["Et_Description"]</BbCardDescription>
         </div>
         <BbCardAction>
             <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <LucideIcon Name="clock" Size="14" />
-                Sorted by Urgency
+                @L["Common_SortedBadge"]
             </span>
         </BbCardAction>
     </BbCardHeader>
     <BbCardContent Class="bg-background">
         <BbDataGrid TData="PantryItemDto" ItemsProvider="@ProvidePageAsync" ShowPagination="true" InitialPageSize="10"
-                    TableContainerClass="overflow-x-auto" AriaLabel="Items expiring soon" @ref="_grid">
+                    TableContainerClass="overflow-x-auto" AriaLabel="@L["Et_GridAria"]" @ref="_grid">
             <Columns>
-                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Item">
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["Et_ColItem"]">
                     <ChildContent Context="item">
                         <span class="inline-flex items-center gap-2 font-medium">
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full @DotClass(item)" aria-hidden="true"></span>
@@ -26,31 +27,31 @@
                         </span>
                     </ChildContent>
                 </BbDataGridTemplateColumn>
-                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Quantity">
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["Et_ColQuantity"]">
                     <ChildContent Context="item">
                         <span class="text-muted-foreground">@item.FormatQuantity()</span>
                     </ChildContent>
                 </BbDataGridTemplateColumn>
-                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Location">
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["Et_ColLocation"]">
                     <ChildContent Context="item">
                         <BbBadge Variant="BadgeVariant.Outline">@item.GetDisplayLocation()</BbBadge>
                     </ChildContent>
                 </BbDataGridTemplateColumn>
-                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Expiration" Sortable="true"
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["Et_ColExpiration"]" Sortable="true"
                                           SortBy="@(i => i.ExpirationDate)">
                     <ChildContent Context="item">
-                        <span class="text-muted-foreground">@item.FormatExpiration()</span>
+                        <span class="text-muted-foreground">@item.FormatExpiration(L)</span>
                     </ChildContent>
                 </BbDataGridTemplateColumn>
-                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Status">
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["Et_ColStatus"]">
                     <ChildContent Context="item">
-                        <BbBadge Variant="@item.GetBadgeVariant()">@item.GetLabel()</BbBadge>
+                        <BbBadge Variant="@item.GetBadgeVariant()">@item.GetLabel(L)</BbBadge>
                     </ChildContent>
                 </BbDataGridTemplateColumn>
-                <BbDataGridTemplateColumn TData="PantryItemDto" Title="Quick Action">
+                <BbDataGridTemplateColumn TData="PantryItemDto" Title="@L["Et_ColQuickAction"]">
                     <ChildContent Context="item">
                         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                                  AriaLabel="@($"Delete {item.Name}")" Loading="@IsBusy(item)"
+                                  AriaLabel="@L["Common_DeleteAria", item.Name]" Loading="@IsBusy(item)"
                                   OnClick="@(() => OnDelete.InvokeAsync(item))">
                             <LucideIcon Name="trash-2" Size="16" />
                         </BbButton>
@@ -62,16 +63,16 @@
     <BbCardFooter Class="bg-background flex flex-col gap-2 sm:flex-row sm:items-center">
         <p class="flex flex-1 items-center gap-1.5 text-xs text-muted-foreground">
             <LucideIcon Name="info" Size="14" />
-            Inventory counts reflect real-time physical stock
+            @L["Et_FooterNote"]
         </p>
         <div class="flex gap-2">
             <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => OnViewAll.InvokeAsync())">
-                View all pantry items
+                @L["Et_ViewAll"]
                 <LucideIcon Name="arrow-right" Size="14" />
             </BbButton>
             <BbButton Size="ButtonSize.Small" OnClick="@(() => OnAdd.InvokeAsync())">
                 <LucideIcon Name="plus" Size="14" />
-                Add new item
+                @L["Common_AddNewItem"]
             </BbButton>
         </div>
     </BbCardFooter>

@@ -1,6 +1,7 @@
 @inject Bit.Butil.ServiceWorker Worker
 @inject NavigationManager Nav
 @inject ToastService Toast
+@inject IStringLocalizer<UIStrings> L
 @inject ILogger<UpdateNotifier> Log
 @implements IAsyncDisposable
 
@@ -111,11 +112,11 @@
 
         await InvokeAsync(() => Toast.Show(new ToastData
         {
-            Title = "Update available",
-            Description = "A new version is ready to install.",
+            Title = L["Un_UpdateTitle"],
+            Description = L["Un_UpdateDescription"],
             Variant = ToastVariant.Info,
             Duration = 0,
-            ActionText = "Reload",
+            ActionText = L["Un_ReloadButton"],
             OnAction = () => _ = ActivateAsync(),
         }));
     }

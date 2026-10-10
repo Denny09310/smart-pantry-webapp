@@ -1,4 +1,5 @@
 @namespace Client.Components.Shared.Home
+@inject IStringLocalizer<UIStrings> L
 
 <div class="scroll-mt-4 space-y-2" id="pantry-items">
     <BbInputGroup>
@@ -6,27 +7,27 @@
             <LucideIcon Name="search" Size="16" />
         </BbInputGroupAddon>
         <BbInputGroupInput Value="@Search" ValueChanged="@OnSearchValueChanged" UpdateTiming="UpdateTiming.Immediate"
-                           DebounceInterval="250" Placeholder="Search items by name or notes..."
-                           AriaLabel="Search pantry items" />
+                           DebounceInterval="250" Placeholder="@L["Common_SearchPlaceholder"]"
+                           AriaLabel="@L["Common_SearchAria"]" />
     </BbInputGroup>
 
     @* Status filter *@
     <BbChipSet TValue="PantryStatusFilter" Value="@Status" ValueChanged="@OnStatusValueChanged" Wrap="false"
                Class="scrollbar-none!">
-        <BbChip Value="@PantryStatusFilter.All">All (@TotalCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Soon">Expiring soon (@SoonCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Today">Expires today (@TodayCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Expired">Expired (@ExpiredCount)</BbChip>
-        <BbChip Value="@PantryStatusFilter.Fresh">Fresh (@FreshCount)</BbChip>
+        <BbChip Value="@PantryStatusFilter.All">@L["Common_FilterAll", TotalCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Soon">@L["Common_FilterSoon", SoonCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Today">@L["Common_FilterToday", TodayCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Expired">@L["Common_FilterExpired", ExpiredCount]</BbChip>
+        <BbChip Value="@PantryStatusFilter.Fresh">@L["Common_FilterFresh", FreshCount]</BbChip>
     </BbChipSet>
 
     <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false"
                Class="scrollbar-none!">
-        <BbChip Value="@("all")">All locations</BbChip>
-        <BbChip Value="@("fridge")">Fridge</BbChip>
-        <BbChip Value="@("pantry")">Pantry</BbChip>
-        <BbChip Value="@("freezer")">Freezer</BbChip>
-        <BbChip Value="@("cabinet")">Cabinet</BbChip>
+        <BbChip Value="@("all")">@L["Common_LocationAll"]</BbChip>
+        <BbChip Value="@("fridge")">@L["Common_LocationFridge"]</BbChip>
+        <BbChip Value="@("pantry")">@L["Common_LocationPantry"]</BbChip>
+        <BbChip Value="@("freezer")">@L["Common_LocationFreezer"]</BbChip>
+        <BbChip Value="@("cabinet")">@L["Common_LocationCabinet"]</BbChip>
     </BbChipSet>
 </div>
 

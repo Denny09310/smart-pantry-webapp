@@ -2,16 +2,20 @@ using System.ComponentModel.DataAnnotations;
 
 using Microsoft.Extensions.Validation;
 
+using Shared.Resources;
+
 namespace Shared.Models;
 
 [ValidatableType]
 public record PushSubscriptionRequest(
-    [Required(ErrorMessage = "Endpoint is required.")]
-    [StringLength(2000, ErrorMessage = "Endpoint must be 2000 characters or fewer.")]
+    [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_EndpointRequired))]
+    [StringLength(2000, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_EndpointLength))]
     string Endpoint,
-    [Required(ErrorMessage = "P256dh is required.")]
-    [StringLength(500, ErrorMessage = "P256dh must be 500 characters or fewer.")]
+    [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_P256dhRequired))]
+    [StringLength(500, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_P256dhLength))]
     string P256dh,
-    [Required(ErrorMessage = "Auth is required.")]
-    [StringLength(500, ErrorMessage = "Auth must be 500 characters or fewer.")]
-    string Auth);
+    [Required(ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_AuthRequired))]
+    [StringLength(500, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_AuthLength))]
+    string Auth,
+    [RegularExpression("^(en|it)$", ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_LanguageSupported))]
+    string? Language = null);

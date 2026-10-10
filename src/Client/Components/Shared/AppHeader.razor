@@ -2,6 +2,7 @@
 @inject ToastService Toast
 @inject BottomSheetService BottomSheet
 @inject MemberService Members
+@inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
 <BbResponsiveNavProvider>
@@ -13,11 +14,11 @@
                 </span>
                 Smart Pantry
             </span>
-            <BbResponsiveNavItems Items="@_items" MobileClass="hidden" />
+            <BbResponsiveNavItems Items="@NavItems" MobileClass="hidden" />
             <span class="flex-1"></span>
             <BbButton Variant="ButtonVariant.Ghost"
                       Size="ButtonSize.IconSmall"
-                      AriaLabel="Switch member"
+                      AriaLabel="@L["Common_SwitchMemberAria"]"
                       OnClick="SwitchMemberAsync">
                 <BbAvatar Class="h-6 w-6">
                     <BbAvatarFallback Class="text-[10px]"
@@ -28,7 +29,7 @@
             </BbButton>
             <BbButton Variant="ButtonVariant.Ghost"
                       Size="ButtonSize.IconSmall"
-                      AriaLabel="Notifications"
+                      AriaLabel="@L["Common_NotificationsTitle"]"
                       OnClick="NotifyAsync">
                 <LucideIcon Name="bell" Size="18" />
             </BbButton>
@@ -37,23 +38,24 @@
 </BbResponsiveNavProvider>
 
 @code {
-    private static readonly IReadOnlyList<NavItemDefinition> _items =
+    private IReadOnlyList<NavItemDefinition> NavItems =>
     [
-        new() { Text = "Dashboard", Href = "/", Match = NavLinkMatch.All },
-        new() { Text = "Pantry", Href = "/pantry" },
+        new() { Text = L["Nav_Dashboard"], Href = "/", Match = NavLinkMatch.All },
+        new() { Text = L["Nav_Pantry"], Href = "/pantry" },
+        new() { Text = L["Settings_Title"], Href = "/settings" },
     ];
 
-    private static readonly DialogOpenOptions NotificationsOptions = new()
+    private DialogOpenOptions NotificationsOptions() => new()
     {
-        Title = "Notifications",
-        Description = "Items approaching expiration",
+        Title = L["Common_NotificationsTitle"],
+        Description = L["Common_NotificationsDescription"],
         Size = DialogSize.Default,
     };
 
-    private static readonly DialogOpenOptions SwitcherOptions = new()
+    private DialogOpenOptions SwitcherOptions() => new()
     {
-        Title = "Who's using the app?",
-        Description = "Attribution for new items",
+        Title = L["Common_SwitcherTitle"],
+        Description = L["Common_SwitcherDescription"],
         Size = DialogSize.Small,
     };
 
@@ -73,7 +75,7 @@
         }
     }
 
-    private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions);
+    private Task NotifyAsync() => BottomSheet.OpenAsync<NotificationsPanel>(NotificationsOptions());
 
-    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions);
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
 }

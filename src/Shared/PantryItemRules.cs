@@ -1,5 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
+using Microsoft.Extensions.Localization;
+
+using Shared.Resources;
+
 namespace Shared.Models;
 
 /// <summary>
@@ -13,26 +17,29 @@ internal static class PantryItemRules
         string? name,
         string? unit,
         string? location,
-        DateOnly expirationDate)
+        DateOnly expirationDate,
+        IStringLocalizer<UIStrings>? localizer)
     {
+        string Text(string key) => localizer?.GetString(key) ?? UIStrings.Get(key);
+
         if (string.IsNullOrWhiteSpace(name))
         {
-            yield return new ValidationResult("Name is required.", ["Name"]);
+            yield return new ValidationResult(Text(nameof(UIStrings.V_ItemNameRequired)), ["Name"]);
         }
 
         if (string.IsNullOrWhiteSpace(unit))
         {
-            yield return new ValidationResult("Unit is required.", ["Unit"]);
+            yield return new ValidationResult(Text(nameof(UIStrings.V_UnitRequired)), ["Unit"]);
         }
 
         if (string.IsNullOrWhiteSpace(location))
         {
-            yield return new ValidationResult("Location is required.", ["Location"]);
+            yield return new ValidationResult(Text(nameof(UIStrings.V_LocationRequired)), ["Location"]);
         }
 
         if (expirationDate == default)
         {
-            yield return new ValidationResult("Expiration date is required.", ["ExpirationDate"]);
+            yield return new ValidationResult(Text(nameof(UIStrings.V_ExpirationRequired)), ["ExpirationDate"]);
         }
     }
 }
