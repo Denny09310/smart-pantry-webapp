@@ -5,7 +5,12 @@
 @implements IAsyncDisposable
 
 @code {
+    // How often to look for a newly arrived worker while the page stays open.
+    // (Full page loads already trigger the browser's own update check.)
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
+
     private Bit.Butil.ButilSubscription? _controllerChange;
+    private CancellationTokenSource? _pollCts;
     private bool _toastShown;
     private bool _started;
     private bool _reloading;
@@ -22,12 +27,46 @@
             if (!await Worker.IsSupported())
                 return;
 
-            // Registration also triggers the browser's update check; force one
-            // anyway so a newly deployed worker is found promptly.
-            await Worker.Register("service-worker.js", "/");
-            await Worker.Update();
-
             _controllerChange = await Worker.SubscribeControllerChange(OnControllerChange);
+
+            await CheckForUpdateAsync();
+
+            _pollCts = new CancellationTokenSource();
+            _ = PollForUpdatesAsync(_pollCts.Token);
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Update check setup failed.");
+        }
+    }
+
+    private async Task PollForUpdatesAsync(CancellationToken token)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(PollInterval);
+
+            while (await timer.WaitForNextTickAsync(token))
+                await CheckForUpdateAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Component torn down; polling stops.
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Update polling failed.");
+        }
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            // The worker is registered by index.html at page load; here we only
+            // ask whether an update check finds something new, then look for a
+            // worker parked in waiting.
+            await Worker.Update();
 
             var registration = await Worker.GetRegistration();
 
@@ -36,7 +75,7 @@
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Service worker registration failed.");
+            Log.LogWarning(ex, "Update check failed.");
         }
     }
 
@@ -100,7 +139,15 @@
 
     public async ValueTask DisposeAsync()
     {
-        // The injected worker service is shared: only the subscription is ours.
+        // The injected worker service is shared: only the subscription and the
+        // polling loop are ours.
+        if (_pollCts is not null)
+        {
+            await _pollCts.CancelAsync();
+            _pollCts.Dispose();
+            _pollCts = null;
+        }
+
         if (_controllerChange is not null)
             await _controllerChange.DisposeAsync();
     }
