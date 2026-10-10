@@ -51,8 +51,6 @@ app.MapHealthChecks("/healthz");
 
 app.UseHttpsRedirection();
 
-app.UseServiceWorkerNoCache();
-
 app.MapEndpointHandlers();
 
 app.MapStaticAssets();
