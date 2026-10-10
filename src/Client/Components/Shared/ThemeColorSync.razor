@@ -1,0 +1,56 @@
+@inject ThemeService Themes
+@inject Bit.Butil.Dom Dom
+@inject ILogger<ThemeColorSync> Log
+@implements IDisposable
+
+@code {
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        _started = true;
+        Themes.OnThemeChanged += OnThemeChanged;
+        await SyncAsync();
+    }
+
+    private async void OnThemeChanged()
+    {
+        try
+        {
+            await InvokeAsync(SyncAsync);
+        }
+        catch (Exception)
+        {
+            // Page is going away; nothing left to render.
+        }
+    }
+
+    private async Task SyncAsync()
+    {
+        try
+        {
+            // Keeps the OS system bars on the app's effective theme. Some
+            // browsers ignore media queries on theme-color and pin to the
+            // first value, so the single meta in index.html is driven here
+            // from the same source as the .dark class.
+            await Themes.InitializeAsync();
+
+            await using var meta = await Dom.Query("meta[name=\"theme-color\"]");
+
+            if (meta is null)
+                return;
+
+            await meta.SetAttribute("content", Themes.IsDarkMode ? "#000000" : "#fafafa");
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Theme color sync failed.");
+        }
+    }
+
+    // The injected theme service is shared: only unsubscribe our handler.
+    public void Dispose() => Themes.OnThemeChanged -= OnThemeChanged;
+}
