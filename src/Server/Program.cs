@@ -15,6 +15,7 @@ builder.Services.AddEndpointHandlers();
 builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 builder.Services.AddLocalization();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
@@ -26,7 +27,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PushService>();
 builder.Services.AddScoped<ProductLookupService>();
+builder.Services.AddScoped<RecipeService>();
 builder.Services.AddOpenFoodFacts();
+builder.Services.AddTheMealDb();
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
 
 if (!builder.Environment.IsEnvironment("Testing"))

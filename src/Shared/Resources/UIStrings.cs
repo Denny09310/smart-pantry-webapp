@@ -264,6 +264,11 @@ public class UIStrings
     public static string V_AuthRequired => Get(nameof(V_AuthRequired));
     public static string V_AuthLength => Get(nameof(V_AuthLength));
     public static string V_LanguageSupported => Get(nameof(V_LanguageSupported));
+    public static string Recipe_Title => Get(nameof(Recipe_Title));
+    public static string Recipe_Description => Get(nameof(Recipe_Description));
+    public static string Recipe_Uses => Get(nameof(Recipe_Uses));
+    public static string Recipe_Attribution => Get(nameof(Recipe_Attribution));
+    public static string Recipe_OpenAria => Get(nameof(Recipe_OpenAria));
     public static string Lang_SwitchAria => Get(nameof(Lang_SwitchAria));
     public static string Settings_Title => Get(nameof(Settings_Title));
     public static string Settings_Eyebrow => Get(nameof(Settings_Eyebrow));
