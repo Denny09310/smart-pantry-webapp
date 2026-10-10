@@ -1,3 +1,14 @@
+## [0.4.4] - 2026-10-10
+
+### 🐛 Bug Fixes
+
+- Theme PWA shell for device light/dark and unify boot splashes
+
+### 💼 Other
+
+- Update VAPID public key
+- Bugfix/pwa-shell into develop
+
 ## [0.4.3] - 2026-10-09
 
 ### 🐛 Bug Fixes
