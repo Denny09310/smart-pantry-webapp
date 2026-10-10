@@ -195,14 +195,23 @@ else
     private ExpiryStatus? Freshness =>
         Input.ExpirationDate is { } d ? ExpiryStatusCalculator.GetStatus(DateOnly.FromDateTime(d.Date), DateOnly.FromDateTime(DateTime.Today)) : null;
 
-    private string FreshnessText => (Freshness, DaysRemaining) switch
+    private string FreshnessText
     {
-        (null, _) => string.Empty,
-        (ExpiryStatus.Expired, var days) => L["Common_ExpiredDaysAgo", -days],
-        (ExpiryStatus.Today, _) => L["Common_ExpiresToday"],
-        (ExpiryStatus.Soon, var days) => L["Cd_UseSoon", days],
-        (_, var days) => L["Cd_FreshStable", days],
-    };
+        get
+        {
+            // Non-null whenever Freshness is: both derive from ExpirationDate.
+            var remaining = DaysRemaining ?? 0;
+
+            return Freshness switch
+            {
+                null => string.Empty,
+                ExpiryStatus.Expired => L["Common_ExpiredDaysAgo", -remaining],
+                ExpiryStatus.Today => L["Common_ExpiresToday"],
+                ExpiryStatus.Soon => L["Cd_UseSoon", remaining],
+                _ => L["Cd_FreshStable", remaining],
+            };
+        }
+    }
 
     private BadgeVariant FreshnessVariant => Freshness switch
     {
