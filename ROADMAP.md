@@ -213,19 +213,45 @@ lists, no saving recipes.
 
 - [ ] Add a server-side recipe lookup proxied through
   `GET /api/recipes/suggestions` (takes the expiring item names, queries
-  TheMealDB `filter.php?i=` per ingredient, ranks meals by how many expiring
-  ingredients they cover, returns the top handful with name, thumbnail, and
-  source/video links; tolerant timeout — lookup failure hides the section
-  instead of breaking the page).
+  TheMealDB `filter.php?i=` per ingredient, looks up the top candidates via
+  `lookup.php?i=`, ranks meals by how many expiring ingredients they cover,
+  returns the top handful with name, thumbnail, and source/video links;
+  tolerant timeout — lookup failure hides the section instead of breaking
+  the page).
 - [ ] Cache suggestion responses server-side with a ~24h TTL (recipe data is
   shared, not household-specific, so an in-memory cache is enough — no table).
 - [ ] Add a "Use it up" section on the dashboard under the attention list:
   recipe cards showing the meal thumbnail, which expiring items each recipe
-  covers, and a link out to the full recipe (TheMealDB source/YouTube).
-  Empty when nothing relevant is found.
+  covers, and a link out to the full recipe (TheMealDB meal page). Empty when
+  nothing relevant is found.
 - [ ] Add tests: ingredient matching/ranking, TheMealDB mapping (stubbed HTTP
   handler, no live network in tests), cache-hit behavior, failure hides the
   section.
+
+### Verified API notes (checked 2026-10-10, free key `1`)
+
+Base: `https://www.themealdb.com/api/json/v1/1/`. No signup needed for the
+dev key; per their terms, publicly released apps should arrange production
+access — this app ships local-LAN only, so the dev key stands.
+
+- `filter.php?i={ingredient}` (single ingredient only — multi-ingredient
+  filtering is premium v2) returns
+  `meals: [{ idMeal, strMeal, strMealThumb }]`, or `{"meals":null}` when
+  nothing matches. Ingredient names use underscores for spaces.
+- Filter responses prove nothing about coverage, so each candidate needs
+  `lookup.php?i={idMeal}`, which returns ingredients in `strIngredient1..20`
+  paired with `strMeasure1..20` (unused slots are `""` or `null`), plus
+  `strInstructions`, `strYoutube`, `strSource`, `strCategory`, `strArea`.
+- Bound the fan-out: at most ~8 detail lookups per suggestion call, return
+  the top 5 ranked meals. Unknown ingredients simply yield `null` and are
+  skipped.
+- Cards use the `{strMealThumb}/small` variant (200px); meal links go to the
+  stable page `https://www.themealdb.com/meal/{idMeal}`.
+- Required attribution on the section: `Recipe data and imagery: TheMealDB
+  (https://www.themealdb.com/)`.
+- No rate limit is documented; the small candidate cap plus the 24h cache is
+  the politeness mechanism. If throttling ever appears, degrade to hiding
+  the section like any other lookup failure.
 
 ### Design notes
 
