@@ -213,6 +213,7 @@ public class UIStrings
     public static string Bc_ManualPlaceholder => Get(nameof(Bc_ManualPlaceholder));
     public static string Bc_ManualAria => Get(nameof(Bc_ManualAria));
     public static string Bc_Lookup => Get(nameof(Bc_Lookup));
+    public static string Bc_LookingUp => Get(nameof(Bc_LookingUp));
     public static string Bc_LookupFailed => Get(nameof(Bc_LookupFailed));
     public static string Pl_LocCount => Get(nameof(Pl_LocCount));
     public static string It_GridAria => Get(nameof(It_GridAria));
