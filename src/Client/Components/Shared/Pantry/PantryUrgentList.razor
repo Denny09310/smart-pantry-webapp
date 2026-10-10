@@ -3,10 +3,9 @@
 @inject BottomSheetService BottomSheet
 @inject IStringLocalizer<UIStrings> L
 
-<InfiniteScrollList T="PantryItemDto" Items="@Items" KeySelector="@(i => i.Id)" EnsureVisibleId="@HighlightId">
+<InfiniteScrollList T="PantryItemDto" Items="@Items">
     <ItemTemplate Context="item">
-        <div id="@($"pantry-item-{item.Id}")" class="@(item.Id == HighlightId ? "rounded-xl bg-muted" : "")">
-        <LongPressSurface T="PantryItemDto" Value="item" OnLongPress="OpenActionsAsync">
+        <div class="@(item.Id == HighlightId ? "rounded-xl bg-muted" : "")">
             <BbCard Class="mb-2">
                 <BbCardContent Class="flex items-center gap-3 p-3">
                     <div class="min-w-0 flex-1">
@@ -40,7 +39,6 @@
                     </BbButton>
                 </BbCardContent>
             </BbCard>
-        </LongPressSurface>
         </div>
     </ItemTemplate>
 </InfiniteScrollList>
