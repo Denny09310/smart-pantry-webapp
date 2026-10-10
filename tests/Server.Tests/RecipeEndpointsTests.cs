@@ -195,3 +195,31 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
         }
     }
 }
+
+public sealed class PantryTranslatorTests
+{
+    [Theory]
+    [InlineData("pomodoro", "tomato")]
+    [InlineData("POMODORI", "tomato")]
+    [InlineData("pollo", "chicken")]
+    [InlineData("olio d'oliva", "olive oil")]
+    public void Translates_Italian_Staples(string input, string expected)
+    {
+        Assert.Contains(expected, PantryTranslator.Candidates(input));
+    }
+
+    [Theory]
+    [InlineData("chicken")]
+    [InlineData("pasta")]
+    [InlineData("mozzarella")]
+    public void Passes_Through_English_And_Universal_Words(string input)
+    {
+        Assert.Equal([input], PantryTranslator.Candidates(input));
+    }
+
+    [Fact]
+    public void Ignores_Blank_Names()
+    {
+        Assert.Empty(PantryTranslator.Candidates("   "));
+    }
+}

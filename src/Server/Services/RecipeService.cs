@@ -18,6 +18,7 @@ internal sealed class RecipeService(
     ILogger<RecipeService> log)
 {
     private const int MaxIngredients = 6;
+    private const int MaxQueries = 8;
     private const int MaxCandidates = 8;
     private const int MaxResults = 5;
 
@@ -27,17 +28,34 @@ internal sealed class RecipeService(
         IReadOnlyList<string> expiringNames,
         CancellationToken ct = default)
     {
-        var queries = expiringNames
-            .Select(NormalizeQuery)
-            .Where(q => q.Length > 0)
-            .Distinct(StringComparer.Ordinal)
+        // Each pantry name contributes its English lookup candidates
+        // (translated plus original); display and matching keep the original.
+        var terms = expiringNames
+            .Select(n => n.Trim())
+            .Where(n => n.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(n => (
+                Display: n,
+                Queries: PantryTranslator.Candidates(n)
+                    .Select(NormalizeQuery)
+                    .Where(q => q.Length > 0)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList()))
+            .Where(x => x.Queries.Count > 0)
             .Take(MaxIngredients)
             .ToList();
 
-        if (queries.Count == 0)
+        if (terms.Count == 0)
             return [];
 
-        var cacheKey = $"recipes:{string.Join('|', queries.OrderBy(q => q, StringComparer.Ordinal))}";
+        var queries = terms
+            .SelectMany(x => x.Queries)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(q => q, StringComparer.Ordinal)
+            .Take(MaxQueries)
+            .ToList();
+
+        var cacheKey = $"recipes:{string.Join('|', queries)}";
 
         if (cache.TryGetValue(cacheKey, out IReadOnlyList<RecipeSuggestion>? cached) && cached is not null)
             return cached;
@@ -46,7 +64,7 @@ internal sealed class RecipeService(
 
         try
         {
-            result = await FetchSuggestionsAsync(queries, expiringNames, ct);
+            result = await FetchSuggestionsAsync(queries, terms, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {
@@ -60,7 +78,7 @@ internal sealed class RecipeService(
 
     private async Task<IReadOnlyList<RecipeSuggestion>> FetchSuggestionsAsync(
         List<string> queries,
-        IReadOnlyList<string> expiringNames,
+        List<(string Display, List<string> Queries)> terms,
         CancellationToken ct)
     {
         var client = http.CreateClient("TheMealDb");
@@ -99,18 +117,13 @@ internal sealed class RecipeService(
         var lookups = await Task.WhenAll(candidates.Select(c =>
             LookupDetailsAsync(client, c.Id, ct)));
 
-        var expiring = expiringNames
-            .Select(n => n.Trim())
-            .Where(n => n.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
         return lookups
             .Where(m => m is not null)
             .Select(m =>
             {
-                var matched = expiring
-                    .Where(e => m!.Ingredients.Any(i => Covers(i, e)))
+                var matched = terms
+                    .Where(t => t.Queries.Any(q => m!.Ingredients.Any(i => Covers(i, q))))
+                    .Select(t => t.Display)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
