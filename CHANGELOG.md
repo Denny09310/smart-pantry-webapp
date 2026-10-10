@@ -1,3 +1,17 @@
+## [0.5.0] - 2026-10-10
+
+### 🛼 Refactor
+
+- Drop Bit.Bswup, register service worker via Bit.Butil
+- Read connection string eagerly, seed it via environment in tests
+- Remove service worker no-cache middleware
+- Register service worker from index.html, updater only inspects
+- Drop scroll helper script for Butil Dom scrolling
+
+### 💼 Other
+
+- Refactor/remove-bswup into develop
+
 ## [0.4.4] - 2026-10-10
 
 ### 🐛 Bug Fixes

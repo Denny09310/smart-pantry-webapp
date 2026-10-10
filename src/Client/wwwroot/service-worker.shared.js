@@ -2,6 +2,13 @@
 // and service-worker.published.js (published) via importScripts().
 // Keeps push handling in one place so the two workers can't drift apart.
 
+// Butil ServiceWorker.SkipWaiting posts { __butil: 'skipWaiting' }; only the
+// worker can skip waiting on itself, so it has to act on that message here.
+self.addEventListener('message', event => {
+    if (event.data?.__butil === 'skipWaiting')
+        self.skipWaiting();
+});
+
 // Web Push: the page cannot receive pushes, so the worker shows the notification.
 // Chromium requires userVisibleOnly subscriptions to always show one.
 self.addEventListener('push', event => {

@@ -66,36 +66,9 @@ body {
     }
 }
 
-/* Bswup overlay: same centered splash as #app, never scrollable. */
-#bit-bswup {
-    overflow: hidden;
-    background-color: var(--background);
-}
-
-#bit-bswup .bit-bswup-container {
-    width: 100%;
-    margin: 0 auto;
-}
-
-#bit-bswup .bit-bswup-description {
-    margin-bottom: 0;
-}
-
-#bit-bswup-percent {
-    margin-top: 0;
-}
-
-.bit-bswup-progress {
-    background-color: var(--muted);
-}
-
-#bit-bswup-progress-bar {
-    background-color: var(--primary);
-}
-
 /* Boot-phase progress text, driven by Blazor itself: it sets
    --blazor-load-percentage-text on :root while downloading boot resources.
    Falls back to a static label before boot starts. */
-.bswup-boot-text:after {
+.boot-text:after {
     content: var(--blazor-load-percentage-text, "Loading…");
 }
