@@ -141,6 +141,19 @@ access — this app ships local-LAN only, so the dev key stands.
   the politeness mechanism. If throttling ever appears, degrade to hiding
   the section like any other lookup failure.
 
+### Italian pantry handling
+
+TheMealDB only indexes English, so `filter.php?i=pomodoro` is always empty.
+Each pantry name is looked up by its English candidates: a curated
+`PantryTranslator` table answers staples instantly and offline
+(`pomodoro` → `tomato`), anything else goes to MyMemory (free, keyless,
+`it|en`, only when the UI language is Italian) with misses cached for 30
+days to respect the anonymous quota. The original name is always tried too,
+display and matching keep the original, and quota refusals fall back
+gracefully. No multilingual recipe API was adopted: Spoonacular/Edamam are
+English-only and keyed, the one claiming multi-language (recipeapi.io)
+has no Italian, requires a key, and is unproven.
+
 ### Design notes
 
 Same shape as the Open Food Facts lookup: the free TheMealDB API needs no

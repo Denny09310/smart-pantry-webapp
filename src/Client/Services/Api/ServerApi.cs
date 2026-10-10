@@ -114,6 +114,7 @@ internal interface IRecipeEndpoints
 {
     [Get("/suggestions")]
     Task<ApiResponse<GetRecipeSuggestionsResponse>> GetSuggestionsAsync(
+        [Query] string? lang = null,
         CancellationToken ct = default);
 }
 

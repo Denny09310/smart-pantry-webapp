@@ -91,9 +91,11 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
             Content = new StringContent(body, Encoding.UTF8, "application/json"),
         };
 
-    private static async Task<GetRecipeSuggestionsResponse?> SuggestionsAsync(HttpClient client)
+    private static async Task<GetRecipeSuggestionsResponse?> SuggestionsAsync(HttpClient client, string? lang = null)
     {
-        using var response = await client.GetAsync("/api/recipes/suggestions");
+        var url = lang is null ? "/api/recipes/suggestions" : $"/api/recipes/suggestions?lang={lang}";
+
+        using var response = await client.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
@@ -221,5 +223,172 @@ public sealed class PantryTranslatorTests
     public void Ignores_Blank_Names()
     {
         Assert.Empty(PantryTranslator.Candidates("   "));
+    }
+}
+
+[Collection("api")]
+public sealed class TranslationPipelineTests(PantryApiFactory factory)
+{
+    private readonly HttpClient _client = factory.CreateClient();
+
+    private static string UniqueName(string prefix)
+        => $"{prefix}-{Guid.NewGuid():N}";
+
+    private static DateOnly InDays(int days)
+        => DateOnly.FromDateTime(DateTime.Today).AddDays(days);
+
+    private static HttpResponseMessage Json(string body)
+        => new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json"),
+        };
+
+    private static void ServeItalianPipeline(StubOffHandler stub)
+    {
+        stub.Responder = request =>
+        {
+            var path = request.RequestUri?.PathAndQuery ?? string.Empty;
+
+            if (path.Contains("get?q=", StringComparison.Ordinal))
+            {
+                return Json("""
+                    {"responseData":{"translatedText":"muscovado sugar"},
+                     "responseStatus":200,
+                     "matches":[{"translation":"muscovado sugar"}]}
+                    """);
+            }
+
+            if (path.Contains("filter.php", StringComparison.Ordinal))
+            {
+                return path.Contains("muscovado_sugar", StringComparison.Ordinal)
+                    ? Json("""
+                        {"meals":[
+                          {"idMeal":"3","strMeal":"Muscovado Cake","strMealThumb":"https://www.themealdb.com/images/media/meals/ghi.jpg"}
+                        ]}
+                        """)
+                    : Json("""{"meals":null}""");
+            }
+
+            if (path.Contains("lookup.php", StringComparison.Ordinal))
+            {
+                return Json("""
+                    {"meals":[{
+                      "idMeal":"3","strMeal":"Muscovado Cake",
+                      "strMealThumb":"https://www.themealdb.com/images/media/meals/ghi.jpg",
+                      "strArea":"British",
+                      "strIngredient1":"muscovado sugar","strIngredient2":"flour","strIngredient3":""
+                    }]}
+                    """);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        };
+    }
+
+    [Fact]
+    public async Task Italian_Word_Is_Translated_Then_Matched()
+    {
+        var stub = factory.Services.GetRequiredService<StubOffHandler>();
+        ServeItalianPipeline(stub);
+
+        using var created = await _client.PostAsJsonAsync(
+            "/api/pantry",
+            new CreatePantryItemRequest("zucchero muscovado", 1, "pcs", "pantry", null, InDays(2)));
+        created.EnsureSuccessStatusCode();
+        var item = await created.Content.ReadFromJsonAsync<PantryItemDto>();
+        Assert.NotNull(item);
+
+        try
+        {
+            using var response = await _client.GetAsync("/api/recipes/suggestions?lang=it");
+            response.EnsureSuccessStatusCode();
+
+            var page = await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
+            Assert.NotNull(page);
+
+            var cake = Assert.Single(page.Items);
+            Assert.Equal("Muscovado Cake", cake.Name);
+            Assert.Contains("zucchero muscovado", cake.MatchedIngredients);
+        }
+        finally
+        {
+            using var deleted = await _client.DeleteAsync($"/api/pantry/{item.Id}");
+            deleted.EnsureSuccessStatusCode();
+        }
+    }
+
+    [Fact]
+    public async Task Translation_Quota_Refusal_Falls_Back_Gracefully()
+    {
+        var stub = factory.Services.GetRequiredService<StubOffHandler>();
+        stub.Responder = request =>
+        {
+            var path = request.RequestUri?.PathAndQuery ?? string.Empty;
+
+            if (path.Contains("get?q=", StringComparison.Ordinal))
+            {
+                return Json("""
+                    {"responseData":{"translatedText":"MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY"},
+                     "responseStatus":429,"matches":[]}
+                    """);
+            }
+
+            return Json("""{"meals":null}""");
+        };
+
+        using var created = await _client.PostAsJsonAsync(
+            "/api/pantry",
+            new CreatePantryItemRequest(UniqueName("quota"), 1, "pcs", "pantry", null, InDays(2)));
+        created.EnsureSuccessStatusCode();
+        var item = await created.Content.ReadFromJsonAsync<PantryItemDto>();
+        Assert.NotNull(item);
+
+        try
+        {
+            using var response = await _client.GetAsync("/api/recipes/suggestions?lang=it");
+            response.EnsureSuccessStatusCode();
+
+            var page = await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
+            Assert.NotNull(page);
+            Assert.Empty(page.Items);
+        }
+        finally
+        {
+            using var deleted = await _client.DeleteAsync($"/api/pantry/{item.Id}");
+            deleted.EnsureSuccessStatusCode();
+        }
+    }
+
+    [Fact]
+    public async Task Translations_Are_Cached()
+    {
+        var stub = factory.Services.GetRequiredService<StubOffHandler>();
+        ServeItalianPipeline(stub);
+
+        using var created = await _client.PostAsJsonAsync(
+            "/api/pantry",
+            new CreatePantryItemRequest(UniqueName("cached-tr"), 1, "pcs", "pantry", null, InDays(2)));
+        created.EnsureSuccessStatusCode();
+        var item = await created.Content.ReadFromJsonAsync<PantryItemDto>();
+        Assert.NotNull(item);
+
+        try
+        {
+            using var first = await _client.GetAsync("/api/recipes/suggestions?lang=it");
+            first.EnsureSuccessStatusCode();
+
+            var translationCalls = stub.RequestedPaths.Count(p => p.Contains("get?q=", StringComparison.Ordinal));
+
+            using var second = await _client.GetAsync("/api/recipes/suggestions?lang=it");
+            second.EnsureSuccessStatusCode();
+
+            // Suggestion cache hit: no new upstream calls at all.
+            Assert.Equal(translationCalls, stub.RequestedPaths.Count(p => p.Contains("get?q=", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            using var deleted = await _client.DeleteAsync($"/api/pantry/{item.Id}");
+            deleted.EnsureSuccessStatusCode();
+        }
     }
 }

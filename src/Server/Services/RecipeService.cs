@@ -14,6 +14,7 @@ namespace Server.Services;
 /// </summary>
 internal sealed class RecipeService(
     IHttpClientFactory http,
+    TranslationService translations,
     IMemoryCache cache,
     ILogger<RecipeService> log)
 {
@@ -26,23 +27,33 @@ internal sealed class RecipeService(
 
     public async Task<IReadOnlyList<RecipeSuggestion>> GetSuggestionsAsync(
         IReadOnlyList<string> expiringNames,
+        bool translate,
         CancellationToken ct = default)
     {
         // Each pantry name contributes its English lookup candidates
         // (translated plus original); display and matching keep the original.
-        var terms = expiringNames
+        var names = expiringNames
             .Select(n => n.Trim())
             .Where(n => n.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(n => (
-                Display: n,
-                Queries: PantryTranslator.Candidates(n)
+            .Take(MaxIngredients)
+            .ToList();
+
+        if (names.Count == 0)
+            return [];
+
+        var candidateLists = await Task.WhenAll(
+            names.Select(n => translations.CandidatesAsync(n, translate, ct)));
+
+        var terms = names
+            .Zip(candidateLists, (name, candidates) => (
+                Display: name,
+                Queries: candidates
                     .Select(NormalizeQuery)
                     .Where(q => q.Length > 0)
                     .Distinct(StringComparer.Ordinal)
                     .ToList()))
             .Where(x => x.Queries.Count > 0)
-            .Take(MaxIngredients)
             .ToList();
 
         if (terms.Count == 0)
@@ -122,7 +133,7 @@ internal sealed class RecipeService(
             .Select(m =>
             {
                 var matched = terms
-                    .Where(t => t.Queries.Any(q => m!.Ingredients.Any(i => Covers(i, q))))
+                    .Where(t => t.Queries.Any(q => m!.Ingredients.Any(i => Covers(NormalizeQuery(i), q))))
                     .Select(t => t.Display)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();

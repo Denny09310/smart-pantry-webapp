@@ -28,8 +28,10 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PushService>();
 builder.Services.AddScoped<ProductLookupService>();
 builder.Services.AddScoped<RecipeService>();
+builder.Services.AddScoped<TranslationService>();
 builder.Services.AddOpenFoodFacts();
 builder.Services.AddTheMealDb();
+builder.Services.AddMyMemory();
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
 
 if (!builder.Environment.IsEnvironment("Testing"))
