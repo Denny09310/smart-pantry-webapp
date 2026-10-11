@@ -1,7 +1,7 @@
 @namespace Client.Components.Shared.Pantry
 @using Client.Components.Shared.Members
 @inject MemberService Members
-@inject BottomSheetService BottomSheet
+
 @inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
@@ -18,15 +18,7 @@
                                Placeholder="@L["Common_SearchPlaceholder"]"
                                AriaLabel="@L["Common_SearchAria"]" />
         </BbInputGroup>
-        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Class="shrink-0 md:hidden"
-                  AriaLabel="@L["Common_SwitchMemberAria"]" OnClick="SwitchMemberAsync">
-            <BbAvatar Class="h-6 w-6">
-                <BbAvatarFallback Class="text-[10px]"
-                                  style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
-                    @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
-                </BbAvatarFallback>
-            </BbAvatar>
-        </BbButton>
+        
         <BbButton OnClick="@(() => OnAdd.InvokeAsync())" Class="shrink-0" AriaLabel="@L["Common_AddItemAria"]">
             <LucideIcon Name="plus" Size="14" />
             <span class="hidden md:inline">@L["Common_AddItem"]</span>
@@ -50,7 +42,8 @@
     </BbChipSet>
 </div>
 
-@code {
+@code
+{
     [Parameter]
     public string? Search { get; set; }
 
@@ -93,12 +86,7 @@
     [Parameter]
     public EventCallback OnAdd { get; set; }
 
-    private DialogOpenOptions SwitcherOptions() => new()
-    {
-        Title = L["Common_SwitcherTitle"],
-        Description = L["Common_SwitcherDescription"],
-        Size = DialogSize.Small
-    };
+    
 
     protected override void OnInitialized() => Members.Changed += OnChanged;
 
@@ -116,7 +104,7 @@
         }
     }
 
-    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
+    
 
     private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
 
