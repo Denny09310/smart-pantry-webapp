@@ -37,7 +37,8 @@
     </header>
 </BbResponsiveNavProvider>
 
-@code {
+@code
+{
     private IReadOnlyList<NavItemDefinition> NavItems =>
     [
         new() { Text = L["Nav_Dashboard"], Href = "/", Match = NavLinkMatch.All },

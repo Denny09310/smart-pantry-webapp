@@ -1,4 +1,16 @@
+## [0.8.0] - 2026-10-11
+
+### Changed
+
+- Move member selector from Pantry screen (mobile) to Settings page; keep selector on Home.
+- Format every @code block to put opening brace on a new line.
+
+### 💼 Other
+
+- Minor release 0.8.0
+
 ## [0.7.3] - 2026-10-11
+
 
 ### 🐛 Bug Fixes
 

@@ -1,9 +1,6 @@
 using System.Globalization;
 
-using Microsoft.Extensions.Localization;
-
 using Shared.Models;
-using Shared.Resources;
 
 namespace Client.Components.Shared;
 

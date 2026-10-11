@@ -1,5 +1,8 @@
 @namespace Client.Components.Pages
+@using Client.Components.Shared.Members
 @inject LanguageService Languages
+@inject MemberService Members
+@inject BottomSheetService BottomSheet
 @inject IStringLocalizer<UIStrings> L
 
 <div class="mx-auto w-full max-w-6xl space-y-4 p-4 md:space-y-6">
@@ -25,14 +28,42 @@
                       Value="@Languages.Current" ValueChanged="@OnLanguageChanged" Options="@_options" />
         </div>
     </BbCard>
+
+    <BbCard Class="p-4 md:p-6">
+        <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <LucideIcon Name="users" Size="18" />
+                </span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium">@L["Common_SwitcherTitle"]</p>
+                    <p class="truncate text-xs text-muted-foreground">@L["Common_SwitcherDescription"]</p>
+                </div>
+            </div>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="SwitchMemberAsync">
+                <LucideIcon Name="user-round" Size="14" />
+                @L["Common_SwitchMemberAria"]
+            </BbButton>
+        </div>
+    </BbCard>
 </div>
 
-@code {
+@code
+{
     private static readonly IReadOnlyList<SelectOption<string>> _options =
     [
         new("en", "English"),
         new("it", "Italiano"),
     ];
+
+    private DialogOpenOptions SwitcherOptions() => new()
+    {
+        Title = L["Common_SwitcherTitle"],
+        Description = L["Common_SwitcherDescription"],
+        Size = DialogSize.Small,
+    };
+
+    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
 
     private Task OnLanguageChanged(string? value)
         => Languages.SetAsync(value ?? UIStrings.DefaultLanguage);
