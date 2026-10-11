@@ -13,11 +13,7 @@
 @if (_hasMore)
 {
     <div @ref="_sentinel" class="flex flex-col items-center gap-2 py-4">
-        @if (_loading)
-        {
-            <BbSpinner Size="SpinnerSize.Default" />
-        }
-        else if (_observerFailed)
+        @if (_observerFailed)
         {
             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="LoadNextAsync">
                 @(TriggerButtonText ?? L["Is_ShowMore"])
@@ -38,7 +34,13 @@
     public IReadOnlyList<T> Items { get; set; } = [];
 
     [Parameter]
-    public Func<int, int, Task<PageResult>>? ItemsProvider { get; set; }
+    public Func<int, int, CancellationToken, Task<PageResult>>? ItemsProvider { get; set; }
+
+    [Parameter]
+    public string? ResetKey { get; set; }
+
+    [Parameter]
+    public EventCallback<int> TotalChanged { get; set; }
 
     [Parameter, EditorRequired]
     public RenderFragment<T> ItemTemplate { get; set; } = default!;
@@ -51,28 +53,26 @@
 
     private List<T> _visible = [];
     private int _total;
+    private bool _hasMore;
+    private bool _loading;
+    private bool _initializing = true;
+    private string? _renderedResetKey;
     private IReadOnlyList<T>? _renderedItems;
     private ElementReference _sentinel;
     private ButilSubscription? _observation;
     private bool _observerFailed;
-    private bool _restartObservation;
-    private bool _loading;
-    private bool _hasMore;
-    private int _loadedCount;
+    private CancellationTokenSource? _loadCts;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (ItemsProvider is not null)
         {
-            if (_renderedItems is not null && Items.SequenceEqual(_renderedItems) && _loadedCount == Items.Count)
+            if (_renderedResetKey == ResetKey && !_initializing)
                 return;
 
-            _renderedItems = Items;
-            _loadedCount = Items.Count;
-            _visible = Items.Take(_loadedCount).ToList();
-            _total = _visible.Count;
-            _restartObservation = true;
-            _hasMore = false;
+            _renderedResetKey = ResetKey;
+            _initializing = false;
+            await ResetAndLoadFirstPageAsync();
             return;
         }
 
@@ -81,25 +81,36 @@
 
         _renderedItems = Items;
         _total = Items.Count;
-        _visible = Items.Take(Math.Max(_loadedCount == 0 ? PageSize : _loadedCount, PageSize)).ToList();
-        _loadedCount = _visible.Count;
-        _restartObservation = true;
-        _hasMore = _loadedCount < _total;
+        _visible = Items.Take(PageSize).ToList();
+        _hasMore = _visible.Count < _total;
+        await TotalChanged.InvokeAsync(_total);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_restartObservation)
-        {
-            _restartObservation = false;
-            await StopObservingAsync();
-        }
-
         if (_hasMore && _observation is null && !_observerFailed)
             await StartObservingAsync();
         else if (!_hasMore && _observation is not null)
             await StopObservingAsync();
     }
+
+    private async Task ResetAndLoadFirstPageAsync()
+    {
+        await StopObservingAsync();
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+
+        _visible = [];
+        _total = 0;
+        _hasMore = true;
+        _observerFailed = false;
+        StateHasChanged();
+
+        await LoadNextAsync();
+    }
+
+    public Task RefreshAsync() => ResetAndLoadFirstPageAsync();
 
     private async Task StartObservingAsync()
     {
@@ -126,45 +137,40 @@
         if (_loading)
             return;
 
-        if (ItemsProvider is not null)
+        if (ItemsProvider is null)
         {
-            if (_visible.Count >= _total && _total >= 0)
+            if (_visible.Count >= _total)
                 return;
 
-            _loading = true;
+            _visible = (_renderedItems?.Take(_visible.Count + PageSize) ?? _visible).ToList();
+            _hasMore = _visible.Count < _total;
             StateHasChanged();
-
-            try
-            {
-                var skip = _visible.Count;
-                var result = await ItemsProvider(skip, PageSize);
-                if (skip == 0)
-                {
-                    _visible = result.Items.ToList();
-                }
-                else
-                {
-                    _visible.AddRange(result.Items);
-                }
-                _total = result.Total;
-                _hasMore = _visible.Count < _total;
-                _loadedCount = _visible.Count;
-            }
-            finally
-            {
-                _loading = false;
-                StateHasChanged();
-            }
             return;
         }
 
-        if (_visible.Count >= _total)
+        if (!_hasMore && _visible.Count > 0)
             return;
 
-        _visible = (_renderedItems?.Take(_visible.Count + PageSize) ?? _visible).ToList();
-        _loadedCount = _visible.Count;
-        _hasMore = _loadedCount < _total;
+        _loading = true;
         StateHasChanged();
+
+        try
+        {
+            var result = await ItemsProvider(_visible.Count, PageSize, _loadCts?.Token ?? CancellationToken.None);
+            _visible.AddRange(result.Items);
+            _total = result.Total;
+            _hasMore = _visible.Count < _total;
+            await TotalChanged.InvokeAsync(_total);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a filter reset; the new load owns the list now.
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task StopObservingAsync()
@@ -178,6 +184,8 @@
 
     public async ValueTask DisposeAsync()
     {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
         await StopObservingAsync();
     }
 }

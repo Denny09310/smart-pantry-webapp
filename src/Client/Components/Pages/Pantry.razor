@@ -1,6 +1,7 @@
 @page "/pantry"
 @using Client.Components.Shared.Home
 @using Client.Components.Shared.Pantry
+@using DataGridPrimitives = BlazorBlueprint.Primitives.DataGrid
 
 @inject ServerApi Api
 @inject ToastService Toast
@@ -33,13 +34,13 @@
                      LocationCounts="@LocationCounts" TotalCount="@TotalCount" SoonCount="@SoonCount" TodayCount="@TodayCount"
                      ExpiredCount="@ExpiredCount" FreshCount="@FreshCount" OnAdd="@CreateItemAsync" />
 
-    @if (_items is null)
+    @if (_summary is null)
     {
         <div class="flex justify-center py-12">
             <BbSpinner Size="SpinnerSize.Large" />
         </div>
     }
-    else if (VisibleItems.Count == 0 && TotalCount == 0)
+    else if (_summary.Total == 0)
     {
         <BbEmpty Title="@L["Common_EmptyTitle"]" Description="@L["Common_EmptyDescription"]"
                  Size="EmptySize.Default">
@@ -54,7 +55,13 @@
             </ChildContent>
         </BbEmpty>
     }
-    else if (VisibleItems.Count == 0)
+    else if (_filterTotal is null)
+    {
+        <div class="flex justify-center py-12">
+            <BbSpinner Size="SpinnerSize.Large" />
+        </div>
+    }
+    else if (_filterTotal == 0)
     {
         <BbEmpty Title="@L["Common_NoMatches"]" Description="@L["Common_NoMatchesHint"]" Size="EmptySize.Default">
             <Icon>
@@ -70,10 +77,10 @@
     else
     {
         <div class="hidden md:block">
-            <PantryInventoryTable Items="@VisibleItems" BusyIds="@_busyIds" OnEdit="@EditItemAsync"
-                                  OnDelete="@DeleteItemAsync" OnDetails="@OpenDetailsAsync" />
+            <PantryInventoryTable ItemsProvider="@ProvideTablePageAsync" FilterKey="@FilterKey" BusyIds="@_busyIds"
+                                  OnEdit="@EditItemAsync" OnDelete="@DeleteItemAsync" OnDetails="@OpenDetailsAsync" />
             <div class="flex items-center justify-between gap-2 px-1 pt-2 text-xs text-muted-foreground">
-                <p>@L["Pantry_Showing", VisibleItems.Count]</p>
+                <p>@L["Pantry_Showing", _filterTotal]</p>
                 <p>@L["Pantry_SortHint"]</p>
             </div>
         </div>
@@ -82,12 +89,13 @@
             <div class="flex items-start justify-between gap-2">
                 <div>
                     <h2 class="text-base font-semibold">@L["Pantry_ItemsHeading"]</h2>
-                    <p class="text-xs text-muted-foreground">@L["Pantry_ItemsSubtext", VisibleItems.Count]</p>
+                    <p class="text-xs text-muted-foreground">@L["Pantry_ItemsSubtext", _filterTotal]</p>
                 </div>
                 <BbBadge Variant="BadgeVariant.SoftInfo">@L["Common_SortedBadge"]</BbBadge>
             </div>
 
-            <PantryUrgentList Items="@VisibleItems" BusyIds="@_busyIds" OnCheck="@MarkUsedAsync" OnEdit="@EditItemAsync"
+            <PantryUrgentList ItemsProvider="@ProvideItemsAsync" ResetKey="@FilterKey" TotalChanged="@OnTotalChanged"
+                              BusyIds="@_busyIds" OnCheck="@MarkUsedAsync" OnEdit="@EditItemAsync"
                               OnDelete="@DeleteItemAsync" OnBarcodeAttached="@AttachBarcodeAsync" HighlightId="@_highlightId" />
 
             @if (HasActiveFilters)
@@ -125,44 +133,41 @@
         Description = L["Pu_ActionsDescription"]
     };
 
-    private const int MaxItems = 500;
-
-    private List<PantryItemDto>? _items;
+    private GetPantrySummaryResponse? _summary;
+    private int? _filterTotal;
+    private int _refreshTick;
     private readonly HashSet<string> _busyIds = [];
     private string? _highlightId;
 
     private string? _location = "all", _name;
     private PantryStatusFilter _status = PantryStatusFilter.All;
 
-    private int TotalCount => _items?.Count ?? 0;
+    private string FilterKey => $"{_name}|{_location}|{_status}|{_refreshTick}";
 
-    private int ExpiredCount => _items?.CountByStatus(PantryItemStatus.Expired) ?? 0;
+    private int TotalCount => _summary?.Total ?? 0;
 
-    private int TodayCount => _items?.CountByStatus(PantryItemStatus.Today) ?? 0;
+    private int ExpiredCount => _summary?.Expired ?? 0;
 
-    private int SoonCount => _items?.CountByStatus(PantryItemStatus.Soon) ?? 0;
+    private int TodayCount => _summary?.Today ?? 0;
 
-    private int FreshCount => _items?.CountByStatus(PantryItemStatus.Fresh) ?? 0;
+    private int SoonCount => _summary?.Soon ?? 0;
+
+    private int FreshCount => _summary?.Fresh ?? 0;
 
     private int CriticalCount => ExpiredCount + TodayCount;
 
-    private IReadOnlyList<string> Locations => _items?.DistinctLocations() ?? [];
+    private IReadOnlyList<string> Locations
+        => _summary?.ByLocation.Keys.OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList() ?? [];
 
     private IReadOnlyDictionary<string, int> LocationCounts
-        => _items?.CountByLocation() ?? System.Collections.Frozen.FrozenDictionary<string, int>.Empty;
-
-    private IReadOnlyList<PantryItemDto> VisibleItems
-        => _items?
-            .Where(MatchesFilters)
-            .OrderBy(i => i.ExpirationDate)
-            .ThenBy(i => i.Name)
-            .ToList() ?? [];
+        => _summary?.ByLocation as IReadOnlyDictionary<string, int>
+            ?? System.Collections.Frozen.FrozenDictionary<string, int>.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         Realtime.Changed += OnRealtimeChanged;
         await Realtime.StartAsync();
-        await LoadAsync();
+        await LoadSummaryAsync();
     }
 
     public void Dispose() => Realtime.Changed -= OnRealtimeChanged;
@@ -175,7 +180,8 @@
             // the manual reload path reports its own errors.
             return InvokeAsync(async () =>
             {
-                await LoadAsync(quiet: true);
+                await LoadSummaryAsync(quiet: true);
+                _refreshTick++;
                 StateHasChanged();
             });
         }
@@ -186,30 +192,105 @@
         }
     }
 
-    private bool MatchesFilters(PantryItemDto item)
+    private static ExpiryStatus? MapStatus(PantryStatusFilter filter) => filter switch
     {
-        if (!string.IsNullOrWhiteSpace(_name)
-            && !item.Name.Contains(_name, StringComparison.OrdinalIgnoreCase)
-            && (item.Notes is null || !item.Notes.Contains(_name, StringComparison.OrdinalIgnoreCase)))
-            return false;
+        PantryStatusFilter.Soon => ExpiryStatus.Soon,
+        PantryStatusFilter.Today => ExpiryStatus.Today,
+        PantryStatusFilter.Expired => ExpiryStatus.Expired,
+        PantryStatusFilter.Fresh => ExpiryStatus.Fresh,
+        _ => null,
+    };
 
-        if (!string.IsNullOrWhiteSpace(_location)
-            && _location is not "all"
-            && !item.Location.Equals(_location, StringComparison.OrdinalIgnoreCase))
-            return false;
+    private GetPantryItemsRequest BuildRequest(int skip, int take, bool descending = false)
+        => new(
+            Location: _location is "all" or null ? null : _location,
+            Name: string.IsNullOrWhiteSpace(_name) ? null : _name,
+            Status: MapStatus(_status))
+        {
+            Skip = skip,
+            Take = take,
+            SortDescending = descending,
+        };
 
-        return item.Matches(_status);
+    private async Task<InfiniteScrollList<PantryItemDto>.PageResult> ProvideItemsAsync(int skip, int take, CancellationToken ct)
+    {
+        try
+        {
+            using var response = await Api.Pantry.GetAsync(BuildRequest(skip, take), ct);
+
+            if (!response.IsSuccessfulWithContent || response.Content is null)
+            {
+                Toast.Error(L["Common_LoadError"]);
+                return new([], _filterTotal ?? skip);
+            }
+
+            return new(response.Content.Items.ToList(), response.Content.TotalItems);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Pantry page load failed.");
+            Toast.Error(L["Common_LoadError"]);
+            return new([], _filterTotal ?? skip);
+        }
     }
 
-    private async Task LoadAsync(bool quiet = false)
+    private async ValueTask<DataGridPrimitives.DataGridResult<PantryItemDto>> ProvideTablePageAsync(DataGridPrimitives.DataGridRequest request)
     {
-        _highlightId = null;
+        request.CancellationToken.ThrowIfCancellationRequested();
+
+        var descending = request.SortDefinitions is [{ Direction: var direction }, ..]
+            && direction == SortDirection.Descending;
 
         try
         {
-            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
+            using var response = await Api.Pantry.GetAsync(
+                BuildRequest(request.StartIndex, request.Count ?? 20, descending),
+                request.CancellationToken);
 
-            if (!response.IsSuccessfulWithContent)
+            if (!response.IsSuccessfulWithContent || response.Content is null)
+            {
+                Toast.Error(L["Common_LoadError"]);
+                return new() { Items = [], TotalItemCount = _filterTotal ?? 0 };
+            }
+
+            _filterTotal = response.Content.TotalItems;
+            await InvokeAsync(StateHasChanged);
+
+            return new()
+            {
+                Items = response.Content.Items.ToList(),
+                TotalItemCount = response.Content.TotalItems,
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Pantry table load failed.");
+            Toast.Error(L["Common_LoadError"]);
+            return new() { Items = [], TotalItemCount = _filterTotal ?? 0 };
+        }
+    }
+
+    private Task OnTotalChanged(int total)
+    {
+        _filterTotal = total;
+        return Task.CompletedTask;
+    }
+
+    private async Task LoadSummaryAsync(bool quiet = false)
+    {
+        try
+        {
+            using var response = await Api.Pantry.GetSummaryAsync();
+
+            if (!response.IsSuccessfulWithContent || response.Content is null)
             {
                 if (!quiet)
                     Toast.Error(L["Common_LoadError"]);
@@ -217,11 +298,11 @@
                 return;
             }
 
-            _items = new(response.Content.Items);
+            _summary = response.Content;
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Pantry load failed.");
+            Log.LogWarning(ex, "Pantry summary load failed.");
 
             if (!quiet)
                 Toast.Error(L["Common_LoadError"]);
@@ -231,18 +312,21 @@
     private Task OnSearchChanged(string? value)
     {
         _name = value;
+        _filterTotal = null;
         return Task.CompletedTask;
     }
 
     private Task OnLocationChanged(string? value)
     {
         _location = value;
+        _filterTotal = null;
         return Task.CompletedTask;
     }
 
     private Task OnStatusChanged(PantryStatusFilter value)
     {
         _status = value;
+        _filterTotal = null;
         return Task.CompletedTask;
     }
 
@@ -251,12 +335,20 @@
         _name = null;
         _location = "all";
         _status = PantryStatusFilter.All;
+        _filterTotal = null;
     }
 
     private bool HasActiveFilters =>
         !string.IsNullOrWhiteSpace(_name)
         || (_location is not null && _location is not "all")
         || _status != PantryStatusFilter.All;
+
+    private async Task RefreshDataAsync()
+    {
+        _highlightId = null;
+        await LoadSummaryAsync();
+        _refreshTick++;
+    }
 
     private async Task CreateItemAsync()
     {
@@ -279,7 +371,7 @@
         var createdId = response.Content?.Id;
 
         Toast.Success(L["Common_Created"]);
-        await LoadAsync();
+        await RefreshDataAsync();
         _highlightId = createdId;
     }
 
@@ -317,7 +409,7 @@
             }
 
             Toast.Success(L["Home_Updated", request.Name]);
-            await LoadAsync();
+            await RefreshDataAsync();
         }
         finally
         {
@@ -383,7 +475,7 @@
             }
 
             Toast.Success(L["Pd_Attached"]);
-            await LoadAsync();
+            await RefreshDataAsync();
         }
         finally
         {
@@ -414,8 +506,8 @@
                 return;
             }
 
-            _items?.RemoveAll(i => i.Id == item.Id);
             Toast.Success(L["Common_Removed", item.Name]);
+            await RefreshDataAsync();
         }
         finally
         {
@@ -446,8 +538,8 @@
                 return;
             }
 
-            _items?.RemoveAll(i => i.Id == item.Id);
             Toast.Success(L["Pantry_UsedUp", item.Name]);
+            await RefreshDataAsync();
         }
         finally
         {

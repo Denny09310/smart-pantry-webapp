@@ -29,6 +29,10 @@ internal interface IPantryEndpoints
         GetPantryItemsRequest? request = null,
         CancellationToken ct = default);
 
+    [Get("/summary")]
+    Task<ApiResponse<GetPantrySummaryResponse>> GetSummaryAsync(
+        CancellationToken ct = default);
+
     [Post("/")]
     Task<ApiResponse<PantryItemDto>> CreateAsync(
         CreatePantryItemRequest request,

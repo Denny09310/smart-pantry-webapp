@@ -44,6 +44,12 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
                 _ => query,
             };
         }
+        else if (request.ExcludeFresh)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var horizon = today.AddDays(7);
+            query = query.Where(x => x.ExpirationDate <= horizon);
+        }
 
         var totalItems = await query.CountAsync(ct);
 
@@ -51,9 +57,11 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         var take = Math.Clamp(request.Take, 1, 100);
 
         // Status is calculated in memory: the shared rule is not translatable to SQL.
-        var entries = await query
-            .OrderBy(x => x.ExpirationDate)
-            .ThenBy(x => x.Id)
+        var ordered = request.SortDescending
+            ? query.OrderByDescending(x => x.ExpirationDate).ThenByDescending(x => x.Id)
+            : query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Id);
+
+        var entries = await ordered
             .Skip(skip)
             .Take(take)
             .ToListAsync(ct);
@@ -77,6 +85,35 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         return TypedResults.Ok(new GetPantryItemsResponse(
             items,
             totalItems));
+    }
+
+    [MapGet("/summary")]
+    public async Task<Ok<GetPantrySummaryResponse>> GetPantrySummaryAsync(CancellationToken ct)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var horizon = today.AddDays(7);
+
+        var expired = await db.Items.CountAsync(x => x.ExpirationDate < today, ct);
+        var todayCount = await db.Items.CountAsync(x => x.ExpirationDate == today, ct);
+        var soon = await db.Items.CountAsync(x => x.ExpirationDate > today && x.ExpirationDate <= horizon, ct);
+        var fresh = await db.Items.CountAsync(x => x.ExpirationDate > horizon, ct);
+
+        var byLocation = await db.Items
+            .AsNoTracking()
+            .GroupBy(x => x.Location)
+            .Select(g => new { Location = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Location, x => x.Count, ct);
+
+        var total = expired + todayCount + soon + fresh;
+
+        return TypedResults.Ok(new GetPantrySummaryResponse(
+            total,
+            expired,
+            todayCount,
+            soon,
+            fresh,
+            expired + todayCount + soon,
+            byLocation));
     }
 
     [MapGet("/{id}")]

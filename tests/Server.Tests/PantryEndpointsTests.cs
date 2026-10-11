@@ -242,4 +242,51 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
                 await DeleteItemAsync(id);
         }
     }
+
+    [Fact]
+    public async Task List_ExcludeFresh_Hides_Fresh()
+    {
+        var soon = await CreateItemAsync(expires: InDays(2));
+        var fresh = await CreateItemAsync(expires: InDays(60));
+        try
+        {
+            using var response = await _client.GetAsync("/api/pantry?excludeFresh=true&take=100");
+            response.EnsureSuccessStatusCode();
+            var page = await response.Content.ReadFromJsonAsync<GetPantryItemsResponse>();
+            Assert.NotNull(page);
+
+            var ids = page.Items.Select(i => i.Id).ToList();
+            Assert.Contains(soon.Id, ids);
+            Assert.DoesNotContain(fresh.Id, ids);
+        }
+        finally
+        {
+            await DeleteItemAsync(soon.Id);
+            await DeleteItemAsync(fresh.Id);
+        }
+    }
+
+    [Fact]
+    public async Task Summary_Returns_Consistent_Counts()
+    {
+        var soon = await CreateItemAsync(expires: InDays(2));
+        var fresh = await CreateItemAsync(expires: InDays(60));
+        try
+        {
+            using var response = await _client.GetAsync("/api/pantry/summary");
+            response.EnsureSuccessStatusCode();
+            var summary = await response.Content.ReadFromJsonAsync<GetPantrySummaryResponse>();
+            Assert.NotNull(summary);
+            Assert.Equal(summary.Expired + summary.Today + summary.Soon + summary.Fresh, summary.Total);
+            Assert.Equal(summary.Expired + summary.Today + summary.Soon, summary.Attention);
+            Assert.True(summary.Soon >= 1);
+            Assert.True(summary.Fresh >= 1);
+            Assert.True(summary.ByLocation.ContainsKey("pantry"));
+        }
+        finally
+        {
+            await DeleteItemAsync(soon.Id);
+            await DeleteItemAsync(fresh.Id);
+        }
+    }
 }
