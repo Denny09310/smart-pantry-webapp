@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 using Server.Data;
 using Server.Data.Entities;
+using Server.Hubs;
 
 using Shared.Models;
 
@@ -12,7 +14,7 @@ namespace Server.Endpoints;
 
 [Tags("Pantry")]
 [MapGroup("/api/pantry")]
-internal class PantryEndpoints(ApplicationDbContext db)
+internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, IPantryHubClient> hub)
 {
     [MapGet("/")]
     public async Task<Ok<GetPantryItemsResponse>> GetPantryItemsAsync(
@@ -112,6 +114,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(PantryChangedEvent.Created, entry.Id));
 
         return TypedResults.Created(
             $"/api/pantry/{entry.Id}",
@@ -140,6 +143,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         entry.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(PantryChangedEvent.Updated, entry.Id));
 
         return TypedResults.Ok(ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
     }
@@ -156,6 +160,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         db.Items.Remove(entry);
         await db.SaveChangesAsync(ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(PantryChangedEvent.Removed, entry.Id));
 
         return TypedResults.NoContent();
     }

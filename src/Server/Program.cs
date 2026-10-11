@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Server.Data;
 using Server.Extensions;
+using Server.Hubs;
 using Server.Services;
 using Server.Workers;
 
@@ -15,6 +16,7 @@ builder.Services.AddEndpointHandlers();
 builder.Services.AddSharedValidation();
 builder.Services.AddLocalization();
 builder.Services.AddMemoryCache();
+builder.Services.AddSignalR();
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Default")
@@ -67,6 +69,8 @@ app.UseRequestLocalization(options =>
 });
 
 app.MapEndpointHandlers();
+
+app.MapHub<PantryHub>("/hubs/pantry");
 
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");

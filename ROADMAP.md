@@ -169,23 +169,24 @@ No instructions are stored or rendered — the app links out to the recipe.
   nothing else breaks.
 - [ ] Recipe links open the full instructions outside the app.
 
-## Phase 6 — Realtime updates via SignalR hub (planned)
+## Phase 6 — Realtime updates via SignalR hub (done, pending device pass)
 
 **Goal:** When one device adds, edits, or removes an item, every other open
 device updates live instead of showing stale lists until its next reload.
 
 ### Tasks
 
-- [ ] Add a SignalR hub on the server (e.g. `/hubs/pantry`) broadcasting
-  item-created, item-updated, and item-removed events from the pantry
-  endpoints (create, update, delete, mark-used).
-- [ ] Connect from the Blazor client
-  (`Microsoft.AspNetCore.SignalR.Client`), reload the visible queries on
-  broadcast, and reconnect with backoff on drops.
-- [ ] Keep the current manual reload as the fallback: broadcasts are
-  progressive enhancement, never required for correctness.
-- [ ] Add tests: hub broadcasts on write paths (test client), no broadcast
-  on validation failure.
+- [x] Add a typed SignalR hub on the server (`/hubs/pantry`, `Hub<IPantryHubClient>`)
+  broadcasting created/updated/removed events from the pantry
+  endpoints (create, update, delete — including mark-used, which deletes).
+- [x] Connect from the Blazor client (`PantryRealtimeService` over
+  `Microsoft.AspNetCore.SignalR.Client`), reload the visible queries on
+  broadcast, and reconnect with backoff on drops (`WithAutomaticReconnect`).
+- [x] Keep the current manual reload as the fallback: broadcasts are
+  progressive enhancement, never required for correctness (failed
+  connections stay silent, background refreshes skip error toasts).
+- [x] Add tests: hub broadcasts on write paths (long-polling test client),
+  no broadcast on validation failure.
 
 ### Design notes
 
