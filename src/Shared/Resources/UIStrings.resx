@@ -101,6 +101,9 @@
   <data name="Np_PushUnsupported" xml:space="preserve"><value>Not supported in this browser</value></data>
   <data name="Np_PushNotConfigured" xml:space="preserve"><value>Push is not configured on the server.</value></data>
   <data name="Np_PushBlocked" xml:space="preserve"><value>Push was blocked. Allow notifications to enable it.</value></data>
+<data name="Np_PushDenied" xml:space="preserve"><value>Blocked in browser settings</value></data>
+<data name="Np_PushDeniedSettings" xml:space="preserve"><value>Notifications are blocked for this site. Allow them in the browser's site settings, then try again.</value></data>
+<data name="Np_PushSubscribeFailed" xml:space="preserve"><value>Couldn't enable notifications. Try again.</value></data>
   <data name="Np_PushSaveFailed" xml:space="preserve"><value>Can't save push subscription.</value></data>
   <data name="Np_PushEnabled" xml:space="preserve"><value>Push notifications enabled.</value></data>
   <data name="Np_PushEnableFailed" xml:space="preserve"><value>Can't enable push notifications.</value></data>
