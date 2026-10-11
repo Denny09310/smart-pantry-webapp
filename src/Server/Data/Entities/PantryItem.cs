@@ -14,6 +14,12 @@ public class PantryItem
     public DateOnly ExpirationDate { get; set; }
 
     /// <summary>
+    /// Open Food Facts barcode linked to this item, if it was scanned.
+    /// Null for manual entries: they show no product details.
+    /// </summary>
+    public string? Barcode { get; set; }
+
+    /// <summary>
     /// Attribution only ("added by…"): never used for access checks.
     /// Null when the member was deleted or the writer sent none.
     /// </summary>

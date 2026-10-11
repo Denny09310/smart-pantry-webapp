@@ -40,6 +40,11 @@
                 <ChildContent Context="item">
                     <span class="inline-flex items-center gap-1">
                         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
+                                  AriaLabel="@L["Pd_DetailsAria", item.Name]"
+                                  OnClick="@(() => OnDetails.InvokeAsync(item))">
+                            <LucideIcon Name="info" Size="14" />
+                        </BbButton>
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
                                   AriaLabel="@L["Common_EditAria", item.Name]" Loading="@IsBusy(item)"
                                   OnClick="@(() => OnEdit.InvokeAsync(item))">
                             <LucideIcon Name="pencil" Size="14" />
@@ -68,6 +73,9 @@
 
     [Parameter]
     public EventCallback<PantryItemDto> OnDelete { get; set; }
+
+    [Parameter]
+    public EventCallback<PantryItemDto> OnDetails { get; set; }
 
     [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
