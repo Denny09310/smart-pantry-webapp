@@ -110,6 +110,17 @@ public partial class NotificationsPanel
 
             _permissionDenied = false;
 
+            // Subscribing without an active worker registration fails even
+            // with permission granted (and can return inactive instead of
+            // throwing): catch it here with an actionable message.
+            var workerReady = await WorkerReadyAsync();
+
+            if (!workerReady)
+            {
+                Toast.Info(L["Np_PushWorkerNotReady"]);
+                return;
+            }
+
             using var key = await Api.Push.GetPublicKeyAsync();
 
             if (!key.IsSuccessfulWithContent)
@@ -143,9 +154,9 @@ public partial class NotificationsPanel
 
             if (subscription is not { IsActive: true })
             {
-                // Permission is granted here, so this is a subscription
-                // failure (no worker registration, push service error) —
-                // never blame the permission for it.
+                // Permission is granted and the worker is registered here,
+                // so this is a subscription failure (push service error,
+                // invalid VAPID key) — never blame the permission for it.
                 Log.LogWarning("Browser push subscription inactive despite granted permission.");
                 Toast.Error(L["Np_PushSubscribeFailed"]);
                 return;
@@ -207,6 +218,22 @@ public partial class NotificationsPanel
             Log.LogWarning(ex, "Notification permission resolution failed; attempting subscribe.");
 
             return Bit.Butil.NotificationPermission.Granted;
+        }
+    }
+
+    private async Task<bool> WorkerReadyAsync()
+    {
+        try
+        {
+            return (await Worker.GetRegistration()).IsRegistered;
+        }
+        catch (Exception ex)
+        {
+            // Registration read failing: fall through to the subscribe
+            // attempt rather than blocking on diagnostics.
+            Log.LogWarning(ex, "Service worker registration read failed; attempting subscribe.");
+
+            return true;
         }
     }
 
