@@ -5,7 +5,8 @@
 @inject ILogger<UpdateNotifier> Log
 @implements IAsyncDisposable
 
-@code {
+@code
+{
     // How often to look for a newly arrived worker while the page stays open.
     // (Full page loads already trigger the browser's own update check.)
     private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);

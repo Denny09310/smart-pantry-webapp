@@ -17,6 +17,8 @@ internal sealed class ServerApi(IServiceProvider services)
     public IMemberEndpoints Members => services.GetRequiredService<IMemberEndpoints>();
 
     public IProductEndpoints Products => services.GetRequiredService<IProductEndpoints>();
+
+    public IRecipeEndpoints Recipes => services.GetRequiredService<IRecipeEndpoints>();
 }
 
 [PathPrefix("/api/pantry")]
@@ -107,6 +109,14 @@ internal interface IProductEndpoints
         CancellationToken ct = default);
 }
 
+[PathPrefix("/api/recipes")]
+internal interface IRecipeEndpoints
+{
+    [Get("/suggestions")]
+    Task<ApiResponse<GetRecipeSuggestionsResponse>> GetSuggestionsAsync(
+        CancellationToken ct = default);
+}
+
 internal static class ServerApiExtensions
 {
     public static IServiceCollection AddServerApi(this IServiceCollection services)
@@ -134,6 +144,10 @@ internal static class ServerApiExtensions
             httpClientName: "Server.API");
 
         services.AddRefitGeneratedClient<IProductEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IRecipeEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 
