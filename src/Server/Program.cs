@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 using Server.Data;
 using Server.Extensions;
+using Server.Hubs;
 using Server.Services;
 using Server.Workers;
 
@@ -12,13 +13,15 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointHandlers();
 
-builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 builder.Services.AddLocalization();
 builder.Services.AddMemoryCache();
+builder.Services.AddSignalR();
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
+    .AddNpgSql(builder.Configuration.GetConnectionString("Default")
+        ?? throw new InvalidOperationException(
+            "Missing ConnectionStrings:Default. Set it via user-secrets or environment (see appsettings.json)."));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
@@ -66,6 +69,8 @@ app.UseRequestLocalization(options =>
 });
 
 app.MapEndpointHandlers();
+
+app.MapHub<PantryHub>("/hubs/pantry");
 
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");

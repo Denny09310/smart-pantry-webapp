@@ -82,10 +82,21 @@ internal sealed class PushService(
         {
             ct.ThrowIfCancellationRequested();
 
+            CultureInfo culture;
+
+            try
+            {
+                culture = CultureInfo.GetCultureInfo(group.Key);
+            }
+            catch (CultureNotFoundException)
+            {
+                culture = CultureInfo.GetCultureInfo(UIStrings.DefaultLanguage);
+            }
+
             // The localizer resolves the culture at call time; scope it to
             // this language group and restore afterwards (async-local).
             var previousCulture = CultureInfo.CurrentUICulture;
-            CultureInfo.CurrentUICulture = new CultureInfo(group.Key);
+            CultureInfo.CurrentUICulture = culture;
 
             string message;
 

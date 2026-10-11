@@ -59,7 +59,7 @@ Keep the architecture deliberately simple:
 - [ ] The production deployment supports the intended devices and browsers.
 - [ ] A tested backup can be restored.
 
-## Phase 7 - Product details from Open Food Facts (in progress)
+## Phase 7 - Product details from Open Food Facts (done, pending device pass)
 
 **Goal:** Make the item actions sheet useful for scanned products: show the
 OFF ingredients text, per-100-g nutrition table, and Nutri-Score grade
@@ -90,7 +90,7 @@ the package — no automatic backfill is possible.
   Nutri-Score; on a manual item it offers barcode linking instead.
 - [ ] Attaching a barcode persists and the details appear on reopen.
 
-## Phase 5 - Recipe suggestions (planned)
+## Phase 5 - Recipe suggestions (done, pending device pass)
 
 **Goal:** Turn "about to expire" into "dinner idea": suggest recipes from
 TheMealDB that use up items expiring within the same 7-day window the
@@ -169,23 +169,24 @@ No instructions are stored or rendered — the app links out to the recipe.
   nothing else breaks.
 - [ ] Recipe links open the full instructions outside the app.
 
-## Phase 6 — Realtime updates via SignalR hub (planned)
+## Phase 6 — Realtime updates via SignalR hub (done, pending device pass)
 
 **Goal:** When one device adds, edits, or removes an item, every other open
 device updates live instead of showing stale lists until its next reload.
 
 ### Tasks
 
-- [ ] Add a SignalR hub on the server (e.g. `/hubs/pantry`) broadcasting
-  item-created, item-updated, and item-removed events from the pantry
-  endpoints (create, update, delete, mark-used).
-- [ ] Connect from the Blazor client
-  (`Microsoft.AspNetCore.SignalR.Client`), reload the visible queries on
-  broadcast, and reconnect with backoff on drops.
-- [ ] Keep the current manual reload as the fallback: broadcasts are
-  progressive enhancement, never required for correctness.
-- [ ] Add tests: hub broadcasts on write paths (test client), no broadcast
-  on validation failure.
+- [x] Add a typed SignalR hub on the server (`/hubs/pantry`, `Hub<IPantryHubClient>`)
+  broadcasting created/updated/removed events from the pantry
+  endpoints (create, update, delete — including mark-used, which deletes).
+- [x] Connect from the Blazor client (`PantryRealtimeService` over
+  `Microsoft.AspNetCore.SignalR.Client`), reload the visible queries on
+  broadcast, and reconnect with backoff on drops (`WithAutomaticReconnect`).
+- [x] Keep the current manual reload as the fallback: broadcasts are
+  progressive enhancement, never required for correctness (failed
+  connections stay silent, background refreshes skip error toasts).
+- [x] Add tests: hub broadcasts on write paths (long-polling test client),
+  no broadcast on validation failure.
 
 ### Design notes
 

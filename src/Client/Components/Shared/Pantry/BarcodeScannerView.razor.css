@@ -1,0 +1,30 @@
+.barcode-frame {
+    padding: 3px;
+    border-radius: 0.65rem;
+}
+
+.barcode-frame.searching {
+    background: conic-gradient(
+        from var(--rb-angle, 0deg),
+        #ff0000, #ff7f00, #ffff00, #00ff00,
+        #0000ff, #4b0082, #8b00ff, #ff0000);
+    animation: rb-spin 1.5s linear infinite;
+}
+
+@property --rb-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes rb-spin {
+    to {
+        --rb-angle: 360deg;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barcode-frame.searching {
+        animation: none;
+    }
+}

@@ -9,7 +9,7 @@ public enum ExpiryStatus
 }
 
 /// <summary>
-/// The single expiry rule (roadmap Phase 6). Pure and UI-independent:
+/// The single expiry rule. Pure and UI-independent:
 /// used by the server when presenting items and by the client for previews.
 /// </summary>
 public static class ExpiryStatusCalculator

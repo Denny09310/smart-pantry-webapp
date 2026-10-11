@@ -31,7 +31,11 @@ internal sealed class NotificationService(ApplicationDbContext db)
             return new GenerationResult(0, 0);
 
         // One notification per item ever: a read reminder never regenerates.
+        // Scope the dedup read to the current candidates instead of the
+        // whole table.
+        var candidateIds = candidates.Select(c => c.Id).ToList();
         var alreadyNotified = new HashSet<string>(await db.Notifications.AsNoTracking()
+            .Where(n => candidateIds.Contains(n.PantryItemId))
             .Select(n => n.PantryItemId)
             .Distinct()
             .ToListAsync(ct));
@@ -41,8 +45,6 @@ internal sealed class NotificationService(ApplicationDbContext db)
 
         foreach (var candidate in candidates)
         {
-            // One notification per item ever: prevents duplicates forever,
-            // including after the previous one was read.
             if (!alreadyNotified.Add(candidate.Id))
                 continue;
 

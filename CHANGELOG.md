@@ -1,3 +1,19 @@
+## [0.9.0] - 2026-10-11
+
+### ✨ Features
+
+- Live pantry updates across devices via typed SignalR hub
+- Rotating rainbow border on the barcode scanner while looking up
+
+### 🐛 Bug Fixes
+
+- Review batch three, server hardening and validation (LIKE escaping, scoped notification dedup, short-lived failure caches, tolerant barcode and push validation)
+- Review batch four, client correctness, localization and a11y (member load failure, culture-aware formatting, localized locations, focus ring, service worker registration file)
+
+### 💼 Other
+
+- Minor release 0.9.0
+
 ## [0.8.0] - 2026-10-11
 
 ### Changed
