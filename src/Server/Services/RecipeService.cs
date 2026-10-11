@@ -92,6 +92,10 @@ internal sealed class RecipeService(
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var candidates = new List<(string Id, string Query)>();
 
+        // Share the candidate budget across queries so the first
+        // ingredient can't fill every slot: breadth first, then depth.
+        var perQuery = Math.Max(1, (MaxCandidates + queries.Count - 1) / queries.Count);
+
         foreach (var query in queries)
         {
             ct.ThrowIfCancellationRequested();
@@ -108,7 +112,7 @@ internal sealed class RecipeService(
                 continue;
             }
 
-            foreach (var meal in meals)
+            foreach (var meal in meals.Take(perQuery))
             {
                 if (candidates.Count >= MaxCandidates)
                     break;

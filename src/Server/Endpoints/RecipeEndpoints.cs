@@ -6,7 +6,6 @@ using Server.Data;
 using Server.Services;
 
 using Shared.Models;
-using Shared.Resources;
 
 namespace Server.Endpoints;
 
@@ -15,9 +14,7 @@ namespace Server.Endpoints;
 internal class RecipeEndpoints(ApplicationDbContext db, RecipeService recipes)
 {
     [MapGet("/suggestions")]
-    public async Task<Ok<GetRecipeSuggestionsResponse>> GetSuggestionsAsync(
-        string? lang,
-        CancellationToken ct)
+    public async Task<Ok<GetRecipeSuggestionsResponse>> GetSuggestionsAsync(CancellationToken ct)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var horizon = today.AddDays(7);

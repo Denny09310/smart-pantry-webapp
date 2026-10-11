@@ -89,11 +89,9 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
             Content = new StringContent(body, Encoding.UTF8, "application/json"),
         };
 
-    private static async Task<GetRecipeSuggestionsResponse?> SuggestionsAsync(HttpClient client, string? lang = null)
+    private static async Task<GetRecipeSuggestionsResponse?> SuggestionsAsync(HttpClient client)
     {
-        var url = lang is null ? "/api/recipes/suggestions" : $"/api/recipes/suggestions?lang={lang}";
-
-        using var response = await client.GetAsync(url);
+        using var response = await client.GetAsync("/api/recipes/suggestions");
         response.EnsureSuccessStatusCode();
 
         return await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
@@ -105,8 +103,12 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
         var stub = factory.Services.GetRequiredService<StubOffHandler>();
         ServeMeals(stub);
 
-        var chickenId = await CreateItemAsync("chicken", InDays(2));
-        var garlicId = await CreateItemAsync("garlic", InDays(2));
+        // Unique names: the suggestion cache is process-wide, so shared
+        // staples would collide with other tests' entries.
+        var chicken = UniqueName("chicken");
+        var garlic = UniqueName("garlic");
+        var chickenId = await CreateItemAsync(chicken, InDays(2));
+        var garlicId = await CreateItemAsync(garlic, InDays(2));
 
         try
         {
@@ -118,7 +120,7 @@ public sealed class RecipeEndpointsTests(PantryApiFactory factory)
             Assert.Equal("Chicken Soup", soup.Name);
             Assert.EndsWith("/small", soup.ThumbnailUrl);
             Assert.Equal("https://www.themealdb.com/meal/1", soup.SourceUrl);
-            Assert.Contains("chicken", soup.MatchedIngredients);
+            Assert.Contains(chicken, soup.MatchedIngredients);
         }
         finally
         {
@@ -264,6 +266,14 @@ public sealed class TranslationPipelineTests(PantryApiFactory factory)
     private static DateOnly InDays(int days)
         => DateOnly.FromDateTime(DateTime.Today).AddDays(days);
 
+    private static async Task<GetRecipeSuggestionsResponse?> SuggestionsAsync(HttpClient client)
+    {
+        using var response = await client.GetAsync("/api/recipes/suggestions");
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
+    }
+
     private static HttpResponseMessage Json(string body)
         => new(HttpStatusCode.OK)
         {
@@ -327,10 +337,7 @@ public sealed class TranslationPipelineTests(PantryApiFactory factory)
 
         try
         {
-            using var response = await _client.GetAsync("/api/recipes/suggestions?lang=it");
-            response.EnsureSuccessStatusCode();
-
-            var page = await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
+            var page = await SuggestionsAsync(_client);
             Assert.NotNull(page);
 
             var cake = Assert.Single(page.Items);
@@ -372,10 +379,7 @@ public sealed class TranslationPipelineTests(PantryApiFactory factory)
 
         try
         {
-            using var response = await _client.GetAsync("/api/recipes/suggestions?lang=it");
-            response.EnsureSuccessStatusCode();
-
-            var page = await response.Content.ReadFromJsonAsync<GetRecipeSuggestionsResponse>();
+            var page = await SuggestionsAsync(_client);
             Assert.NotNull(page);
             Assert.Empty(page.Items);
         }
@@ -401,16 +405,15 @@ public sealed class TranslationPipelineTests(PantryApiFactory factory)
 
         try
         {
-            using var first = await _client.GetAsync("/api/recipes/suggestions?lang=it");
-            first.EnsureSuccessStatusCode();
+            var first = await SuggestionsAsync(_client);
+            var callsAfterFirst = stub.RequestedPaths.Count;
 
-            var translationCalls = stub.RequestedPaths.Count(p => p.Contains("get?q=", StringComparison.Ordinal));
+            var second = await SuggestionsAsync(_client);
 
-            using var second = await _client.GetAsync("/api/recipes/suggestions?lang=it");
-            second.EnsureSuccessStatusCode();
-
-            // Suggestion cache hit: no new upstream calls at all.
-            Assert.Equal(translationCalls, stub.RequestedPaths.Count(p => p.Contains("get?q=", StringComparison.Ordinal)));
+            Assert.NotNull(first);
+            Assert.NotNull(second);
+            Assert.Equal(first.Items.Count, second.Items.Count);
+            Assert.Equal(callsAfterFirst, stub.RequestedPaths.Count);
         }
         finally
         {

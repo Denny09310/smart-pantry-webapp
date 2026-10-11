@@ -1,6 +1,5 @@
 @namespace Client.Components.Shared.Home
 @inject ServerApi Api
-@inject LanguageService Languages
 @inject IStringLocalizer<UIStrings> L
 @inject ILogger<RecipeSuggestions> Log
 
@@ -45,7 +44,7 @@
     {
         try
         {
-            using var response = await Api.Recipes.GetSuggestionsAsync(Languages.Current);
+            using var response = await Api.Recipes.GetSuggestionsAsync();
 
             if (response.IsSuccessfulWithContent)
                 _items = new(response.Content.Items);

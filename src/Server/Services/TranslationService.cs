@@ -5,10 +5,10 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Server.Services;
 
 /// <summary>
-/// English lookup candidates for pantry names. The curated dictionary answers
-/// staples instantly and offline; anything else goes to MyMemory (free,
-/// keyless) when the caller asks for translation, cached for weeks to stay
-/// far under the anonymous quota. Failures fall back to the original name.
+/// English lookup candidates for pantry names via MyMemory (free, keyless).
+/// Results are cached for weeks to stay far under the anonymous quota;
+/// failures fall back to the original name so suggestions simply narrow
+/// instead of breaking.
 /// </summary>
 internal sealed class TranslationService(
     IHttpClientFactory http,
