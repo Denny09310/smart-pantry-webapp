@@ -32,9 +32,29 @@ namespace Server.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("brand");
 
+                    b.Property<double?>("Carbohydrates100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("carbohydrates100g");
+
+                    b.Property<double?>("EnergyKcal100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("energy_kcal100g");
+
+                    b.Property<double?>("Fat100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("fat100g");
+
+                    b.Property<double?>("Fiber100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("fiber100g");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text")
                         .HasColumnName("image_url");
+
+                    b.Property<string>("IngredientsText")
+                        .HasColumnType("text")
+                        .HasColumnName("ingredients_text");
 
                     b.Property<DateTimeOffset>("LookedUpAt")
                         .HasColumnType("timestamp with time zone")
@@ -45,9 +65,29 @@ namespace Server.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<string>("NutriScoreGrade")
+                        .HasColumnType("text")
+                        .HasColumnName("nutri_score_grade");
+
+                    b.Property<double?>("Proteins100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("proteins100g");
+
                     b.Property<string>("Quantity")
                         .HasColumnType("text")
                         .HasColumnName("quantity");
+
+                    b.Property<double?>("Salt100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("salt100g");
+
+                    b.Property<double?>("SaturatedFat100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("saturated_fat100g");
+
+                    b.Property<double?>("Sugars100g")
+                        .HasColumnType("double precision")
+                        .HasColumnName("sugars100g");
 
                     b.HasKey("Barcode")
                         .HasName("pk_barcode_products");
@@ -116,6 +156,10 @@ namespace Server.Data.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
+
+                    b.Property<string>("Barcode")
+                        .HasColumnType("text")
+                        .HasColumnName("barcode");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")

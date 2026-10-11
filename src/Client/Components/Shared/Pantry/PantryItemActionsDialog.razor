@@ -1,17 +1,93 @@
+@inject ServerApi Api
 @inject IStringLocalizer<UIStrings> L
+@inject ILogger<PantryItemActionsDialog> Log
 
-<div class="flex flex-col gap-2">
-    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Secondary" AriaLabel="@L["Common_EditAria", Item.Name]"
-              @onclick="SelectEditAsync">
-        <LucideIcon Name="pencil" Size="14" />
-        @L["Common_Edit"]
-    </BbButton>
-    <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Destructive" AriaLabel="@L["Common_DeleteAria", Item.Name]"
-              @onclick="SelectDeleteAsync">
-        <LucideIcon Name="trash-2" Size="14" />
-        @L["Common_Delete"]
-    </BbButton>
-</div>
+@if (_attaching)
+{
+    <BarcodeScannerView OnScanned="AttachAsync" OnCancelled="CancelAttach" />
+}
+else
+{
+    <div class="space-y-4">
+        @if (Item.Barcode is null)
+        {
+            <div class="space-y-1.5">
+                <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartAttach">
+                    <LucideIcon Name="barcode" Size="16" />
+                    @L["Pd_AttachBarcode"]
+                </BbButton>
+                <p class="text-xs text-muted-foreground">@L["Pd_AttachHint"]</p>
+            </div>
+        }
+        else
+        {
+            <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <LucideIcon Name="barcode" Size="12" />
+                <span>@Item.Barcode</span>
+            </div>
+            @if (_loading)
+            {
+                <div class="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
+                    <BbSpinner Size="SpinnerSize.Default" />
+                    @L["Pd_Loading"]
+                </div>
+            }
+            else if (_product is not null && HasDetails)
+            {
+                @if (!string.IsNullOrWhiteSpace(_product.Brand))
+                {
+                    <p class="text-sm text-muted-foreground">@_product.Brand</p>
+                }
+                @if (_product.NutriScoreGrade is not null)
+                {
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium">@L["Pd_NutriScore"]</span>
+                        <BbBadge Variant="@NutriScoreVariant">@_product.NutriScoreGrade.ToUpperInvariant()</BbBadge>
+                    </div>
+                }
+                @if (_product.IngredientsText is not null)
+                {
+                    <div class="space-y-1">
+                        <h3 class="text-sm font-medium">@L["Pd_Ingredients"]</h3>
+                        <p class="text-sm text-muted-foreground">@_product.IngredientsText</p>
+                    </div>
+                }
+                @if (NutritionRows() is { Count: > 0 } rows)
+                {
+                    <div class="space-y-1">
+                        <h3 class="text-sm font-medium">@L["Pd_Nutrition"]</h3>
+                        <dl class="divide-y divide-border rounded-lg border">
+                            @foreach (var row in rows)
+                            {
+                                <div class="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                                    <dt class="text-muted-foreground">@row.Label</dt>
+                                    <dd class="font-medium">@row.Value</dd>
+                                </div>
+                            }
+                        </dl>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-sm text-muted-foreground">@L["Pd_NoData"]</p>
+            }
+        }
+
+        <div class="flex flex-col gap-2 border-t pt-3">
+            <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Secondary" AriaLabel="@L["Common_EditAria", Item.Name]"
+                      @onclick="SelectEditAsync">
+                <LucideIcon Name="pencil" Size="14" />
+                @L["Common_Edit"]
+            </BbButton>
+            <BbButton Size="ButtonSize.Large" Variant="ButtonVariant.Destructive" AriaLabel="@L["Common_DeleteAria", Item.Name]"
+                      @onclick="SelectDeleteAsync">
+                <LucideIcon Name="trash-2" Size="14" />
+                @L["Common_Delete"]
+            </BbButton>
+        </div>
+    </div>
+}
 
 @code
 {
@@ -19,21 +95,112 @@
     public IDialogReference Reference { get; set; } = default!;
 
     [Parameter, EditorRequired]
-    public PantryItemDto Item { get; set; }
+    public PantryItemDto Item { get; set; } = default!;
+
+    private bool _attaching;
+    private bool _loading;
+    private ProductLookupDto? _product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Item.Barcode is null)
+            return;
+
+        _loading = true;
+
+        try
+        {
+            using var response = await Api.Products.LookupAsync(Item.Barcode);
+
+            if (response.IsSuccessfulWithContent)
+                _product = response.Content;
+        }
+        catch (Exception ex)
+        {
+            Log.LogWarning(ex, "Product details lookup failed.");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool HasDetails => _product is not null
+        && (_product.IngredientsText is not null
+            || _product.NutriScoreGrade is not null
+            || _product.Nutrition is not null);
+
+    private BadgeVariant NutriScoreVariant => _product?.NutriScoreGrade switch
+    {
+        "a" => BadgeVariant.SoftSuccess,
+        "b" => BadgeVariant.SoftInfo,
+        "c" => BadgeVariant.SoftWarning,
+        "d" or "e" => BadgeVariant.SoftDestructive,
+        _ => BadgeVariant.Outline,
+    };
+
+    private IReadOnlyList<(string Label, string Value)> NutritionRows()
+    {
+        if (_product?.Nutrition is not { } nutrition)
+            return [];
+
+        List<(string, string)> rows = [];
+
+        if (nutrition.EnergyKcal100g is { } energy)
+            rows.Add((L["Pd_Energy"], $"{energy:0} kcal"));
+
+        if (nutrition.Fat100g is { } fat)
+            rows.Add((L["Pd_Fat"], Grams(fat)));
+
+        if (nutrition.SaturatedFat100g is { } satFat)
+            rows.Add((L["Pd_SatFat"], Grams(satFat)));
+
+        if (nutrition.Carbohydrates100g is { } carbs)
+            rows.Add((L["Pd_Carbs"], Grams(carbs)));
+
+        if (nutrition.Sugars100g is { } sugars)
+            rows.Add((L["Pd_Sugars"], Grams(sugars)));
+
+        if (nutrition.Fiber100g is { } fiber)
+            rows.Add((L["Pd_Fiber"], Grams(fiber)));
+
+        if (nutrition.Proteins100g is { } protein)
+            rows.Add((L["Pd_Protein"], Grams(protein)));
+
+        if (nutrition.Salt100g is { } salt)
+            rows.Add((L["Pd_Salt"], Grams(salt)));
+
+        return rows;
+    }
+
+    private static string Grams(double value) => $"{value:0.#} g";
+
+    private void StartAttach() => _attaching = true;
+
+    private void CancelAttach() => _attaching = false;
+
+    private async Task AttachAsync(ProductLookupDto product)
+    {
+        _attaching = false;
+        await Reference.CloseAsync(DialogResult.Ok(new Choice(Result.Attach, product.Barcode)));
+    }
 
     private async Task SelectEditAsync()
     {
-        await Reference.CloseAsync(DialogResult.Ok(Result.Edit));
+        await Reference.CloseAsync(DialogResult.Ok(new Choice(Result.Edit)));
     }
 
     private async Task SelectDeleteAsync()
     {
-        await Reference.CloseAsync(DialogResult.Ok(Result.Delete));
+        await Reference.CloseAsync(DialogResult.Ok(new Choice(Result.Delete)));
     }
 
     public enum Result
     {
         Edit,
-        Delete
+        Delete,
+        Attach
     }
+
+    public sealed record Choice(Result Action, string? Barcode = null);
 }

@@ -236,6 +236,25 @@
   <data name="Pu_ActionsTitle" xml:space="preserve"><value>Pantry item actions</value></data>
   <data name="Pu_ActionsDescription" xml:space="preserve"><value>Select what you want to do with this item</value></data>
   <data name="Pu_UseByTonight" xml:space="preserve"><value>Use by 11:59 PM</value></data>
+  <!-- Product details (item actions sheet). -->
+  <data name="Pd_Ingredients" xml:space="preserve"><value>Ingredients</value></data>
+  <data name="Pd_Nutrition" xml:space="preserve"><value>Nutrition per 100 g</value></data>
+  <data name="Pd_NutriScore" xml:space="preserve"><value>Nutri-Score</value></data>
+  <data name="Pd_NoData" xml:space="preserve"><value>No product data for this barcode yet.</value></data>
+  <data name="Pd_Loading" xml:space="preserve"><value>Loading product data…</value></data>
+  <data name="Pd_AttachBarcode" xml:space="preserve"><value>Link product barcode</value></data>
+  <data name="Pd_AttachHint" xml:space="preserve"><value>Scan the package barcode to see ingredients and nutrition here.</value></data>
+  <data name="Pd_Attached" xml:space="preserve"><value>Product linked.</value></data>
+  <data name="Pd_DetailsAria" xml:space="preserve"><value>Show details for {0}</value></data>
+  <data name="Pd_Energy" xml:space="preserve"><value>Energy</value></data>
+  <data name="Pd_Fat" xml:space="preserve"><value>Fat</value></data>
+  <data name="Pd_SatFat" xml:space="preserve"><value>Saturated fat</value></data>
+  <data name="Pd_Carbs" xml:space="preserve"><value>Carbohydrates</value></data>
+  <data name="Pd_Sugars" xml:space="preserve"><value>Sugars</value></data>
+  <data name="Pd_Fiber" xml:space="preserve"><value>Fiber</value></data>
+  <data name="Pd_Protein" xml:space="preserve"><value>Protein</value></data>
+  <data name="Pd_Salt" xml:space="preserve"><value>Salt</value></data>
+  <data name="Cd_ScannedBarcode" xml:space="preserve"><value>Linked barcode: {0}</value></data>
   <!-- Notification sentences (shared server/client formatter). -->
   <data name="Notif_ExpiredYesterday" xml:space="preserve"><value>{0} expired yesterday.</value></data>
   <data name="Notif_ExpiredDaysAgo" xml:space="preserve"><value>{0} expired {1} days ago.</value></data>

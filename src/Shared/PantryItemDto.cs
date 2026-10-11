@@ -10,4 +10,5 @@ public record PantryItemDto(
     DateOnly ExpirationDate,
     ExpiryStatus Status,
     string? CreatedByMemberId = null,
-    string? CreatedByName = null);
+    string? CreatedByName = null,
+    string? Barcode = null);
