@@ -151,6 +151,8 @@
         Size = DialogSize.Small
     };
 
+    private const int MaxItems = 500;
+
     private List<PantryItemDto>? _items;
     private readonly HashSet<string> _deletingIds = [];
     private string? _highlightId;
@@ -250,9 +252,9 @@
 
         try
         {
-            var items = await Api.GetAllPantryItemsAsync();
+            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
 
-            if (items is null)
+            if (!response.IsSuccessfulWithContent)
             {
                 if (!quiet)
                     Toast.Error(L["Common_LoadError"]);
@@ -260,7 +262,7 @@
                 return;
             }
 
-            _items = items;
+            _items = new(response.Content.Items);
         }
         catch (Exception ex)
         {
