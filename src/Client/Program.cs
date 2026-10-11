@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using Bit.Brouter;
 using Bit.Butil;
 
@@ -10,8 +12,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 using Shared.Resources;
-
-using System.Globalization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");

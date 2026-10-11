@@ -18,6 +18,7 @@ public partial class NotificationsPanel
     private bool _pushEnabled;
     private bool _pushBusy;
     private bool _pushChecked;
+    private bool _permissionDenied;
 
     private int UnreadCount => _items.Count(n => n.ReadAt == null);
 
@@ -25,9 +26,11 @@ public partial class NotificationsPanel
         ? L["Np_PushChecking"]
         : _pushEnabled
             ? L["Np_PushOn"]
-            : _pushSupported
-                ? L["Np_PushPromo"]
-                : L["Np_PushUnsupported"];
+            : _permissionDenied
+                ? L["Np_PushDenied"]
+                : _pushSupported
+                    ? L["Np_PushPromo"]
+                    : L["Np_PushUnsupported"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -46,7 +49,22 @@ public partial class NotificationsPanel
             _pushSupported = await Push.IsSupported();
 
             if (_pushSupported)
+            {
                 _pushEnabled = (await Push.GetSubscription()).IsActive;
+
+                if (!_pushEnabled)
+                {
+                    try
+                    {
+                        _permissionDenied = await Notifications.GetPermission()
+                            == Bit.Butil.NotificationPermission.Denied;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.LogWarning(ex, "Notification permission read failed.");
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -66,6 +84,32 @@ public partial class NotificationsPanel
         _pushBusy = true;
         try
         {
+            if (_pushChecked && !_pushSupported)
+            {
+                Toast.Info(L["Np_PushUnsupported"]);
+                return;
+            }
+
+            var permission = await ResolvePermissionAsync();
+
+            if (permission == Bit.Butil.NotificationPermission.Denied)
+            {
+                // While denied no prompt will ever appear: subscribing
+                // would just throw. Clearing the cache or reinstalling the
+                // PWA does not reset the site permission either.
+                _permissionDenied = true;
+                Toast.Info(L["Np_PushDeniedSettings"]);
+                return;
+            }
+
+            if (permission != Bit.Butil.NotificationPermission.Granted)
+            {
+                Toast.Info(L["Np_PushBlocked"]);
+                return;
+            }
+
+            _permissionDenied = false;
+
             using var key = await Api.Push.GetPublicKeyAsync();
 
             if (!key.IsSuccessfulWithContent)
@@ -99,7 +143,11 @@ public partial class NotificationsPanel
 
             if (subscription is not { IsActive: true })
             {
-                Toast.Info(L["Np_PushBlocked"]);
+                // Permission is granted here, so this is a subscription
+                // failure (no worker registration, push service error) —
+                // never blame the permission for it.
+                Log.LogWarning("Browser push subscription inactive despite granted permission.");
+                Toast.Error(L["Np_PushSubscribeFailed"]);
                 return;
             }
 
@@ -137,6 +185,28 @@ public partial class NotificationsPanel
         finally
         {
             _pushBusy = false;
+        }
+    }
+
+    private async Task<Bit.Butil.NotificationPermission> ResolvePermissionAsync()
+    {
+        try
+        {
+            var current = await Notifications.GetPermission();
+
+            if (current == Bit.Butil.NotificationPermission.Granted
+                || current == Bit.Butil.NotificationPermission.Denied)
+                return current;
+
+            return await Notifications.RequestPermission();
+        }
+        catch (Exception ex)
+        {
+            // Permission APIs missing or failing: fall through to the
+            // subscribe attempt, which is the historical behavior.
+            Log.LogWarning(ex, "Notification permission resolution failed; attempting subscribe.");
+
+            return Bit.Butil.NotificationPermission.Granted;
         }
     }
 
