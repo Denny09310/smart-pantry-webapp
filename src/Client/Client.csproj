@@ -5,9 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
-    <StaticWebAssetFingerprintingEnabled>false</StaticWebAssetFingerprintingEnabled>
-	<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+	  <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+    <!-- In this hosted layout the Client writes the service-worker manifest hash
+         over its ramp-trimmed bit-butil.js, but the Server host serves the
+         package's untrimmed bundle; the hashes then disagree and the worker's
+         SRI check blocks the script. Ship one untrimmed bundle from both. -->
+    <BitButilTrimScripts>false</BitButilTrimScripts>
   </PropertyGroup>
 
   <ItemGroup>

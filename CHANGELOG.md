@@ -1,3 +1,13 @@
+## [0.7.3] - 2026-10-11
+
+### 🐛 Bug Fixes
+
+- Ship one untrimmed bit-butil.js so the service worker manifest hash matches the served bundle (fixes the blocked script / SRI failure)
+
+### 💼 Other
+
+- Bugfix/pwa-manifest-sri into develop
+
 ## [0.7.2] - 2026-10-11
 
 ### 🔨 Refactors
