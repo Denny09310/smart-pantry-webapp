@@ -1,3 +1,19 @@
+## [0.9.1] - 2026-10-11
+
+### 🚀 Features
+
+- Server-paged pantry lists and tables via Refit PagedEnumerable (offset paging with Skip/TotalItems): infinite scroll and desktop grids request one page at a time instead of loading everything up front
+- Home shows the same attention-only items on mobile and desktop; Fresh chip removed from the Home filter set
+
+### 🐛 Bug Fixes
+
+- Lists stuck at 20 items with dead scrolling; desktop tables and search missing items past the server Take cap
+- Simplified search to raw EF.Functions.ILike matching
+
+### 🧹 Other
+
+- Bugfix/pantry-listing into develop
+
 ## [0.9.0] - 2026-10-11
 
 ### ✨ Features
