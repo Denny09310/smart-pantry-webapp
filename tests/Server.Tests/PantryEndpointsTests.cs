@@ -210,4 +210,36 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
             await DeleteItemAsync(fresh.Id);
         }
     }
+
+    [Fact]
+    public async Task List_Pages_Past_Default_Take()
+    {
+        // Regression: the default page is 20, but Take/Skip must reach everything.
+        var prefix = UniqueName("bulk");
+        var ids = new List<string>();
+        try
+        {
+            for (var i = 0; i < 25; i++)
+                ids.Add((await CreateItemAsync($"{prefix}-{i:00}")).Id);
+
+            using var all = await _client.GetAsync($"/api/pantry?name={prefix}&take=100");
+            all.EnsureSuccessStatusCode();
+            var full = await all.Content.ReadFromJsonAsync<GetPantryItemsResponse>();
+            Assert.NotNull(full);
+            Assert.Equal(25, full.Items.Count());
+            Assert.Equal(25, full.TotalItems);
+
+            using var tail = await _client.GetAsync($"/api/pantry?name={prefix}&skip=20&take=100");
+            tail.EnsureSuccessStatusCode();
+            var rest = await tail.Content.ReadFromJsonAsync<GetPantryItemsResponse>();
+            Assert.NotNull(rest);
+            Assert.Equal(5, rest.Items.Count());
+            Assert.Equal(25, rest.TotalItems);
+        }
+        finally
+        {
+            foreach (var id in ids)
+                await DeleteItemAsync(id);
+        }
+    }
 }
