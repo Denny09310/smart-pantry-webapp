@@ -18,7 +18,6 @@
         <BbChip Value="@PantryStatusFilter.Soon">@L["Common_FilterSoon", SoonCount]</BbChip>
         <BbChip Value="@PantryStatusFilter.Today">@L["Common_FilterToday", TodayCount]</BbChip>
         <BbChip Value="@PantryStatusFilter.Expired">@L["Common_FilterExpired", ExpiredCount]</BbChip>
-        <BbChip Value="@PantryStatusFilter.Fresh">@L["Common_FilterFresh", FreshCount]</BbChip>
     </BbChipSet>
 
     <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false"
@@ -62,9 +61,6 @@
 
     [Parameter]
     public int ExpiredCount { get; set; }
-
-    [Parameter]
-    public int FreshCount { get; set; }
 
     private Task OnSearchValueChanged(string? value) => SearchChanged.InvokeAsync(value);
 

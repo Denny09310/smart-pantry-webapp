@@ -43,6 +43,7 @@
   <data name="Common_NotificationsDescription" xml:space="preserve"><value>Items approaching expiration</value></data>
   <data name="Common_NotificationsTitle" xml:space="preserve"><value>Notifications</value></data>
   <data name="Common_Removed" xml:space="preserve"><value>Removed {0}.</value></data>
+  <data name="Common_Retry" xml:space="preserve"><value>Retry</value></data>
   <data name="Common_SearchAria" xml:space="preserve"><value>Search pantry items</value></data>
   <data name="Common_SearchPlaceholder" xml:space="preserve"><value>Search items by name or notes...</value></data>
   <data name="Common_SortedBadge" xml:space="preserve"><value>Sorted by urgency</value></data>

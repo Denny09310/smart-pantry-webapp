@@ -84,6 +84,12 @@
     public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
 
     [Parameter]
+    public Func<DataGridPrimitives.DataGridRequest, ValueTask<DataGridPrimitives.DataGridResult<PantryItemDto>>>? ItemsProvider { get; set; }
+
+    [Parameter]
+    public string? FilterKey { get; set; }
+
+    [Parameter]
     public EventCallback<PantryItemDto> OnDelete { get; set; }
 
     [Parameter]
@@ -97,14 +103,20 @@
 
     private BbDataGrid<PantryItemDto>? _grid;
     private IReadOnlyList<PantryItemDto>? _renderedItems;
+    private string? _renderedFilterKey;
     private bool _refreshPending;
 
     protected override void OnParametersSet()
     {
-        // The grid detects data changes by collection reference. This component
-        // otherwise forwards the identical reference it received, so nudge the
-        // grid explicitly whenever a new collection arrives.
-        if (!ReferenceEquals(_renderedItems, Items))
+        if (ItemsProvider is not null)
+        {
+            if (_renderedFilterKey != FilterKey)
+            {
+                _renderedFilterKey = FilterKey;
+                _refreshPending = true;
+            }
+        }
+        else if (!ReferenceEquals(_renderedItems, Items))
         {
             _renderedItems = Items;
             _refreshPending = true;
@@ -128,6 +140,9 @@
     private ValueTask<DataGridPrimitives.DataGridResult<PantryItemDto>> ProvidePageAsync(DataGridPrimitives.DataGridRequest request)
     {
         request.CancellationToken.ThrowIfCancellationRequested();
+
+        if (ItemsProvider is not null)
+            return ItemsProvider(request);
 
         var sorted = ApplyRequestSort(Items, request.SortDefinitions);
         var page = sorted.Skip(request.StartIndex).Take(request.Count ?? sorted.Count).ToList();

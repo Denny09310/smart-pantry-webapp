@@ -25,10 +25,10 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
 
         if (!string.IsNullOrWhiteSpace(request.Location)
             && !request.Location.Trim().Equals("all", StringComparison.OrdinalIgnoreCase))
-            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{EscapeLike(request.Location.Trim())}%", @"\"));
+            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{request.Location.Trim()}%"));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
-            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{EscapeLike(request.Name.Trim())}%", @"\"));
+            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name.Trim()}%"));
 
         if (request.Status is { } status)
         {
@@ -44,6 +44,12 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
                 _ => query,
             };
         }
+        else if (request.ExcludeFresh)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var horizon = today.AddDays(7);
+            query = query.Where(x => x.ExpirationDate <= horizon);
+        }
 
         var totalItems = await query.CountAsync(ct);
 
@@ -51,9 +57,11 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         var take = Math.Clamp(request.Take, 1, 100);
 
         // Status is calculated in memory: the shared rule is not translatable to SQL.
-        var entries = await query
-            .OrderBy(x => x.ExpirationDate)
-            .ThenBy(x => x.Id)
+        var ordered = request.SortDescending
+            ? query.OrderByDescending(x => x.ExpirationDate).ThenByDescending(x => x.Id)
+            : query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Id);
+
+        var entries = await ordered
             .Skip(skip)
             .Take(take)
             .ToListAsync(ct);
@@ -165,11 +173,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         return TypedResults.NoContent();
     }
 
-    /// <summary>
-    /// Escapes LIKE wildcards so search text matches literally.
-    /// </summary>
-    private static string EscapeLike(string value)
-        => value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
+
 
     private static PantryItemDto ToDto(PantryItem entry, string? memberName = null)
         => new(

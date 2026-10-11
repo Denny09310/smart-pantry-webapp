@@ -10,23 +10,37 @@
     @ItemTemplate(item)
 }
 
-@if (_visible.Count < _total)
+@if (_hasMore)
 {
     <div @ref="_sentinel" class="flex flex-col items-center gap-2 py-4">
-        <BbSpinner Size="SpinnerSize.Default" />
         @if (_observerFailed)
         {
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ShowMore">
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="LoadNextAsync">
                 @(TriggerButtonText ?? L["Is_ShowMore"])
             </BbButton>
+        }
+        else
+        {
+            <BbSpinner Size="SpinnerSize.Default" />
         }
     </div>
 }
 
 @code
 {
-    [Parameter, EditorRequired]
+    public readonly record struct PageResult(IReadOnlyList<T> Items, int Total);
+
+    [Parameter]
     public IReadOnlyList<T> Items { get; set; } = [];
+
+    [Parameter]
+    public Func<int, int, CancellationToken, Task<PageResult>>? ItemsProvider { get; set; }
+
+    [Parameter]
+    public string? ResetKey { get; set; }
+
+    [Parameter]
+    public EventCallback<int> TotalChanged { get; set; }
 
     [Parameter, EditorRequired]
     public RenderFragment<T> ItemTemplate { get; set; } = default!;
@@ -39,36 +53,64 @@
 
     private List<T> _visible = [];
     private int _total;
+    private bool _hasMore;
+    private bool _loading;
+    private bool _initializing = true;
+    private string? _renderedResetKey;
     private IReadOnlyList<T>? _renderedItems;
     private ElementReference _sentinel;
-    private Bit.Butil.ButilSubscription? _observation;
+    private ButilSubscription? _observation;
     private bool _observerFailed;
-    private bool _restartObservation;
+    private CancellationTokenSource? _loadCts;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        if (ReferenceEquals(_renderedItems, Items))
+        if (ItemsProvider is not null)
+        {
+            if (_renderedResetKey == ResetKey && !_initializing)
+                return;
+
+            _renderedResetKey = ResetKey;
+            _initializing = false;
+            await ResetAndLoadFirstPageAsync();
+            return;
+        }
+
+        if (_renderedItems is not null && Items.SequenceEqual(_renderedItems))
             return;
 
         _renderedItems = Items;
         _total = Items.Count;
         _visible = Items.Take(PageSize).ToList();
-        _restartObservation = true;
+        _hasMore = _visible.Count < _total;
+        await TotalChanged.InvokeAsync(_total);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_restartObservation)
-        {
-            _restartObservation = false;
-            await StopObservingAsync();
-        }
-
-        if (_visible.Count < _total && _observation is null && !_observerFailed)
+        if (_hasMore && _observation is null && !_observerFailed)
             await StartObservingAsync();
-        else if (_visible.Count >= _total && _observation is not null)
+        else if (!_hasMore && _observation is not null)
             await StopObservingAsync();
     }
+
+    private async Task ResetAndLoadFirstPageAsync()
+    {
+        await StopObservingAsync();
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+
+        _visible = [];
+        _total = 0;
+        _hasMore = true;
+        _observerFailed = false;
+        StateHasChanged();
+
+        await LoadNextAsync();
+    }
+
+    public Task RefreshAsync() => ResetAndLoadFirstPageAsync();
 
     private async Task StartObservingAsync()
     {
@@ -79,42 +121,71 @@
                 entries =>
                 {
                     if (entries.Any(e => e.IsIntersecting))
-                        _ = InvokeAsync(ShowMore);
-                });
+                        _ = InvokeAsync(LoadNextAsync);
+                },
+                new IntersectionObserverOptions { RootMargin = "0px 0px 400px 0px" });
         }
         catch
         {
-            // No IntersectionObserver (old browsers, some web views):
-            // the manual trigger button stays visible instead.
             _observerFailed = true;
             StateHasChanged();
         }
     }
 
-    private void ShowMore()
+    private async Task LoadNextAsync()
     {
-        if (_visible.Count >= _total)
+        if (_loading)
             return;
 
-        _visible = _renderedItems?.Take(_visible.Count + PageSize).ToList() ?? _visible;
+        if (ItemsProvider is null)
+        {
+            if (_visible.Count >= _total)
+                return;
+
+            _visible = (_renderedItems?.Take(_visible.Count + PageSize) ?? _visible).ToList();
+            _hasMore = _visible.Count < _total;
+            StateHasChanged();
+            return;
+        }
+
+        if (!_hasMore && _visible.Count > 0)
+            return;
+
+        _loading = true;
         StateHasChanged();
+
+        try
+        {
+            var result = await ItemsProvider(_visible.Count, PageSize, _loadCts?.Token ?? CancellationToken.None);
+            _visible.AddRange(result.Items);
+            _total = result.Total;
+            _hasMore = _visible.Count < _total;
+            await TotalChanged.InvokeAsync(_total);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a filter reset; the new load owns the list now.
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task StopObservingAsync()
     {
-        try
+        if (_observation is not null)
         {
-            if (_observation is not null)
-                await _observation.DisposeAsync();
-        }
-        catch (JSDisconnectedException)
-        {
-        }
-        finally
-        {
+            await _observation.DisposeAsync();
             _observation = null;
         }
     }
 
-    public async ValueTask DisposeAsync() => await StopObservingAsync();
+    public async ValueTask DisposeAsync()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        await StopObservingAsync();
+    }
 }
