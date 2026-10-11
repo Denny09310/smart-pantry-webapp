@@ -84,6 +84,12 @@ public partial class NotificationsPanel
         _pushBusy = true;
         try
         {
+            if (_pushChecked && !_pushSupported)
+            {
+                Toast.Info(L["Np_PushUnsupported"]);
+                return;
+            }
+
             var permission = await ResolvePermissionAsync();
 
             if (permission == Bit.Butil.NotificationPermission.Denied)
