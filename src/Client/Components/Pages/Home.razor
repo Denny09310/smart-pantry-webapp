@@ -7,6 +7,7 @@
 @inject BottomSheetService BottomSheet
 @inject NavigationManager Nav
 @inject MemberService Members
+@inject PantryRealtimeService Realtime
 @inject ILogger<Home> Log
 @inject IStringLocalizer<UIStrings> L
 @implements IDisposable
@@ -177,10 +178,16 @@
     protected override async Task OnInitializedAsync()
     {
         Members.Changed += OnMembersChanged;
+        Realtime.Changed += OnRealtimeChanged;
+        await Realtime.StartAsync();
         await LoadAsync();
     }
 
-    public void Dispose() => Members.Changed -= OnMembersChanged;
+    public void Dispose()
+    {
+        Members.Changed -= OnMembersChanged;
+        Realtime.Changed -= OnRealtimeChanged;
+    }
 
     private async void OnMembersChanged()
     {
@@ -191,6 +198,25 @@
         catch (Exception)
         {
             // Member switched during navigation/dispose; nothing to render.
+        }
+    }
+
+    private Task OnRealtimeChanged()
+    {
+        try
+        {
+            // Broadcasts are hints: re-query and converge, quietly —
+            // the manual reload path reports its own errors.
+            return InvokeAsync(async () =>
+            {
+                await LoadAsync(quiet: true);
+                StateHasChanged();
+            });
+        }
+        catch (Exception)
+        {
+            // Page is going away; nothing left to render.
+            return Task.CompletedTask;
         }
     }
 
@@ -211,7 +237,7 @@
         return item.Matches(_status);
     }
 
-    private async Task LoadAsync()
+    private async Task LoadAsync(bool quiet = false)
     {
         _highlightId = null;
 
@@ -221,7 +247,9 @@
 
             if (!response.IsSuccessfulWithContent)
             {
-                Toast.Error(L["Common_LoadError"]);
+                if (!quiet)
+                    Toast.Error(L["Common_LoadError"]);
+
                 return;
             }
 
@@ -230,7 +258,9 @@
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Pantry load failed.");
-            Toast.Error(L["Common_LoadError"]);
+
+            if (!quiet)
+                Toast.Error(L["Common_LoadError"]);
         }
     }
 

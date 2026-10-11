@@ -31,6 +31,7 @@ builder.Services.AddBottomSheet();
 builder.Services.AddServerApi();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<LanguageService>();
+builder.Services.AddScoped<PantryRealtimeService>();
 
 var host = builder.Build();
 
