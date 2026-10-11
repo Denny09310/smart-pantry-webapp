@@ -10,23 +10,35 @@
     @ItemTemplate(item)
 }
 
-@if (_visible.Count < _total)
+@if (_hasMore)
 {
     <div @ref="_sentinel" class="flex flex-col items-center gap-2 py-4">
-        <BbSpinner Size="SpinnerSize.Default" />
-        @if (_observerFailed)
+        @if (_loading)
         {
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ShowMore">
+            <BbSpinner Size="SpinnerSize.Default" />
+        }
+        else if (_observerFailed)
+        {
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="LoadNextAsync">
                 @(TriggerButtonText ?? L["Is_ShowMore"])
             </BbButton>
+        }
+        else
+        {
+            <BbSpinner Size="SpinnerSize.Default" />
         }
     </div>
 }
 
 @code
 {
-    [Parameter, EditorRequired]
+    public readonly record struct PageResult(IReadOnlyList<T> Items, int Total);
+
+    [Parameter]
     public IReadOnlyList<T> Items { get; set; } = [];
+
+    [Parameter]
+    public Func<int, int, Task<PageResult>>? ItemsProvider { get; set; }
 
     [Parameter, EditorRequired]
     public RenderFragment<T> ItemTemplate { get; set; } = default!;
@@ -41,23 +53,38 @@
     private int _total;
     private IReadOnlyList<T>? _renderedItems;
     private ElementReference _sentinel;
-    private Bit.Butil.ButilSubscription? _observation;
+    private ButilSubscription? _observation;
     private bool _observerFailed;
     private bool _restartObservation;
+    private bool _loading;
+    private bool _hasMore;
+    private int _loadedCount;
 
     protected override void OnParametersSet()
     {
-        // Parents rebuild their filtered collection on every render, so a new
-        // reference does not mean new data: only restart when the content
-        // actually changed, otherwise every re-render (e.g. realtime
-        // refreshes) snaps the list back to the first page.
+        if (ItemsProvider is not null)
+        {
+            if (_renderedItems is not null && Items.SequenceEqual(_renderedItems) && _loadedCount == Items.Count)
+                return;
+
+            _renderedItems = Items;
+            _loadedCount = Items.Count;
+            _visible = Items.Take(_loadedCount).ToList();
+            _total = _visible.Count;
+            _restartObservation = true;
+            _hasMore = false;
+            return;
+        }
+
         if (_renderedItems is not null && Items.SequenceEqual(_renderedItems))
             return;
 
         _renderedItems = Items;
         _total = Items.Count;
-        _visible = Items.Take(Math.Max(_visible.Count, PageSize)).ToList();
+        _visible = Items.Take(Math.Max(_loadedCount == 0 ? PageSize : _loadedCount, PageSize)).ToList();
+        _loadedCount = _visible.Count;
         _restartObservation = true;
+        _hasMore = _loadedCount < _total;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -68,9 +95,9 @@
             await StopObservingAsync();
         }
 
-        if (_visible.Count < _total && _observation is null && !_observerFailed)
+        if (_hasMore && _observation is null && !_observerFailed)
             await StartObservingAsync();
-        else if (_visible.Count >= _total && _observation is not null)
+        else if (!_hasMore && _observation is not null)
             await StopObservingAsync();
     }
 
@@ -83,43 +110,74 @@
                 entries =>
                 {
                     if (entries.Any(e => e.IsIntersecting))
-                        _ = InvokeAsync(ShowMore);
+                        _ = InvokeAsync(LoadNextAsync);
                 },
                 new IntersectionObserverOptions { RootMargin = "0px 0px 400px 0px" });
         }
         catch
         {
-            // No IntersectionObserver (old browsers, some web views):
-            // the manual trigger button stays visible instead.
             _observerFailed = true;
             StateHasChanged();
         }
     }
 
-    private void ShowMore()
+    private async Task LoadNextAsync()
     {
+        if (_loading)
+            return;
+
+        if (ItemsProvider is not null)
+        {
+            if (_visible.Count >= _total && _total >= 0)
+                return;
+
+            _loading = true;
+            StateHasChanged();
+
+            try
+            {
+                var skip = _visible.Count;
+                var result = await ItemsProvider(skip, PageSize);
+                if (skip == 0)
+                {
+                    _visible = result.Items.ToList();
+                }
+                else
+                {
+                    _visible.AddRange(result.Items);
+                }
+                _total = result.Total;
+                _hasMore = _visible.Count < _total;
+                _loadedCount = _visible.Count;
+            }
+            finally
+            {
+                _loading = false;
+                StateHasChanged();
+            }
+            return;
+        }
+
         if (_visible.Count >= _total)
             return;
 
-        _visible = _renderedItems?.Take(_visible.Count + PageSize).ToList() ?? _visible;
+        _visible = (_renderedItems?.Take(_visible.Count + PageSize) ?? _visible).ToList();
+        _loadedCount = _visible.Count;
+        _hasMore = _loadedCount < _total;
         StateHasChanged();
     }
 
     private async Task StopObservingAsync()
     {
-        try
+        if (_observation is not null)
         {
-            if (_observation is not null)
-                await _observation.DisposeAsync();
-        }
-        catch (JSDisconnectedException)
-        {
-        }
-        finally
-        {
+            await _observation.DisposeAsync();
             _observation = null;
         }
     }
 
-    public async ValueTask DisposeAsync() => await StopObservingAsync();
+    public async ValueTask DisposeAsync()
+    {
+        await StopObservingAsync();
+    }
 }

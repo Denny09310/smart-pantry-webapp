@@ -25,10 +25,10 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
 
         if (!string.IsNullOrWhiteSpace(request.Location)
             && !request.Location.Trim().Equals("all", StringComparison.OrdinalIgnoreCase))
-            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{EscapeLike(request.Location.Trim())}%", @"\"));
+            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{request.Location.Trim()}%"));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
-            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{EscapeLike(request.Name.Trim())}%", @"\"));
+            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name.Trim()}%"));
 
         if (request.Status is { } status)
         {
@@ -165,11 +165,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         return TypedResults.NoContent();
     }
 
-    /// <summary>
-    /// Escapes LIKE wildcards so search text matches literally.
-    /// </summary>
-    private static string EscapeLike(string value)
-        => value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
+
 
     private static PantryItemDto ToDto(PantryItem entry, string? memberName = null)
         => new(

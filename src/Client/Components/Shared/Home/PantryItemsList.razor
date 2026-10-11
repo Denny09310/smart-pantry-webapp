@@ -3,7 +3,7 @@
 
 <BbCard>
     <BbCardContent Class="p-0">
-        <InfiniteScrollList T="PantryItemDto" Items="@Items">
+        <InfiniteScrollList T="PantryItemDto" Items="@Items" ItemsProvider="@ItemsProvider">
             <ItemTemplate Context="item">
                 <div class="flex items-center gap-3 border-b p-3 last:border-0 @(item.Id == HighlightId ? "bg-muted" : "")">
                     <BbAvatar>
@@ -44,6 +44,9 @@
 
     [Parameter]
     public IReadOnlyCollection<string> DeletingIds { get; set; } = [];
+
+    [Parameter]
+    public Func<int, int, Task<InfiniteScrollList<PantryItemDto>.PageResult>>? ItemsProvider { get; set; }
 
     [Parameter]
     public string? HighlightId { get; set; }

@@ -3,7 +3,7 @@
 @inject BottomSheetService BottomSheet
 @inject IStringLocalizer<UIStrings> L
 
-<InfiniteScrollList T="PantryItemDto" Items="@Items">
+<InfiniteScrollList T="PantryItemDto" Items="@Items" ItemsProvider="@ItemsProvider">
     <ItemTemplate Context="item">
         <div class="@(item.Id == HighlightId ? "rounded-xl bg-muted" : "")">
             <BbCard Class="mb-2">
@@ -62,6 +62,9 @@
 
     [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
+
+    [Parameter]
+    public Func<int, int, Task<InfiniteScrollList<PantryItemDto>.PageResult>>? ItemsProvider { get; set; }
 
     [Parameter]
     public string? HighlightId { get; set; }

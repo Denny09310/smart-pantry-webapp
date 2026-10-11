@@ -69,6 +69,9 @@
     public IReadOnlyList<PantryItemDto> Items { get; set; } = [];
 
     [Parameter]
+    public Func<DataGridPrimitives.DataGridRequest, ValueTask<DataGridPrimitives.DataGridResult<PantryItemDto>>>? ItemsProvider { get; set; }
+
+    [Parameter]
     public EventCallback<PantryItemDto> OnEdit { get; set; }
 
     [Parameter]
@@ -89,17 +92,26 @@
         // The grid detects data changes by collection reference. This component
         // otherwise forwards the identical reference it received, so nudge the
         // grid explicitly whenever a new collection arrives.
-        if (!ReferenceEquals(_renderedItems, Items))
+        if (ItemsProvider is not null)
         {
-            _renderedItems = Items;
-            _refreshPending = true;
+            if (!ReferenceEquals(_renderedItems, Items))
+            {
+                _renderedItems = Items;
+                _refreshPending = true;
+            }
+        }
+        else
+        {
+            if (!ReferenceEquals(_renderedItems, Items))
+            {
+                _renderedItems = Items;
+                _refreshPending = true;
+            }
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // No first-render skip: the grid mounts its own initial query, and a
-        // skipped flag would fire spuriously on the next unrelated render.
         if (_refreshPending)
         {
             _refreshPending = false;
@@ -113,6 +125,9 @@
     private ValueTask<DataGridPrimitives.DataGridResult<PantryItemDto>> ProvidePageAsync(DataGridPrimitives.DataGridRequest request)
     {
         request.CancellationToken.ThrowIfCancellationRequested();
+
+        if (ItemsProvider is not null)
+            return ItemsProvider(request);
 
         var sorted = ApplyRequestSort(Items, request.SortDefinitions);
         var page = sorted.Skip(request.StartIndex).Take(request.Count ?? sorted.Count).ToList();
