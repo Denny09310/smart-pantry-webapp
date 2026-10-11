@@ -125,8 +125,6 @@
         Description = L["Pu_ActionsDescription"]
     };
 
-    private const int MaxItems = 500;
-
     private List<PantryItemDto>? _items;
     private readonly HashSet<string> _busyIds = [];
     private string? _highlightId;
@@ -207,9 +205,9 @@
 
         try
         {
-            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
+            var items = await Api.GetAllPantryItemsAsync();
 
-            if (!response.IsSuccessfulWithContent)
+            if (items is null)
             {
                 if (!quiet)
                     Toast.Error(L["Common_LoadError"]);
@@ -217,7 +215,7 @@
                 return;
             }
 
-            _items = new(response.Content.Items);
+            _items = items;
         }
         catch (Exception ex)
         {
