@@ -265,28 +265,4 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
             await DeleteItemAsync(fresh.Id);
         }
     }
-
-    [Fact]
-    public async Task Summary_Returns_Consistent_Counts()
-    {
-        var soon = await CreateItemAsync(expires: InDays(2));
-        var fresh = await CreateItemAsync(expires: InDays(60));
-        try
-        {
-            using var response = await _client.GetAsync("/api/pantry/summary");
-            response.EnsureSuccessStatusCode();
-            var summary = await response.Content.ReadFromJsonAsync<GetPantrySummaryResponse>();
-            Assert.NotNull(summary);
-            Assert.Equal(summary.Expired + summary.Today + summary.Soon + summary.Fresh, summary.Total);
-            Assert.Equal(summary.Expired + summary.Today + summary.Soon, summary.Attention);
-            Assert.True(summary.Soon >= 1);
-            Assert.True(summary.Fresh >= 1);
-            Assert.True(summary.ByLocation.ContainsKey("pantry"));
-        }
-        finally
-        {
-            await DeleteItemAsync(soon.Id);
-            await DeleteItemAsync(fresh.Id);
-        }
-    }
 }

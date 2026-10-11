@@ -87,35 +87,6 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
             totalItems));
     }
 
-    [MapGet("/summary")]
-    public async Task<Ok<GetPantrySummaryResponse>> GetPantrySummaryAsync(CancellationToken ct)
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var horizon = today.AddDays(7);
-
-        var expired = await db.Items.CountAsync(x => x.ExpirationDate < today, ct);
-        var todayCount = await db.Items.CountAsync(x => x.ExpirationDate == today, ct);
-        var soon = await db.Items.CountAsync(x => x.ExpirationDate > today && x.ExpirationDate <= horizon, ct);
-        var fresh = await db.Items.CountAsync(x => x.ExpirationDate > horizon, ct);
-
-        var byLocation = await db.Items
-            .AsNoTracking()
-            .GroupBy(x => x.Location)
-            .Select(g => new { Location = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Location, x => x.Count, ct);
-
-        var total = expired + todayCount + soon + fresh;
-
-        return TypedResults.Ok(new GetPantrySummaryResponse(
-            total,
-            expired,
-            todayCount,
-            soon,
-            fresh,
-            expired + todayCount + soon,
-            byLocation));
-    }
-
     [MapGet("/{id}")]
     public async Task<Results<Ok<PantryItemDto>, NotFound>> GetPantryItemAsync(
         string id,

@@ -51,13 +51,26 @@
                    LocationChanged="@OnLocationChanged" Status="@_status" StatusChanged="@OnStatusChanged" TotalCount="@TotalCount"
                    SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" />
 
-    @if (_summary is null)
+    @if (_counts is null && !_countsFailed)
     {
         <div class="flex justify-center py-12">
             <BbSpinner Size="SpinnerSize.Large" />
         </div>
     }
-    else if (_summary.Total == 0)
+    else if (_counts is null)
+    {
+        <BbEmpty Title="@L["Common_LoadError"]" Description="@L["Common_NoMatchesHint"]" Size="EmptySize.Default">
+            <Icon>
+                <LucideIcon Name="triangle-alert" Size="28" />
+            </Icon>
+            <ChildContent>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="RetryCountsAsync">
+                    @L["Common_Retry"]
+                </BbButton>
+            </ChildContent>
+        </BbEmpty>
+    }
+    else if (_counts.Total == 0)
     {
         <BbEmpty Title="@L["Common_EmptyTitle"]" Description="@L["Common_EmptyDescription"]"
                  Size="EmptySize.Default">
@@ -72,13 +85,7 @@
             </ChildContent>
         </BbEmpty>
     }
-    else if (_filterTotal is null)
-    {
-        <div class="flex justify-center py-12">
-            <BbSpinner Size="SpinnerSize.Large" />
-        </div>
-    }
-    else if (_filterTotal == 0 && _summary.Attention == 0)
+    else if (_counts.Attention == 0)
     {
         <BbEmpty Title="@L["Home_AllFreshTitle"]" Description="@L["Home_AllFreshDescription"]" Size="EmptySize.Default">
             <Icon>
@@ -142,7 +149,8 @@
         Size = DialogSize.Small
     };
 
-    private GetPantrySummaryResponse? _summary;
+    private PantryCounts? _counts;
+    private bool _countsFailed;
     private int? _filterTotal;
     private int _refreshTick;
     private readonly HashSet<string> _deletingIds = [];
@@ -153,22 +161,26 @@
 
     private string FilterKey => $"{_name}|{_location}|{_status}|{_refreshTick}";
 
-    private int TotalCount => _summary?.Attention ?? 0;
+    private string? QueryLocation => _location is "all" or null ? null : _location;
 
-    private int LocationsCount => _summary?.ByLocation.Count ?? 0;
+    private string? QueryName => string.IsNullOrWhiteSpace(_name) ? null : _name;
 
-    private int ExpiredCount => _summary?.Expired ?? 0;
+    private int TotalCount => _counts?.Attention ?? 0;
 
-    private int TodayCount => _summary?.Today ?? 0;
+    private int LocationsCount => _counts?.ByLocation.Count(kv => kv.Value > 0) ?? 0;
 
-    private int SoonCount => _summary?.Soon ?? 0;
+    private int ExpiredCount => _counts?.Expired ?? 0;
+
+    private int TodayCount => _counts?.Today ?? 0;
+
+    private int SoonCount => _counts?.Soon ?? 0;
 
     protected override async Task OnInitializedAsync()
     {
         Members.Changed += OnMembersChanged;
         Realtime.Changed += OnRealtimeChanged;
         await Realtime.StartAsync();
-        await LoadSummaryAsync();
+        await LoadCountsAsync();
     }
 
     public void Dispose()
@@ -197,7 +209,7 @@
             // the manual reload path reports its own errors.
             return InvokeAsync(async () =>
             {
-                await LoadSummaryAsync(quiet: true);
+                await LoadCountsAsync(quiet: true);
                 _refreshTick++;
                 StateHasChanged();
             });
@@ -219,31 +231,20 @@
         _ => null,
     };
 
-    private GetPantryItemsRequest BuildRequest(int skip, int take, bool descending = false)
-        => new(
-            Location: _location is "all" or null ? null : _location,
-            Name: string.IsNullOrWhiteSpace(_name) ? null : _name,
-            Status: MapStatus(_status))
-        {
-            Skip = skip,
-            Take = take,
-            ExcludeFresh = _status == PantryStatusFilter.All,
-            SortDescending = descending,
-        };
-
     private async Task<InfiniteScrollList<PantryItemDto>.PageResult> ProvideItemsAsync(int skip, int take, CancellationToken ct)
     {
         try
         {
-            using var response = await Api.Pantry.GetAsync(BuildRequest(skip, take), ct);
-
-            if (!response.IsSuccessfulWithContent || response.Content is null)
-            {
-                Toast.Error(L["Common_LoadError"]);
-                return new([], _filterTotal ?? skip);
-            }
-
-            return new(response.Content.Items.ToList(), response.Content.TotalItems);
+            return await ServerApiExtensions.GetPantryPageAsync(
+                Api.Pantry,
+                QueryLocation,
+                QueryName,
+                MapStatus(_status),
+                _status == PantryStatusFilter.All,
+                false,
+                skip,
+                take,
+                ct);
         }
         catch (OperationCanceledException)
         {
@@ -266,23 +267,21 @@
 
         try
         {
-            using var response = await Api.Pantry.GetAsync(
-                BuildRequest(request.StartIndex, request.Count ?? 20, descending),
+            var page = await ServerApiExtensions.GetPantryPageAsync(
+                Api.Pantry,
+                QueryLocation,
+                QueryName,
+                MapStatus(_status),
+                _status == PantryStatusFilter.All,
+                descending,
+                request.StartIndex,
+                request.Count ?? 20,
                 request.CancellationToken);
-
-            if (!response.IsSuccessfulWithContent || response.Content is null)
-            {
-                Toast.Error(L["Common_LoadError"]);
-                return new() { Items = [], TotalItemCount = _filterTotal ?? 0 };
-            }
-
-            _filterTotal = response.Content.TotalItems;
-            await InvokeAsync(StateHasChanged);
 
             return new()
             {
-                Items = response.Content.Items.ToList(),
-                TotalItemCount = response.Content.TotalItems,
+                Items = page.Items.ToList(),
+                TotalItemCount = page.Total,
             };
         }
         catch (OperationCanceledException)
@@ -293,7 +292,7 @@
         {
             Log.LogWarning(ex, "Pantry table load failed.");
             Toast.Error(L["Common_LoadError"]);
-            return new() { Items = [], TotalItemCount = _filterTotal ?? 0 };
+            return new() { Items = [], TotalItemCount = 0 };
         }
     }
 
@@ -303,58 +302,38 @@
         return Task.CompletedTask;
     }
 
-    private async Task LoadSummaryAsync(bool quiet = false)
+    private async Task LoadCountsAsync(bool quiet = false)
     {
         try
         {
-            using var response = await Api.Pantry.GetSummaryAsync();
-
-            if (!response.IsSuccessfulWithContent || response.Content is null)
-            {
-                if (!quiet)
-                    Toast.Error(L["Common_LoadError"]);
-
-                return;
-            }
-
-            _summary = response.Content;
+            _counts = await ServerApiExtensions.GetPantryCountsAsync(Api.Pantry, CancellationToken.None);
+            _countsFailed = false;
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Pantry summary load failed.");
+            Log.LogWarning(ex, "Pantry counts load failed.");
 
             if (!quiet)
                 Toast.Error(L["Common_LoadError"]);
+
+            if (_counts is null)
+                _countsFailed = true;
         }
     }
 
-    private Task OnSearchChanged(string? value)
-    {
-        _name = value;
-        _filterTotal = null;
-        return Task.CompletedTask;
-    }
+    private async Task RetryCountsAsync() => await LoadCountsAsync();
 
-    private Task OnLocationChanged(string? value)
-    {
-        _location = value;
-        _filterTotal = null;
-        return Task.CompletedTask;
-    }
+    private void OnSearchChanged(string? value) => _name = value;
 
-    private Task OnStatusChanged(PantryStatusFilter value)
-    {
-        _status = value;
-        _filterTotal = null;
-        return Task.CompletedTask;
-    }
+    private void OnLocationChanged(string? value) => _location = value;
+
+    private void OnStatusChanged(PantryStatusFilter value) => _status = value;
 
     private void ClearFilters()
     {
         _name = null;
         _location = "all";
         _status = PantryStatusFilter.All;
-        _filterTotal = null;
     }
 
     private void ViewAllItems() => Nav.NavigateTo("/pantry");
@@ -362,7 +341,7 @@
     private async Task RefreshDataAsync()
     {
         _highlightId = null;
-        await LoadSummaryAsync();
+        await LoadCountsAsync();
         _refreshTick++;
     }
 

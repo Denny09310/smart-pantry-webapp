@@ -43,6 +43,7 @@
   <data name="Common_NotificationsDescription" xml:space="preserve"><value>Articoli in scadenza</value></data>
   <data name="Common_NotificationsTitle" xml:space="preserve"><value>Notifiche</value></data>
   <data name="Common_Removed" xml:space="preserve"><value>{0} eliminato.</value></data>
+  <data name="Common_Retry" xml:space="preserve"><value>Riprova</value></data>
   <data name="Common_SearchAria" xml:space="preserve"><value>Cerca negli articoli</value></data>
   <data name="Common_SearchPlaceholder" xml:space="preserve"><value>Cerca per nome o note...</value></data>
   <data name="Common_SortedBadge" xml:space="preserve"><value>Ordinati per urgenza</value></data>

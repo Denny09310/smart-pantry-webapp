@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 using Refit;
 
+using Client.Components.Shared;
+using Client.Models;
+
 using Shared.Models;
 
 namespace Client.Services;
@@ -29,9 +32,17 @@ internal interface IPantryEndpoints
         GetPantryItemsRequest? request = null,
         CancellationToken ct = default);
 
-    [Get("/summary")]
-    Task<ApiResponse<GetPantrySummaryResponse>> GetSummaryAsync(
-        CancellationToken ct = default);
+    // Offset paging: Skip is the token, TotalItems ends the sequence.
+    [Get("/")]
+    [Paged(Total = nameof(GetPantryItemsResponse.TotalItems))]
+    PagedEnumerable<GetPantryItemsResponse, PantryItemDto> ListAsync(
+        string? location,
+        string? name,
+        ExpiryStatus? status,
+        bool excludeFresh,
+        bool sortDescending,
+        int take,
+        [PageToken] int skip = 0);
 
     [Post("/")]
     Task<ApiResponse<PantryItemDto>> CreateAsync(
@@ -123,6 +134,87 @@ internal interface IRecipeEndpoints
 
 internal static class ServerApiExtensions
 {
+    /// <summary>
+    /// Reads one page (at most) and returns its items plus the total.
+    /// </summary>
+    public static async Task<InfiniteScrollList<PantryItemDto>.PageResult> GetPantryPageAsync(
+        IPantryEndpoints pantry,
+        string? location,
+        string? name,
+        ExpiryStatus? status,
+        bool excludeFresh,
+        bool sortDescending,
+        int skip,
+        int take,
+        CancellationToken ct)
+    {
+        await foreach (var page in pantry
+            .ListAsync(location, name, status, excludeFresh, sortDescending, take, skip)
+            .WithMaxPages(1)
+            .AsPages()
+            .WithCancellation(ct))
+        {
+            return new(page.Items.ToList(), page.TotalItems);
+        }
+
+        return new([], 0);
+    }
+
+    /// <summary>
+    /// Chip counts, one Take=1 paged request per status plus one per storage
+    /// location. All run in parallel.
+    /// </summary>
+    public static async Task<PantryCounts> GetPantryCountsAsync(
+        IPantryEndpoints pantry,
+        CancellationToken ct)
+    {
+        var total = CountAsync(pantry, null, null, false, ct);
+        var expired = CountAsync(pantry, null, ExpiryStatus.Expired, false, ct);
+        var today = CountAsync(pantry, null, ExpiryStatus.Today, false, ct);
+        var soon = CountAsync(pantry, null, ExpiryStatus.Soon, false, ct);
+        var fresh = CountAsync(pantry, null, ExpiryStatus.Fresh, false, ct);
+        var attention = CountAsync(pantry, null, null, true, ct);
+
+        var locations = new[]
+        {
+            ("pantry", CountAsync(pantry, "pantry", null, false, ct)),
+            ("fridge", CountAsync(pantry, "fridge", null, false, ct)),
+            ("freezer", CountAsync(pantry, "freezer", null, false, ct)),
+            ("cabinet", CountAsync(pantry, "cabinet", null, false, ct)),
+        };
+
+        await Task.WhenAll(
+            [total, expired, today, soon, fresh, attention,
+             .. locations.Select(l => l.Item2)]);
+
+        return new(
+            await total,
+            await expired,
+            await today,
+            await soon,
+            await fresh,
+            await attention,
+            locations.ToDictionary(l => l.Item1, l => l.Item2.Result));
+    }
+
+    private static async Task<int> CountAsync(
+        IPantryEndpoints pantry,
+        string? location,
+        ExpiryStatus? status,
+        bool excludeFresh,
+        CancellationToken ct)
+    {
+        await foreach (var page in pantry
+            .ListAsync(location, null, status, excludeFresh, false, 1)
+            .WithMaxPages(1)
+            .AsPages()
+            .WithCancellation(ct))
+        {
+            return page.TotalItems;
+        }
+
+        return 0;
+    }
     public static IServiceCollection AddServerApi(this IServiceCollection services)
     {
         services.AddHttpClient("Server.API", (sp, client) =>
