@@ -17,15 +17,10 @@
 else if (_camera)
 {
     <div class="space-y-3">
-        <video @ref="_video" autoplay playsinline muted aria-label="@L["Bc_PreviewAria"]" class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
-        <p class="text-center text-xs text-muted-foreground">@L["Bc_PointHint"]</p>
-        @if (_lookingUp)
-        {
-            <div class="flex flex-col items-center gap-2 py-2" aria-live="polite">
-                <BbSpinner Size="SpinnerSize.Default" />
-                <p class="text-center text-xs text-muted-foreground">@L["Bc_LookingUp"]</p>
-            </div>
-        }
+        <div class="barcode-frame@(_lookingUp ? " searching" : null)">
+            <video @ref="_video" autoplay playsinline muted aria-label="@L["Bc_PreviewAria"]" class="aspect-[4/3] w-full rounded-lg bg-muted object-cover"></video>
+        </div>
+        <p class="text-center text-xs text-muted-foreground" aria-live="polite">@(_lookingUp ? L["Bc_LookingUp"] : L["Bc_PointHint"])</p>
         @if (_notFound)
         {
             <div class="space-y-2">
