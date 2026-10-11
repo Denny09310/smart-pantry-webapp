@@ -1,3 +1,13 @@
+## [0.7.2] - 2026-10-11
+
+### 🔨 Refactors
+
+- Group notification panel booleans into PanelState
+
+### 💼 Other
+
+- Refactor/panel-state into develop
+
 ## [0.7.1] - 2026-10-11
 
 ### 🐛 Bug Fixes
