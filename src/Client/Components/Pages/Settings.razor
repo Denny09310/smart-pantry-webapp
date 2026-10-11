@@ -11,7 +11,8 @@
 
     <BbCard Class="p-4 md:p-6">
         <div class="flex items-center gap-3">
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <span
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <LucideIcon Name="globe" Size="18" />
             </span>
             <div class="min-w-0 flex-1">
@@ -20,12 +21,8 @@
             </div>
         </div>
         <div class="mt-4">
-            <BbSelect TValue="string"
-                      Class="w-full text-base"
-                      AriaLabel="@L["Settings_LanguageLabel"]"
-                      Value="@Languages.Current"
-                      ValueChanged="@OnLanguageChanged"
-                      Options="@_options" />
+            <BbSelect TValue="string" Class="w-full text-base" AriaLabel="@L["Settings_LanguageLabel"]"
+                      Value="@Languages.Current" ValueChanged="@OnLanguageChanged" Options="@_options" />
         </div>
     </BbCard>
 </div>

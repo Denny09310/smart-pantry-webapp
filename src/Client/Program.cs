@@ -41,7 +41,11 @@ try
     CultureInfo.DefaultThreadCurrentCulture = culture;
     CultureInfo.DefaultThreadCurrentUICulture = culture;
 
-    ApplyBlueprintStrings(host.Services.GetRequiredService<DefaultBbLocalizer>(), culture);
+    // IBbLocalizer is the registered service (DefaultBbLocalizer is only
+    // its implementation): resolving the concrete type throws
+    // NoServiceRegistered and the Blueprint chrome stays English.
+    if (host.Services.GetRequiredService<IBbLocalizer>() is DefaultBbLocalizer defaults)
+        ApplyBlueprintStrings(defaults, culture);
 }
 catch (Exception ex)
 {
