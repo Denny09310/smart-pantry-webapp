@@ -9,26 +9,34 @@ namespace Client.Components.Shared;
 
 public partial class NotificationsPanel
 {
-    private bool _loading = true;
-    private bool _markingAll;
+    /// <summary>
+    /// Mutable UI state for the panel, kept in one object so the booleans
+    /// read as a single group instead of scattered fields.
+    /// </summary>
+    private sealed class PanelState
+    {
+        public bool Loading { get; set; } = true;
+        public bool MarkingAll { get; set; }
+        public bool PushSupported { get; set; }
+        public bool PushEnabled { get; set; }
+        public bool PushBusy { get; set; }
+        public bool PushChecked { get; set; }
+        public bool PermissionDenied { get; set; }
+    }
+
+    private readonly PanelState _state = new();
     private readonly List<NotificationDto> _items = [];
     private readonly HashSet<string> _busyIds = [];
 
-    private bool _pushSupported;
-    private bool _pushEnabled;
-    private bool _pushBusy;
-    private bool _pushChecked;
-    private bool _permissionDenied;
-
     private int UnreadCount => _items.Count(n => n.ReadAt == null);
 
-    private string PushStatusText => !_pushChecked
+    private string PushStatusText => !_state.PushChecked
         ? L["Np_PushChecking"]
-        : _pushEnabled
+        : _state.PushEnabled
             ? L["Np_PushOn"]
-            : _permissionDenied
+            : _state.PermissionDenied
                 ? L["Np_PushDenied"]
-                : _pushSupported
+                : _state.PushSupported
                     ? L["Np_PushPromo"]
                     : L["Np_PushUnsupported"];
 
@@ -39,24 +47,24 @@ public partial class NotificationsPanel
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _pushChecked)
+        if (!firstRender || _state.PushChecked)
             return;
 
-        _pushChecked = true;
+        _state.PushChecked = true;
 
         try
         {
-            _pushSupported = await Push.IsSupported();
+            _state.PushSupported = await Push.IsSupported();
 
-            if (_pushSupported)
+            if (_state.PushSupported)
             {
-                _pushEnabled = (await Push.GetSubscription()).IsActive;
+                _state.PushEnabled = (await Push.GetSubscription()).IsActive;
 
-                if (!_pushEnabled)
+                if (!_state.PushEnabled)
                 {
                     try
                     {
-                        _permissionDenied = await Notifications.GetPermission()
+                        _state.PermissionDenied = await Notifications.GetPermission()
                             == Bit.Butil.NotificationPermission.Denied;
                     }
                     catch (Exception ex)
@@ -69,8 +77,8 @@ public partial class NotificationsPanel
         catch (Exception ex)
         {
             Log.LogWarning(ex, "Push availability check failed.");
-            _pushSupported = false;
-            _pushEnabled = false;
+            _state.PushSupported = false;
+            _state.PushEnabled = false;
         }
 
         StateHasChanged();
@@ -78,13 +86,13 @@ public partial class NotificationsPanel
 
     private async Task EnablePushAsync()
     {
-        if (_pushBusy)
+        if (_state.PushBusy)
             return;
 
-        _pushBusy = true;
+        _state.PushBusy = true;
         try
         {
-            if (_pushChecked && !_pushSupported)
+            if (_state.PushChecked && !_state.PushSupported)
             {
                 Toast.Info(L["Np_PushUnsupported"]);
                 return;
@@ -97,7 +105,7 @@ public partial class NotificationsPanel
                 // While denied no prompt will ever appear: subscribing
                 // would just throw. Clearing the cache or reinstalling the
                 // PWA does not reset the site permission either.
-                _permissionDenied = true;
+                _state.PermissionDenied = true;
                 Toast.Info(L["Np_PushDeniedSettings"]);
                 return;
             }
@@ -108,7 +116,7 @@ public partial class NotificationsPanel
                 return;
             }
 
-            _permissionDenied = false;
+            _state.PermissionDenied = false;
 
             // Subscribing without an active worker registration fails even
             // with permission granted (and can return inactive instead of
@@ -185,7 +193,7 @@ public partial class NotificationsPanel
                 return;
             }
 
-            _pushEnabled = true;
+            _state.PushEnabled = true;
             Toast.Success(L["Np_PushEnabled"]);
         }
         catch (Exception ex)
@@ -195,7 +203,7 @@ public partial class NotificationsPanel
         }
         finally
         {
-            _pushBusy = false;
+            _state.PushBusy = false;
         }
     }
 
@@ -239,10 +247,10 @@ public partial class NotificationsPanel
 
     private async Task DisablePushAsync()
     {
-        if (_pushBusy)
+        if (_state.PushBusy)
             return;
 
-        _pushBusy = true;
+        _state.PushBusy = true;
         try
         {
             var existing = await Push.GetSubscription();
@@ -256,13 +264,13 @@ public partial class NotificationsPanel
                 {
                     // Browser is unsubscribed but the server still lists the
                     // endpoint: report it instead of claiming success.
-                    _pushEnabled = (await Push.GetSubscription()).IsActive;
+                    _state.PushEnabled = (await Push.GetSubscription()).IsActive;
                     Toast.Error(L["Np_PushRemoveFailed"]);
                     return;
                 }
             }
 
-            _pushEnabled = false;
+            _state.PushEnabled = false;
             Toast.Success(L["Np_PushDisabled"]);
         }
         catch (Exception ex)
@@ -272,13 +280,13 @@ public partial class NotificationsPanel
         }
         finally
         {
-            _pushBusy = false;
+            _state.PushBusy = false;
         }
     }
 
     private async Task LoadAsync()
     {
-        _loading = true;
+        _state.Loading = true;
         try
         {
             using var response = await Api.Notifications.GetAsync();
@@ -299,7 +307,7 @@ public partial class NotificationsPanel
         }
         finally
         {
-            _loading = false;
+            _state.Loading = false;
         }
     }
 
@@ -330,10 +338,10 @@ public partial class NotificationsPanel
 
     private async Task MarkAllReadAsync()
     {
-        if (_markingAll)
+        if (_state.MarkingAll)
             return;
 
-        _markingAll = true;
+        _state.MarkingAll = true;
         try
         {
             using var response = await Api.Notifications.MarkAllReadAsync();
@@ -348,7 +356,7 @@ public partial class NotificationsPanel
         }
         finally
         {
-            _markingAll = false;
+            _state.MarkingAll = false;
         }
     }
 
