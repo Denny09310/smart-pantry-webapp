@@ -236,6 +236,25 @@
   <data name="Pu_ActionsTitle" xml:space="preserve"><value>Azioni articolo</value></data>
   <data name="Pu_ActionsDescription" xml:space="preserve"><value>Scegli cosa fare con questo articolo</value></data>
   <data name="Pu_UseByTonight" xml:space="preserve"><value>Da usare entro le 23:59</value></data>
+  <!-- Dettagli prodotto (foglio azioni articolo). -->
+  <data name="Pd_Ingredients" xml:space="preserve"><value>Ingredienti</value></data>
+  <data name="Pd_Nutrition" xml:space="preserve"><value>Valori nutrizionali per 100 g</value></data>
+  <data name="Pd_NutriScore" xml:space="preserve"><value>Nutri-Score</value></data>
+  <data name="Pd_NoData" xml:space="preserve"><value>Nessun dato prodotto per questo codice a barre.</value></data>
+  <data name="Pd_Loading" xml:space="preserve"><value>Caricamento dati prodotto…</value></data>
+  <data name="Pd_AttachBarcode" xml:space="preserve"><value>Collega codice a barre</value></data>
+  <data name="Pd_AttachHint" xml:space="preserve"><value>Scansiona il codice a barre della confezione per vedere ingredienti e valori nutrizionali.</value></data>
+  <data name="Pd_Attached" xml:space="preserve"><value>Prodotto collegato.</value></data>
+  <data name="Pd_DetailsAria" xml:space="preserve"><value>Mostra dettagli per {0}</value></data>
+  <data name="Pd_Energy" xml:space="preserve"><value>Energia</value></data>
+  <data name="Pd_Fat" xml:space="preserve"><value>Grassi</value></data>
+  <data name="Pd_SatFat" xml:space="preserve"><value>Acidi grassi saturi</value></data>
+  <data name="Pd_Carbs" xml:space="preserve"><value>Carboidrati</value></data>
+  <data name="Pd_Sugars" xml:space="preserve"><value>Zuccheri</value></data>
+  <data name="Pd_Fiber" xml:space="preserve"><value>Fibre</value></data>
+  <data name="Pd_Protein" xml:space="preserve"><value>Proteine</value></data>
+  <data name="Pd_Salt" xml:space="preserve"><value>Sale</value></data>
+  <data name="Cd_ScannedBarcode" xml:space="preserve"><value>Codice collegato: {0}</value></data>
   <!-- Frasi di notifica (formattatore condiviso server/client). -->
   <data name="Notif_ExpiredYesterday" xml:space="preserve"><value>{0} è scaduto ieri.</value></data>
   <data name="Notif_ExpiredDaysAgo" xml:space="preserve"><value>{0} è scaduto {1} giorni fa.</value></data>

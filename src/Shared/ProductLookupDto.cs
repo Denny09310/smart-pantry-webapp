@@ -5,4 +5,7 @@ public record ProductLookupDto(
     string Name,
     string? Brand,
     string? Quantity,
-    string? ImageUrl);
+    string? ImageUrl,
+    string? IngredientsText = null,
+    string? NutriScoreGrade = null,
+    NutritionFactsDto? Nutrition = null);

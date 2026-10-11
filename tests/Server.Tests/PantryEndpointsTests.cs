@@ -94,6 +94,48 @@ public sealed class PantryEndpointsTests(PantryApiFactory factory)
     }
 
     [Fact]
+    public async Task Create_And_Attach_Barcode_Roundtrip()
+    {
+        var created = await CreateItemAsync();
+        Assert.Null(created.Barcode);
+
+        try
+        {
+            var update = new UpdatePantryItemRequest(
+                created.Name, 1, "pcs", "pantry", null, created.ExpirationDate, "5449000000996");
+
+            using var put = await _client.PutAsJsonAsync($"/api/pantry/{created.Id}", update);
+            Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+            var updated = await put.Content.ReadFromJsonAsync<PantryItemDto>();
+            Assert.NotNull(updated);
+            Assert.Equal("5449000000996", updated.Barcode);
+
+            using var get = await _client.GetAsync($"/api/pantry/{created.Id}");
+            var fetched = await get.Content.ReadFromJsonAsync<PantryItemDto>();
+            Assert.NotNull(fetched);
+            Assert.Equal("5449000000996", fetched.Barcode);
+        }
+        finally
+        {
+            await DeleteItemAsync(created.Id);
+        }
+    }
+
+    [Fact]
+    public async Task Create_Rejects_Invalid_Barcode()
+    {
+        var request = new CreatePantryItemRequest("soda", 1, "pcs", "pantry", null, InDays(1), "abc");
+
+        using var response = await _client.PostAsJsonAsync("/api/pantry", request);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var errors = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.NotNull(errors);
+        Assert.True(errors.RootElement.GetProperty("errors").TryGetProperty("Barcode", out _));
+    }
+
+    [Fact]
     public async Task Update_Missing_Returns_NotFound()
     {
         var request = new UpdatePantryItemRequest("ghost", 1, "pcs", "pantry", null, InDays(3));

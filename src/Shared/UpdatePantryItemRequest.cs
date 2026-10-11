@@ -22,7 +22,9 @@ public record UpdatePantryItemRequest(
     string Location,
     [StringLength(500, ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_NotesLength))]
     string? Notes,
-    DateOnly ExpirationDate) : IValidatableObject
+    DateOnly ExpirationDate,
+    [RegularExpression(@"^\d{8}$|^\d{12}$|^\d{13}$", ErrorMessageResourceType = typeof(UIStrings), ErrorMessageResourceName = nameof(UIStrings.V_BarcodeFormat))]
+    string? Barcode = null) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         => PantryItemRules.Validate(

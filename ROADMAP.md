@@ -59,7 +59,38 @@ Keep the architecture deliberately simple:
 - [ ] The production deployment supports the intended devices and browsers.
 - [ ] A tested backup can be restored.
 
-## Phase 5 — Recipe suggestions (planned)
+## Phase 7 - Product details from Open Food Facts (in progress)
+
+**Goal:** Make the item actions sheet useful for scanned products: show the
+OFF ingredients text, per-100-g nutrition table, and Nutri-Score grade
+alongside the existing Edit/Delete buttons. Manual items (no barcode) keep
+just the buttons plus a "link barcode" action. Barcodes were never stored
+before this phase, so already-added items are linked one by one by scanning
+the package — no automatic backfill is possible.
+
+### Tasks
+
+- [x] Store `Barcode` on pantry items (create/update requests, entity,
+  migration) and capture it at scan time in the create dialog.
+- [x] Extend the OFF lookup with `ingredients_text`, `nutriments`, and
+  `nutriscore_grade` (tolerant parsing, 30-day-style cache rows backfill
+  details on next lookup).
+- [x] Rework `PantryItemActionsDialog` into a details sheet (loading/empty
+  states, attach-barcode flow via inline scanner) and add a desktop info
+  button opening the same sheet.
+- [x] Localize the new strings (EN/IT) and regenerate `tailwind.min.css`.
+- [x] Tests: details mapping, legacy-row backfill, barcode round-trip and
+  validation (42/42 green).
+- [ ] Device pass: details render on mobile + desktop, attach flow on a real
+  package, Italian strings.
+
+### Acceptance criteria
+
+- [ ] Opening the sheet on a scanned item shows ingredients, nutrition, and
+  Nutri-Score; on a manual item it offers barcode linking instead.
+- [ ] Attaching a barcode persists and the details appear on reopen.
+
+## Phase 5 - Recipe suggestions (planned)
 
 **Goal:** Turn "about to expire" into "dinner idea": suggest recipes from
 TheMealDB that use up items expiring within the same 7-day window the

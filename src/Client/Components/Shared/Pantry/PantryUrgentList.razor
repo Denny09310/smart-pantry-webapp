@@ -58,6 +58,9 @@
     public EventCallback<PantryItemDto> OnDelete { get; set; }
 
     [Parameter]
+    public EventCallback<BarcodeAttached> OnBarcodeAttached { get; set; }
+
+    [Parameter]
     public IReadOnlyCollection<string> BusyIds { get; set; } = [];
 
     [Parameter]
@@ -95,9 +98,10 @@
         if (result.Cancelled)
             return;
 
-        var action = result.GetData<PantryItemActionsDialog.Result>();
+        if (result.GetData<PantryItemActionsDialog.Choice>() is not { } choice)
+            return;
 
-        switch (action)
+        switch (choice.Action)
         {
             case PantryItemActionsDialog.Result.Edit:
                 await OnEdit.InvokeAsync(item);
@@ -106,6 +110,12 @@
             case PantryItemActionsDialog.Result.Delete:
                 await OnDelete.InvokeAsync(item);
                 break;
+
+            case PantryItemActionsDialog.Result.Attach when choice.Barcode is not null:
+                await OnBarcodeAttached.InvokeAsync(new BarcodeAttached(item, choice.Barcode));
+                break;
         }
     }
+
+    public sealed record BarcodeAttached(PantryItemDto Item, string Barcode);
 }

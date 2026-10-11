@@ -106,6 +106,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
             Location = request.Location,
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             ExpirationDate = request.ExpirationDate,
+            Barcode = request.Barcode,
             CreatedByMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
@@ -133,6 +134,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         entry.Location = request.Location;
         entry.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         entry.ExpirationDate = request.ExpirationDate;
+        entry.Barcode = request.Barcode;
         entry.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(ct);
@@ -167,7 +169,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.ExpirationDate,
             ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.UtcNow)),
             entry.CreatedByMemberId,
-            memberName);
+            memberName,
+            entry.Barcode);
 
     private async Task<string?> MemberNameAsync(string? memberId, CancellationToken ct)
         => memberId is null

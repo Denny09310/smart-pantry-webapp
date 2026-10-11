@@ -19,6 +19,10 @@ else
             <LucideIcon Name="barcode" Size="16" />
             @L["Cd_ScanBarcode"]
         </BbButton>
+        @if (_scannedBarcode is not null)
+        {
+            <p class="text-xs text-muted-foreground">@L["Cd_ScannedBarcode", _scannedBarcode]</p>
+        }
         @* Item name *@
         <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
             <div class="flex items-center justify-between">
@@ -167,6 +171,7 @@ else
 
     private bool _saving;
     private bool _scanning;
+    private string? _scannedBarcode;
     private InputModel Input { get; set; } = new();
     private string? _editingId;
 
@@ -175,6 +180,7 @@ else
         if (Item is { } item && _editingId != item.Id)
         {
             _editingId = item.Id;
+            _scannedBarcode = item.Barcode;
             Input = new InputModel
             {
                 Name = item.Name,
@@ -188,6 +194,7 @@ else
         else if (Item is null)
         {
             _editingId = null;
+            _scannedBarcode = null;
         }
     }
 
@@ -246,6 +253,7 @@ else
     private void ApplyScanAsync(ProductLookupDto product)
     {
         Input.Name = product.Name;
+        _scannedBarcode = product.Barcode;
 
         var details = string.Join(
             " • ",
@@ -271,7 +279,8 @@ else
                 Input.Unit,
                 Input.Location,
                 string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-                DateOnly.FromDateTime(Input.ExpirationDate.Value));
+                DateOnly.FromDateTime(Input.ExpirationDate.Value),
+                _scannedBarcode);
 
             await Reference.CloseAsync(DialogResult.Ok(request));
         }
