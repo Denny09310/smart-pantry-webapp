@@ -8,10 +8,13 @@
 }
 else
 {
-<EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex flex-col overflow-hidden">
+<EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync">
     <DataAnnotationsValidator />
 
-    <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-none pr-1">
+    @* Single scroller: .bs-content scrolls. No nested overflow container
+       here — an inner scroller inside the sheet traps gestures and pushes
+       the actions out of reach instead of scrolling them into view. *@
+    <div class="space-y-4">
         <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartScan">
             <LucideIcon Name="barcode" Size="16" />
             @L["Cd_ScanBarcode"]
