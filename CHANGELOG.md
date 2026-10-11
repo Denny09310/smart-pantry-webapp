@@ -1,3 +1,16 @@
+## [0.7.0] - 2026-10-11
+
+### ✨ Features
+
+- Product details from Open Food Facts in item sheet (ingredients, nutrition per 100 g, Nutri-Score)
+- Link package barcode to already-added items via inline scanner
+- Desktop info button opening the same details sheet
+- Store barcode on pantry items at scan time
+
+### 💼 Other
+
+- Feature/product-details into develop
+
 ## [0.6.3] - 2026-10-11
 
 ### 🐛 Bug Fixes
