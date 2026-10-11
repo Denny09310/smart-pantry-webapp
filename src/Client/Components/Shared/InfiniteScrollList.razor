@@ -47,12 +47,16 @@
 
     protected override void OnParametersSet()
     {
-        if (ReferenceEquals(_renderedItems, Items))
+        // Parents rebuild their filtered collection on every render, so a new
+        // reference does not mean new data: only restart when the content
+        // actually changed, otherwise every re-render (e.g. realtime
+        // refreshes) snaps the list back to the first page.
+        if (_renderedItems is not null && Items.SequenceEqual(_renderedItems))
             return;
 
         _renderedItems = Items;
         _total = Items.Count;
-        _visible = Items.Take(PageSize).ToList();
+        _visible = Items.Take(Math.Max(_visible.Count, PageSize)).ToList();
         _restartObservation = true;
     }
 
@@ -80,7 +84,8 @@
                 {
                     if (entries.Any(e => e.IsIntersecting))
                         _ = InvokeAsync(ShowMore);
-                });
+                },
+                new IntersectionObserverOptions { RootMargin = "0px 0px 400px 0px" });
         }
         catch
         {
