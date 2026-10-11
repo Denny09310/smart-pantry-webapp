@@ -1,3 +1,15 @@
+## [0.6.2] - 2026-10-10
+
+### 🐛 Bug Fixes
+
+- Single sheet scroller on create dialog
+- Clear stale push subscription and retry before reporting blocked
+
+### 💼 Other
+
+- Bugfix/sheet-and-navbar into develop
+- Bugfix/push-resubscribe into develop
+
 ## [0.6.1] - 2026-10-10
 
 ### 🚀 Features
