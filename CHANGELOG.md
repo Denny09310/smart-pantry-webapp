@@ -1,3 +1,14 @@
+## [0.7.1] - 2026-10-11
+
+### 🐛 Bug Fixes
+
+- Resolve Blueprint localizer via interface (Italian component chrome)
+- Guard push subscribe on service worker registration with actionable message
+
+### 💼 Other
+
+- Bugfix/push-worker-check into develop
+
 ## [0.7.0] - 2026-10-11
 
 ### ✨ Features
