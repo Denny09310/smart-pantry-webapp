@@ -101,6 +101,9 @@
   <data name="Np_PushUnsupported" xml:space="preserve"><value>Non supportate in questo browser</value></data>
   <data name="Np_PushNotConfigured" xml:space="preserve"><value>Push non configurato sul server.</value></data>
   <data name="Np_PushBlocked" xml:space="preserve"><value>Notifiche bloccate. Consenti le notifiche per attivarle.</value></data>
+<data name="Np_PushDenied" xml:space="preserve"><value>Bloccate nelle impostazioni del browser</value></data>
+<data name="Np_PushDeniedSettings" xml:space="preserve"><value>Le notifiche sono bloccate per questo sito. Consentile nelle impostazioni sito del browser e riprova.</value></data>
+<data name="Np_PushSubscribeFailed" xml:space="preserve"><value>Impossibile attivare le notifiche. Riprova.</value></data>
   <data name="Np_PushSaveFailed" xml:space="preserve"><value>Impossibile salvare l'iscrizione push.</value></data>
   <data name="Np_PushEnabled" xml:space="preserve"><value>Notifiche push attivate.</value></data>
   <data name="Np_PushEnableFailed" xml:space="preserve"><value>Impossibile attivare le notifiche push.</value></data>
