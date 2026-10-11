@@ -1,6 +1,7 @@
 @inject ServerApi Api
 @inject IStringLocalizer<UIStrings> L
 @inject ILogger<PantryItemActionsDialog> Log
+@using System.Globalization
 
 @if (_attaching)
 {
@@ -130,7 +131,7 @@ else
             || _product.NutriScoreGrade is not null
             || _product.Nutrition is not null);
 
-    private BadgeVariant NutriScoreVariant => _product?.NutriScoreGrade switch
+    private BadgeVariant NutriScoreVariant => _product?.NutriScoreGrade?.ToLowerInvariant() switch
     {
         "a" => BadgeVariant.SoftSuccess,
         "b" => BadgeVariant.SoftInfo,
@@ -173,7 +174,7 @@ else
         return rows;
     }
 
-    private static string Grams(double value) => $"{value:0.#} g";
+    private static string Grams(double value) => $"{value.ToString("0.#", CultureInfo.CurrentCulture)} g";
 
     private void StartAttach() => _attaching = true;
 

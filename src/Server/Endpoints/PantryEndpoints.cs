@@ -23,10 +23,10 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         if (!string.IsNullOrWhiteSpace(request.Location)
             && !request.Location.Trim().Equals("all", StringComparison.OrdinalIgnoreCase))
-            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{request.Location}%"));
+            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{EscapeLike(request.Location.Trim())}%", @"\"));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
-            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
+            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{EscapeLike(request.Name.Trim())}%", @"\"));
 
         if (request.Status is { } status)
         {
@@ -102,18 +102,20 @@ internal class PantryEndpoints(ApplicationDbContext db)
         {
             Name = request.Name.Trim(),
             Quantity = request.Quantity,
-            Unit = request.Unit,
-            Location = request.Location,
+            Unit = request.Unit.Trim(),
+            Location = request.Location.Trim(),
             Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
             ExpirationDate = request.ExpirationDate,
-            Barcode = request.Barcode,
+            Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim(),
             CreatedByMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
 
-        return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
+        return TypedResults.Created(
+            $"/api/pantry/{entry.Id}",
+            ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
     }
 
     [MapPut("/{id}")]
@@ -130,16 +132,16 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         entry.Name = request.Name.Trim();
         entry.Quantity = request.Quantity;
-        entry.Unit = request.Unit;
-        entry.Location = request.Location;
+        entry.Unit = request.Unit.Trim();
+        entry.Location = request.Location.Trim();
         entry.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         entry.ExpirationDate = request.ExpirationDate;
-        entry.Barcode = request.Barcode;
+        entry.Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim();
         entry.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(ct);
 
-        return TypedResults.Ok(ToDto(entry));
+        return TypedResults.Ok(ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
     }
 
     [MapDelete("/{id}")]
@@ -157,6 +159,12 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         return TypedResults.NoContent();
     }
+
+    /// <summary>
+    /// Escapes LIKE wildcards so search text matches literally.
+    /// </summary>
+    private static string EscapeLike(string value)
+        => value.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
 
     private static PantryItemDto ToDto(PantryItem entry, string? memberName = null)
         => new(

@@ -135,7 +135,16 @@
 
         // The click must never die silently: if no controller change arrives
         // (no waiting worker, stuck activation), reload anyway.
-        await Task.Delay(4000);
+        // Abort the wait when the component is torn down.
+        try
+        {
+            await Task.Delay(4000, _pollCts?.Token ?? CancellationToken.None);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
         await ReloadAsync();
     }
 
@@ -151,6 +160,19 @@
         }
 
         if (_controllerChange is not null)
-            await _controllerChange.DisposeAsync();
+        {
+            try
+            {
+                await _controllerChange.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.LogWarning(ex, "Update subscription disposal failed.");
+            }
+            finally
+            {
+                _controllerChange = null;
+            }
+        }
     }
 }

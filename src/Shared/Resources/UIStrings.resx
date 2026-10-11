@@ -289,7 +289,7 @@
   <data name="Recipe_Description" xml:space="preserve"><value>Recipes using your expiring items.</value></data>
   <data name="Recipe_Uses" xml:space="preserve"><value>Uses {0}</value></data>
   <data name="Recipe_Attribution" xml:space="preserve"><value>Recipe data and imagery: TheMealDB (https://www.themealdb.com/)</value></data>
-  <data name="Recipe_OpenAria" xml:space="preserve"><value>Open full recipe</value></data>
+  <data name="Recipe_OpenAria" xml:space="preserve"><value>Open full recipe for {0}</value></data>
   <data name="Recipe_OpenRecipe" xml:space="preserve"><value>View recipe</value></data>
   <!-- Language switcher. -->
   <data name="Lang_SwitchAria" xml:space="preserve"><value>Switch language</value></data>

@@ -1,9 +1,12 @@
 {
   "name": "Smart Pantry",
   "short_name": "Smart Pantry",
+  "description": "Shared household food inventory with expiry reminders.",
   "id": "./",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#fafafa",
   "theme_color": "#fafafa",
   "prefer_related_applications": false,

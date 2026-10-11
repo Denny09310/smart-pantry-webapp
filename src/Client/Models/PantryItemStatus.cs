@@ -104,20 +104,33 @@ public static class PantryItemStatusExtensions
         };
 
     public static string GetDisplayLocation(this PantryItemDto item)
-        => string.IsNullOrEmpty(item.Location)
-            ? item.Location
-            : char.ToUpperInvariant(item.Location[0]) + item.Location[1..];
+        => FormatLocation(item.Location);
+
+    public static string GetDisplayLocation(this PantryItemDto item, IStringLocalizer<UIStrings> localizer)
+        => item.Location.ToLowerInvariant() switch
+        {
+            "pantry" => localizer["Common_LocationPantry"],
+            "fridge" => localizer["Common_LocationFridge"],
+            "freezer" => localizer["Common_LocationFreezer"],
+            "cabinet" => localizer["Common_LocationCabinet"],
+            _ => FormatLocation(item.Location),
+        };
+
+    private static string FormatLocation(string location)
+        => string.IsNullOrEmpty(location)
+            ? location
+            : char.ToUpperInvariant(location[0]) + location[1..];
 
     public static string FormatExpiration(this PantryItemDto item, IStringLocalizer<UIStrings> localizer)
         => item.GetStatus() is PantryItemStatus.Today
             ? localizer["Ps_MobileToday"]
-            : item.ExpirationDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture);
+            : item.ExpirationDate.ToString("d", CultureInfo.CurrentCulture);
 
     public static string FormatQuantity(this PantryItemDto item)
     {
         var quantity = item.Quantity % 1 == 0
-            ? ((int)item.Quantity).ToString(CultureInfo.InvariantCulture)
-            : item.Quantity.ToString("0.##", CultureInfo.InvariantCulture);
+            ? ((int)item.Quantity).ToString(CultureInfo.CurrentCulture)
+            : item.Quantity.ToString("0.##", CultureInfo.CurrentCulture);
 
         return $"{quantity} {item.Unit}";
     }

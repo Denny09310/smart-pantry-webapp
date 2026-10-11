@@ -36,8 +36,13 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
         {
             using var response = await api.Members.GetAsync();
 
-            if (response.IsSuccessfulWithContent)
-                _members.AddRange(response.Content);
+            if (!response.IsSuccessfulWithContent)
+            {
+                LoadFailed = true;
+                return;
+            }
+
+            _members.AddRange(response.Content);
 
             var stored = await storage.GetItem(StorageKey);
             CurrentMemberId = _members.Any(m => m.Id == stored)

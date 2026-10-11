@@ -19,11 +19,10 @@ on every phone, tablet, and computer, no accounts, no passwords, no cloud.
 - **Your data stays yours.** It runs on your own network, not in someone
   else's cloud. No tracking, no subscriptions, no ads.
 
-## On the horizon
+## Use it up, don't throw it out
 
-- **Use it up, don't throw it out.** Smart Pantry will soon suggest recipes
-  for whatever is about to expire — dinner ideas from your own shelves,
-  powered by TheMealDB.
+Smart Pantry suggests recipes for whatever is about to expire — dinner
+ideas from your own shelves, powered by TheMealDB.
 
 ## Made for real kitchens
 

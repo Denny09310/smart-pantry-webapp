@@ -23,6 +23,7 @@ internal sealed class RecipeService(
     private const int MaxResults = 5;
 
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromHours(24);
+    private static readonly TimeSpan EmptyCacheLifetime = TimeSpan.FromMinutes(15);
 
     public async Task<IReadOnlyList<RecipeSuggestion>> GetSuggestionsAsync(
         IReadOnlyList<string> expiring,
@@ -69,16 +70,21 @@ internal sealed class RecipeService(
 
         IReadOnlyList<RecipeSuggestion> result = [];
 
+        var failed = false;
+
         try
         {
             result = await FetchSuggestionsAsync(queries, terms, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {
+            failed = true;
             log.LogWarning(ex, "Recipe suggestions failed.");
         }
 
-        cache.Set(cacheKey, result, CacheLifetime);
+        // A failure or empty lookup must not poison the cache for a full
+        // day: retry soon, keep good results for 24h.
+        cache.Set(cacheKey, result, result.Count > 0 && !failed ? CacheLifetime : EmptyCacheLifetime);
 
         return result;
     }

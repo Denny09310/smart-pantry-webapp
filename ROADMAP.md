@@ -59,7 +59,7 @@ Keep the architecture deliberately simple:
 - [ ] The production deployment supports the intended devices and browsers.
 - [ ] A tested backup can be restored.
 
-## Phase 7 - Product details from Open Food Facts (in progress)
+## Phase 7 - Product details from Open Food Facts (done, pending device pass)
 
 **Goal:** Make the item actions sheet useful for scanned products: show the
 OFF ingredients text, per-100-g nutrition table, and Nutri-Score grade
@@ -90,7 +90,7 @@ the package — no automatic backfill is possible.
   Nutri-Score; on a manual item it offers barcode linking instead.
 - [ ] Attaching a barcode persists and the details appear on reopen.
 
-## Phase 5 - Recipe suggestions (planned)
+## Phase 5 - Recipe suggestions (done, pending device pass)
 
 **Goal:** Turn "about to expire" into "dinner idea": suggest recipes from
 TheMealDB that use up items expiring within the same 7-day window the
