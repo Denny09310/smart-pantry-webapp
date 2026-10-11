@@ -74,19 +74,30 @@ public partial class NotificationsPanel
                 return;
             }
 
-            Bit.Butil.PushSubscriptionInfo subscription;
+            Bit.Butil.PushSubscriptionInfo? subscription = null;
             try
             {
                 subscription = await Push.Subscribe(key.Content.PublicKey);
             }
             catch (Exception ex)
             {
-                Log.LogWarning(ex, "Browser push subscription failed.");
-                Toast.Info(L["Np_PushBlocked"]);
-                return;
+                // A stale subscription (e.g. from before a VAPID rotation)
+                // can reject a fresh subscribe despite granted permission:
+                // clear it and retry once before giving up.
+                Log.LogWarning(ex, "Browser push subscription failed; retrying after unsubscribe.");
+
+                try
+                {
+                    await Push.Unsubscribe();
+                    subscription = await Push.Subscribe(key.Content.PublicKey);
+                }
+                catch (Exception retryEx)
+                {
+                    Log.LogWarning(retryEx, "Browser push subscription retry failed.");
+                }
             }
 
-            if (!subscription.IsActive)
+            if (subscription is not { IsActive: true })
             {
                 Toast.Info(L["Np_PushBlocked"]);
                 return;

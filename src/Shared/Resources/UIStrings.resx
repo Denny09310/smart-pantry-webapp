@@ -265,7 +265,10 @@
   <data name="Lang_SwitchAria" xml:space="preserve"><value>Switch language</value></data>
   <!-- Settings page. -->
   <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_Eyebrow" xml:space="preserve"><value>Preferences</value></data>
+  <data name="Settings_Description" xml:space="preserve"><value>Tune the app to your liking.</value></data>
   <data name="Settings_LanguageLabel" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_LanguageDescription" xml:space="preserve"><value>Applies to menus, messages and notifications.</value></data>
   <data name="Settings_OpenAria" xml:space="preserve"><value>Open settings</value></data>
   <!-- BlazorBlueprint component chrome (applied at startup for the current culture). -->
   <data name="Bb_DialogClose" xml:space="preserve"><value>Close</value></data>
