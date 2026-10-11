@@ -14,6 +14,8 @@ on every phone, tablet, and computer, no accounts, no passwords, no cloud.
   brand, and size fill in themselves. Or type it — your choice.
 - **Everyone knows who added what.** Each person picks their name; every item
   shows who brought it home. No sign-in screens, ever.
+- **Always in sync.** Add, edit, or remove an item on one phone and every
+  other open device updates live — no reload, no stale lists.
 - **Installs like a real app.** Add it to your home screen from the browser
   and it works like a native app — including offline access to your pantry.
 - **Your data stays yours.** It runs on your own network, not in someone
