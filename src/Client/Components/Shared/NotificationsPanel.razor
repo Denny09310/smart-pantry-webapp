@@ -13,20 +13,20 @@
             <p class="text-sm font-medium">@L["Np_PushTitle"]</p>
             <p class="truncate text-xs text-muted-foreground">@PushStatusText</p>
         </div>
-        @if (_pushEnabled)
+        @if (_state.PushEnabled)
         {
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Loading="@_pushBusy" OnClick="DisablePushAsync">
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Loading="@_state.PushBusy" OnClick="DisablePushAsync">
                 @L["Np_Disable"]
             </BbButton>
         }
         else
         {
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Loading="@_pushBusy" OnClick="EnablePushAsync">
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Loading="@_state.PushBusy" OnClick="EnablePushAsync">
                 @L["Np_Enable"]
             </BbButton>
         }
     </div>
-    @if (_loading)
+    @if (_state.Loading)
     {
         <div class="flex justify-center py-8">
             <BbSpinner Size="SpinnerSize.Large" />
@@ -50,7 +50,7 @@
             </p>
             @if (UnreadCount > 0)
             {
-                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Loading="@_markingAll" OnClick="MarkAllReadAsync">
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Loading="@_state.MarkingAll" OnClick="MarkAllReadAsync">
                     @L["Np_MarkAllRead"]
                 </BbButton>
             }
