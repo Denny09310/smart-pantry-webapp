@@ -15,7 +15,7 @@ else
        here — an inner scroller inside the sheet traps gestures and pushes
        the actions out of reach instead of scrolling them into view. *@
     <div class="space-y-4">
-        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartScan">
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button" OnClick="StartScan">
             <LucideIcon Name="barcode" Size="16" />
             @L["Cd_ScanBarcode"]
         </BbButton>
@@ -46,7 +46,7 @@ else
             </div>
 
             <div class="flex items-center justify-between rounded-lg bg-muted p-1">
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@L["Cd_DecreaseAria"]"
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button" AriaLabel="@L["Cd_DecreaseAria"]"
                           OnClick="DecrementQuantity">
                     <LucideIcon Name="minus" Size="16" />
                 </BbButton>
@@ -54,7 +54,7 @@ else
                     <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
                     <span class="text-xs text-muted-foreground">@Input.Unit</span>
                 </div>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@L["Cd_IncreaseAria"]"
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button" AriaLabel="@L["Cd_IncreaseAria"]"
                           OnClick="IncrementQuantity">
                     <LucideIcon Name="plus" Size="16" />
                 </BbButton>
@@ -111,16 +111,16 @@ else
         <div class="space-y-2">
             <span class="text-xs text-muted-foreground">@L["Cd_AddShortcuts"]</span>
             <div class="flex flex-wrap gap-1.5">
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(3))">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(3))">
                     @L["Cd_Plus3Days"]
                 </BbButton>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(7))">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(7))">
                     @L["Cd_Plus1Week"]
                 </BbButton>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(30))">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(30))">
                     @L["Cd_Plus1Month"]
                 </BbButton>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => SetExpiry(180))">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(180))">
                     @L["Cd_Plus6Months"]
                 </BbButton>
             </div>
@@ -153,7 +153,7 @@ else
             </Icon>
             <ChildContent>@(_editingId is null ? L["Cd_SaveItem"] : L["Cd_SaveChanges"])</ChildContent>
         </BbButton>
-        <BbButton Variant="ButtonVariant.Ghost" Class="w-full" OnClick="CancelAsync">
+        <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button" OnClick="CancelAsync">
             @L["Common_Cancel"]
         </BbButton>
     </div>

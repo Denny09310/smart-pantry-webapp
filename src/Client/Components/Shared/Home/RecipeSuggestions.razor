@@ -15,7 +15,7 @@
             {
                 <BbCard @key="@recipe.IdMeal">
                     <BbCardContent Class="flex items-center gap-3 p-3">
-                        <img src="@recipe.ThumbnailUrl" alt="" loading="lazy"
+                        <img src="@recipe.ThumbnailUrl" alt="@recipe.Name" loading="lazy"
                              class="h-16 w-16 shrink-0 rounded-lg object-cover" />
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-medium">@recipe.Name</p>
@@ -24,7 +24,7 @@
                             </p>
                             <BbLink Href="@recipe.SourceUrl" Target="_blank" Rel="noopener" Variant="LinkVariant.Muted"
                                     Underline="LinkUnderline.Hover" Class="inline-flex gap-2 text-xs"
-                                    aria-label="@L["Recipe_OpenAria"]">
+                                    aria-label="@L["Recipe_OpenAria", recipe.Name]">
                                 @L["Recipe_OpenRecipe"]
                                 <LucideIcon Name="external-link" Size="12" />
                             </BbLink>

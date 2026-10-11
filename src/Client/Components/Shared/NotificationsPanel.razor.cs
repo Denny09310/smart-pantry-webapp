@@ -360,5 +360,5 @@ public partial class NotificationsPanel
     private bool IsBusy(NotificationDto notification) => _busyIds.Contains(notification.Id);
 
     private static string FormatWhen(DateTimeOffset createdAt)
-        => createdAt.ToLocalTime().ToString("dd MMM HH:mm");
+        => createdAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
 }

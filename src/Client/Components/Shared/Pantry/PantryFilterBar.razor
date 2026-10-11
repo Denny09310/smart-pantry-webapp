@@ -34,7 +34,7 @@
     </BbChipSet>
 
     <BbChipSet TValue="string" Value="@Location" ValueChanged="@OnLocationValueChanged" Wrap="false" Class="scrollbar-none!">
-        <BbChip Value="@("all")">@L["Common_FilterAll", TotalCount]</BbChip>
+        <BbChip Value="@("all")">@L["Common_LocationAll"]</BbChip>
         @foreach (var location in Locations)
         {
             <BbChip Value="@location">@L["Pl_LocCount", DisplayName(location), LocationCount(location)]</BbChip>
@@ -115,8 +115,15 @@
     private int LocationCount(string location)
         => LocationCounts.TryGetValue(location, out var count) ? count : 0;
 
-    private static string DisplayName(string location)
-        => string.IsNullOrEmpty(location)
-            ? location
-            : char.ToUpperInvariant(location[0]) + location[1..];
+    private string DisplayName(string location)
+        => location.ToLowerInvariant() switch
+        {
+            "pantry" => L["Common_LocationPantry"],
+            "fridge" => L["Common_LocationFridge"],
+            "freezer" => L["Common_LocationFreezer"],
+            "cabinet" => L["Common_LocationCabinet"],
+            _ => string.IsNullOrEmpty(location)
+                ? location
+                : char.ToUpperInvariant(location[0]) + location[1..],
+        };
 }

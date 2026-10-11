@@ -289,7 +289,7 @@
   <data name="Recipe_Description" xml:space="preserve"><value>Ricette con i tuoi articoli in scadenza.</value></data>
   <data name="Recipe_Uses" xml:space="preserve"><value>Usa {0}</value></data>
   <data name="Recipe_Attribution" xml:space="preserve"><value>Dati ricette e immagini: TheMealDB (https://www.themealdb.com/)</value></data>
-  <data name="Recipe_OpenAria" xml:space="preserve"><value>Apri ricetta completa</value></data>
+  <data name="Recipe_OpenAria" xml:space="preserve"><value>Apri ricetta completa di {0}</value></data>
   <data name="Recipe_OpenRecipe" xml:space="preserve"><value>Vedi ricetta</value></data>
   <!-- Selettore lingua. -->
   <data name="Lang_SwitchAria" xml:space="preserve"><value>Cambia lingua</value></data>

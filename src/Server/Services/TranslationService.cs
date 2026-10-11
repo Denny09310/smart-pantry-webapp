@@ -16,6 +16,7 @@ internal sealed class TranslationService(
     ILogger<TranslationService> log)
 {
     private static readonly TimeSpan TranslationCacheLifetime = TimeSpan.FromDays(30);
+    private static readonly TimeSpan MissCacheLifetime = TimeSpan.FromHours(1);
 
     public async Task<IReadOnlyList<string>> CandidatesAsync(
         string name,
@@ -51,7 +52,7 @@ internal sealed class TranslationService(
             log.LogWarning(ex, "Translation of {Text} failed.", text);
         }
 
-        cache.Set(cacheKey, translated, TranslationCacheLifetime);
+        cache.Set(cacheKey, translated, translated is null ? MissCacheLifetime : TranslationCacheLifetime);
 
         return translated;
     }
@@ -77,7 +78,8 @@ internal sealed class TranslationService(
     private static bool IsQuotaRefusal(string text)
         => text.Contains("MYMEMORY WARNING", StringComparison.OrdinalIgnoreCase)
             || text.Contains("QUERY LENGTH LIMIT", StringComparison.OrdinalIgnoreCase)
-            || text.Contains("INVALID", StringComparison.OrdinalIgnoreCase);
+            || text.Contains("INVALID EMAIL", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("INVALID TARGET LANGUAGE", StringComparison.OrdinalIgnoreCase);
 
     private sealed record MyMemoryResponse(
         [property: JsonPropertyName("responseData")] MyMemoryData? Data,

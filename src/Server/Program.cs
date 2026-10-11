@@ -12,13 +12,14 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointHandlers();
 
-builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 builder.Services.AddLocalization();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
+    .AddNpgSql(builder.Configuration.GetConnectionString("Default")
+        ?? throw new InvalidOperationException(
+            "Missing ConnectionStrings:Default. Set it via user-secrets or environment (see appsettings.json)."));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
