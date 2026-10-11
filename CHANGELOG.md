@@ -1,3 +1,14 @@
+## [0.6.3] - 2026-10-11
+
+### 🐛 Bug Fixes
+
+- Resolve notification permission before subscribing, guide on denied
+- Report unsupported browsers instead of attempting subscribe
+
+### 💼 Other
+
+- Bugfix/push-permission-flow into develop
+
 ## [0.6.2] - 2026-10-10
 
 ### 🐛 Bug Fixes
