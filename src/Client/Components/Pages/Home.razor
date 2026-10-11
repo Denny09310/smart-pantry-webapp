@@ -48,7 +48,7 @@
 
     <PantryToolbar Search="@_name" SearchChanged="@OnSearchChanged" Location="@_location"
                    LocationChanged="@OnLocationChanged" Status="@_status" StatusChanged="@OnStatusChanged" TotalCount="@TotalCount"
-                   SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" FreshCount="@FreshCount" />
+                   SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" />
 
     @if (_items is null)
     {
@@ -108,8 +108,19 @@
         }
 
         <div class="md:hidden">
-            <PantryItemsList Items="@VisibleItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
-                             HighlightId="@_highlightId" />
+            @if (AttentionItems.Count > 0)
+            {
+                <PantryItemsList Items="@AttentionItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
+                                 HighlightId="@_highlightId" />
+            }
+            else
+            {
+                <BbEmpty Title="@L["Home_AllFreshTitle"]" Description="@L["Home_AllFreshDescription"]" Size="EmptySize.Default">
+                    <Icon>
+                        <LucideIcon Name="badge-check" Size="28" />
+                    </Icon>
+                </BbEmpty>
+            }
         </div>
 
         <div class="flex flex-col gap-2 md:hidden">
@@ -159,8 +170,6 @@
     private int TodayCount => _items?.CountByStatus(PantryItemStatus.Today) ?? 0;
 
     private int SoonCount => _items?.CountByStatus(PantryItemStatus.Soon) ?? 0;
-
-    private int FreshCount => _items?.CountByStatus(PantryItemStatus.Fresh) ?? 0;
 
     private IReadOnlyList<PantryItemDto> VisibleItems
         => _items?
