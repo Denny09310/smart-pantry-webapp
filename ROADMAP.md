@@ -84,24 +84,24 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 8 — Browser/device push subscriptions
 
-- [ ] Request browser notification permission only after an explicit user action.
-- [ ] Implement Blazor JavaScript interop to create and manage push subscriptions.
-- [ ] Persist subscription endpoint and cryptographic keys on the server; keep the VAPID private key server-side.
-- [ ] Treat each subscription as belonging to a browser/device, **not an authenticated user**.
-- [ ] If notifications need to target a particular household member, make the device-to-profile association explicit; do not infer identity from a device.
-- [ ] Support unsubscribing, permission denial, missing subscriptions, and invalid/expired subscriptions.
+- [x] Request browser notification permission only after an explicit user action.
+- [x] Implement Blazor JavaScript interop to create and manage push subscriptions.
+- [x] Persist subscription endpoint and cryptographic keys on the server; keep the VAPID private key server-side.
+- [x] Treat each subscription as belonging to a browser/device, **not an authenticated user**.
+- [x] If notifications need to target a particular household member, make the device-to-profile association explicit; do not infer identity from a device.
+- [x] Support unsubscribing, permission denial, missing subscriptions, and invalid/expired subscriptions.
 
 **Done when:** a supported browser can subscribe, unsubscribe, and store its subscription safely, with denial and failure paths handled.
 
 ## Phase 9 — Expiry push notifications
 
-- [ ] Extend the reminder worker to send push notifications for the agreed expiry reminder.
-- [ ] Keep in-app notifications as the durable history; push delivery is best-effort.
-- [ ] Deduplicate reminders using the intended notification identity (such as item, expiry date, reminder type, and target subscription/recipient).
-- [ ] Ensure one failed push does not block delivery attempts to other subscriptions.
-- [ ] Disable or remove subscriptions rejected as invalid by the push service.
-- [ ] Configure service-worker notification display and click behavior so a click opens the relevant app screen where possible.
-- [ ] Test expired items, upcoming items, repeated runs, denied permission, offline devices, and invalid subscriptions.
+- [x] Extend the reminder worker to send push notifications for the agreed expiry reminder.
+- [x] Keep in-app notifications as the durable history; push delivery is best-effort.
+- [x] Deduplicate reminders using the intended notification identity (such as item, expiry date, reminder type, and target subscription/recipient).
+- [x] Ensure one failed push does not block delivery attempts to other subscriptions.
+- [x] Disable or remove subscriptions rejected as invalid by the push service.
+- [x] Configure service-worker notification display and click behavior so a click opens the relevant app screen where possible.
+- [x] Test expired items, upcoming items, repeated runs, denied permission, offline devices, and invalid subscriptions.
 
 **Done when:** the reminder worker creates the in-app record and attempts push delivery reliably without duplicate notifications or cascading failures.
 
@@ -128,14 +128,6 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 - [ ] Perform a short household trial and fix recurring issues before adding features.
 
 **Done when:** builds and tests run repeatably, recovery is documented, and the app has been exercised on real devices in ordinary household use.
-
-## Later improvements — only if real usage calls for them
-
-- [ ] Quick quantity adjustments (`+1`, `-1`, “used up”).
-- [ ] CSV export.
-- [ ] Separate “best before” and “use by” semantics, if needed.
-- [ ] A simple shopping list.
-- [ ] Pagination or query optimization if measured scale requires it.
 
 Keep native apps, offline synchronization, email reminders, recipes, barcode/OCR/AI, complex permissions, inventory ledgers, queues, event buses, and additional architectural layers out of scope unless requirements change.
 

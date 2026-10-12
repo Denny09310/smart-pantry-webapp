@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Push;
 using Server.Workers;
 using Shared.Validation;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -13,6 +13,8 @@ builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 
 builder.Services.AddProblemDetails();
+builder.Services.AddVapidOptions(builder.Configuration);
+builder.Services.AddSingleton<IPushSender, WebPushSender>();
 builder.Services.AddHostedService<ReminderWorker>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

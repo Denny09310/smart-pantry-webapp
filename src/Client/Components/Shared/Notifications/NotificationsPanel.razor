@@ -2,6 +2,7 @@
 @inject ServerApi Api
 @inject NotificationService Notifications
 @inject BottomSheetService Sheet
+@inject ToastService Toasts
 @inject ILogger<NotificationsPanel> Logger
 @implements IDisposable
 
@@ -110,6 +111,13 @@
     private async Task ToggleNotificationsAsync(bool value)
     {
         if (value)
-            await Notifications.EnableAsync();
+        {
+            if (!await Notifications.EnableAsync())
+                Toasts.Warning("Couldn't enable push notifications. Check the browser site settings if they are blocked.");
+        }
+        else
+        {
+            await Notifications.DisableAsync();
+        }
     }
 }

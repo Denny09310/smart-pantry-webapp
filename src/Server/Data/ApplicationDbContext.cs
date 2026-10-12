@@ -10,6 +10,7 @@ public class ApplicationDbContext(
     public DbSet<PantryItem> Items => Set<PantryItem>();
     public DbSet<HouseholdMember> Members => Set<HouseholdMember>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,6 +45,14 @@ public class ApplicationDbContext(
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => new { x.PantryItemId, x.ExpirationDate, x.Type });
+        });
+
+        modelBuilder.Entity<PushSubscription>(entity =>
+        {
+            entity.Property(x => x.Endpoint).HasMaxLength(2000);
+            entity.Property(x => x.P256dh).HasMaxLength(512);
+            entity.Property(x => x.Auth).HasMaxLength(512);
+            entity.HasIndex(x => x.Endpoint).IsUnique();
         });
     }
 }

@@ -18,10 +18,21 @@
 
 @code
 {
-    protected override async Task OnInitializedAsync()
+    private bool _started;
+
+    protected override void OnInitialized()
     {
         Notifications.Changed += OnChanged;
-        await Notifications.RefreshAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        // Browser touch (subscription lookup) only after first render.
+        _started = true;
+        await Notifications.InitializeAsync();
     }
 
     public void Dispose() => Notifications.Changed -= OnChanged;
