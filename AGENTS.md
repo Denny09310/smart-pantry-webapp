@@ -19,12 +19,12 @@ These instructions apply across the Smart Pantry repository.
 
 ## 3. Preserve the existing architecture
 
-- `SmartPantry.Server`: ASP.NET Core Minimal APIs, application behavior, EF Core persistence, and background work.
-- `SmartPantry.Client`: Blazor WebAssembly Standalone UI.
-- `SmartPantry.Shared`: transport contracts shared between client and server.
+- `Server`: ASP.NET Core Minimal APIs, application behavior, EF Core persistence, and background work.
+- `Client`: Blazor WebAssembly Standalone UI.
+- `Shared`: transport contracts shared between client and server.
 - Use `AppDbContext` directly where appropriate. Keep data access explicit and easy to follow.
 - Do not introduce CQRS, DDD aggregate layers, use-case/handler classes, repository interfaces, MediatR, event buses, extra projects, or similar abstractions unless a specific demonstrated requirement justifies them.
-- Keep `SmartPantry.Shared` focused on transport contracts; do not put server implementation or persistence concerns there.
+- Keep `Shared` focused on transport contracts; do not put server implementation or persistence concerns there.
 - Minimize dependencies and prefer capabilities already in the stack.
 
 ## 4. UI: prioritize BlazorBlueprint
@@ -87,11 +87,6 @@ Do not claim deployment, external actions, or successful verification unless the
 - .NET 10 solution (`smart-pantry-webapp.slnx`): `Client` (Blazor WebAssembly) + `Server` (ASP.NET Core). No test project, no CI.
 - Build: `dotnet build smart-pantry-webapp.slnx`. Run/debug via the **Server** project (`http://localhost:5125`, `https://localhost:7139`); it serves the Client (`MapStaticAssets` + `MapFallbackToFile("index.html")` in `Server/Program.cs`).
 - Product plan and phase order live in `ROADMAP.md`; check it before adding features outside the current slice.
-
-## Contracts: no Shared project
-
-- `Shared.Models` is a **namespace, not a project**. DTOs live in `Client/Models/DTOs`; `Server` consumes them through its `ProjectReference` to `Client` (`Server/Server.csproj`).
-- Keep DTOs in `Client/Models/DTOs` with namespace `Shared.Models`. Do not create a Shared project unless a concrete need arises.
 
 ## Endpoints: update both sides
 
