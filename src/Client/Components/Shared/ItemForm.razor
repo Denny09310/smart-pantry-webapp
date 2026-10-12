@@ -276,7 +276,10 @@
                     Input.Unit,
                     Input.Location,
                     string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-                    DateOnly.FromDateTime(Input.ExpirationDate.Value)),
+                    DateOnly.FromDateTime(Input.ExpirationDate.Value),
+                    _scannedBarcode,
+                    _scannedNutriScore,
+                    _scannedNutrition),
                     Members.CurrentMemberId);
 
                 if (!await HandleSavedAsync(response, Loc["ItemAdded"]))
@@ -290,7 +293,10 @@
                     Input.Unit,
                     Input.Location,
                     string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-                    DateOnly.FromDateTime(Input.ExpirationDate.Value)));
+                    DateOnly.FromDateTime(Input.ExpirationDate.Value),
+                    _scannedBarcode,
+                    _scannedNutriScore,
+                    _scannedNutrition));
 
                 if (!await HandleSavedAsync(response, Loc["ItemUpdated"]))
                     return;
