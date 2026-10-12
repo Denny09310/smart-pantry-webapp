@@ -11,7 +11,9 @@ namespace Server.Endpoints;
 internal class NotificationEndpoints(ApplicationDbContext db)
 {
     [MapGet("/")]
-    public async Task<Ok<GetNotificationsResponse>> GetNotificationsAsync(CancellationToken ct)
+    public async Task<Ok<GetNotificationsResponse>> GetNotificationsAsync(
+        [AsParameters] GetNotificationsRequest request,
+        CancellationToken ct)
     {
         var items = await db.Notifications.AsNoTracking()
             .OrderByDescending(x => x.CreatedAt)
@@ -25,14 +27,17 @@ internal class NotificationEndpoints(ApplicationDbContext db)
                     i.ExpirationDate,
                     n.CreatedAt,
                     n.ReadAt))
-            .Take(100)
+            .Skip(Math.Max(0, request.Skip ?? 0))
+            .Take(Math.Clamp(request.Take ?? PantryRules.DefaultPageSize, 1, PantryRules.MaxPageSize))
             .ToListAsync(ct);
 
         var unread = await db.Notifications.AsNoTracking()
             .Where(x => x.ReadAt == null)
             .CountAsync(ct);
 
-        return TypedResults.Ok(new GetNotificationsResponse(items, unread));
+        var total = await db.Notifications.CountAsync(ct);
+
+        return TypedResults.Ok(new GetNotificationsResponse(items, unread, total));
     }
 
     [MapPost("/{id}/read")]

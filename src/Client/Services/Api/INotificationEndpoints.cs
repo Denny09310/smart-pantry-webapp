@@ -8,6 +8,7 @@ internal interface INotificationEndpoints
 {
     [Get("/")]
     Task<ApiResponse<GetNotificationsResponse>> GetAsync(
+        GetNotificationsRequest? request = null,
         CancellationToken ct = default);
 
     [Post("/{id}/read")]

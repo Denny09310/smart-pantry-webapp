@@ -1,6 +1,5 @@
 ﻿@page "/"
 
-@using Client.Models
 @inject ServerApi Api
 @inject BottomSheetService Sheet
 @inject DialogService Dialogs
@@ -10,9 +9,9 @@
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Smart Pantry</h1>
     <div class="flex items-center gap-2">
-        @if (_totalItems > 0)
+        @if (_total > 0)
         {
-            <span class="text-sm text-muted-foreground">@_totalItems items</span>
+            <span class="text-sm text-muted-foreground">@_total items</span>
         }
         <NotificationsBellButton />
         <MemberAvatarButton />
@@ -25,41 +24,46 @@
             <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
                 <LucideIcon Name="search" Size="16" />
             </BbInputGroupAddon>
-            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
+            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="ReloadListAsync"
+                               Placeholder="Search pantry items..." />
         </BbInputGroup>
     </div>
     <BbButton Variant="ButtonVariant.Outline" AriaLabel="Open filters" @onclick="OpenFiltersAsync">
         <LucideIcon Name="sliders-horizontal" Size="16" />
-        @if (_hasActiveFilters)
+        @if (HasFilters)
         {
             <span class="h-2 w-2 rounded-full bg-primary"></span>
         }
     </BbButton>
 </div>
 
-@if (_loading)
-{
-    <div class="space-y-2" aria-hidden="true">
-        <BbSkeleton Height="64px" Class="w-full" />
-        <BbSkeleton Height="64px" Class="w-full" />
-        <BbSkeleton Height="64px" Class="w-full" />
-    </div>
-}
-else if (_error is not null)
-{
-    <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
-        <p class="text-sm">Couldn't load pantry items. Try again.</p>
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
-    </div>
-}
-else if (_view is not null)
-{
-    <div class="flex items-center justify-between gap-2">
-        <span class="text-sm text-muted-foreground">@_view.Count shown</span>
-    </div>
-
-    @if (_view.Count == 0)
-    {
+<InfiniteScrollList TItem="PantryItemDto" @ref="_list" LoadPageAsync="LoadPageAsync" KeySelector="@(x => x.Id)"
+                    TotalChanged="OnTotalChanged">
+    <ItemTemplate>
+        @{
+            var status = ExpiryHelper.GetStatus(context.ExpirationDate, _today);
+        }
+        <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
+                class="bg-card block w-full rounded-md border p-3 text-left">
+            <span class="flex items-center justify-between gap-2">
+                <span class="font-medium">@context.Name</span>
+                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+            </span>
+            <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <span>@context.Quantity @context.Unit</span>
+                <BbBadge Variant="BadgeVariant.Outline">@context.Location</BbBadge>
+                <span>@context.ExpirationDate.ToString("MMM d")</span>
+            </span>
+        </button>
+    </ItemTemplate>
+    <LoadingTemplate>
+        <div class="space-y-2" aria-hidden="true">
+            <BbSkeleton Height="64px" Class="w-full" />
+            <BbSkeleton Height="64px" Class="w-full" />
+            <BbSkeleton Height="64px" Class="w-full" />
+        </div>
+    </LoadingTemplate>
+    <EmptyTemplate>
         <BbEmpty Title="No items found" Description="Try clearing filters or add one">
             <Icon>
                 <LucideIcon Name="search" Size="24" />
@@ -71,31 +75,8 @@ else if (_view is not null)
                 </BbButton>
             </ChildContent>
         </BbEmpty>
-    }
-    else
-    {
-        <ul class="space-y-2">
-            @foreach (var item in _view)
-            {
-                var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
-                <li @key="item.Id">
-                    <button type="button" @onclick="() => OpenDetailsAsync(item.Id)"
-                            class="block w-full rounded-md border p-3 text-left">
-                        <span class="flex items-center justify-between gap-2">
-                            <span class="font-medium">@item.Name</span>
-                            <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
-                        </span>
-                        <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>@item.Quantity @item.Unit</span>
-                            <BbBadge Variant="BadgeVariant.Outline">@item.Location</BbBadge>
-                            <span>@item.ExpirationDate.ToString("MMM d")</span>
-                        </span>
-                    </button>
-                </li>
-            }
-        </ul>
-    }
-}
+    </EmptyTemplate>
+</InfiniteScrollList>
 
 <BbFab AriaLabel="Add item" Class="bottom-24 md:bottom-6" OnClick="OpenAddAsync">
     <Icon>
@@ -105,29 +86,51 @@ else if (_view is not null)
 
 @code
 {
-    private List<PantryItemDto>? _items;
-    private List<PantryItemDto>? _view;
-    private int _totalItems;
-    private bool _loading = true;
-    private string? _error;
+    private InfiniteScrollList<PantryItemDto>? _list;
+    private int _total;
 
     private string? _location = PantryLocations.All, _name;
-    private string _status = "all";
+    private string _status = PantryRules.StatusAll;
     private ItemSort _sort = ItemSort.ExpiryAsc;
     private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
 
-    private bool _hasActiveFilters =>
-        _location != PantryLocations.All || _status != "all" || _sort != ItemSort.ExpiryAsc;
+    private bool HasFilters =>
+        _location != PantryLocations.All || _status != PantryRules.StatusAll || _sort != ItemSort.ExpiryAsc;
 
-    protected override async Task OnInitializedAsync()
+    private void OnTotalChanged(int total) => _total = total;
+
+    private async Task<Page<PantryItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
     {
-        await LoadAsync();
+        var request = new GetPantryItemsRequest
+        {
+            Location = _location,
+            Name = _name,
+            Status = _status == PantryRules.StatusAll ? null : _status,
+            Sort = _sort switch
+            {
+                ItemSort.ExpiryDesc => PantryRules.SortExpiryDesc,
+                ItemSort.Name => PantryRules.SortName,
+                _ => PantryRules.SortExpiryAsc
+            },
+            Skip = skip,
+            Take = take
+        };
+
+        using var response = await Api.Pantry.GetAsync(request, ct);
+
+        if (!response.IsSuccessfulWithContent)
+        {
+            Logger.LogWarning("Pantry list load failed with {StatusCode}", response.StatusCode);
+            throw new HttpRequestException($"Pantry list load failed with {response.StatusCode}.");
+        }
+
+        return new Page<PantryItemDto>(response.Content.Items.ToList(), response.Content.TotalItems);
     }
 
     private async Task OpenAddAsync()
     {
         await Sheet.OpenAsync<ItemForm>();
-        await LoadAsync();
+        await ReloadListAsync();
     }
 
     private async Task OpenDetailsAsync(string id)
@@ -135,7 +138,7 @@ else if (_view is not null)
         var parameters = new Dictionary<string, object?> { ["ItemId"] = id };
         var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
         await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger);
-        await LoadAsync();
+        await ReloadListAsync();
     }
 
     private async Task OpenFiltersAsync()
@@ -157,78 +160,10 @@ else if (_view is not null)
         if (data is not { } filters)
             return;
 
-        var changed = filters.Location != _location;
         (_location, _status, _sort) = (filters.Location, filters.Status, filters.Sort);
-
-        if (changed)
-            await LoadAsync();
-        else
-            ApplySorting();
+        await ReloadListAsync();
     }
 
-    private void ApplySorting()
-    {
-        if (_items is null)
-        {
-            _view = null;
-            return;
-        }
-
-        IEnumerable<PantryItemDto> query = _items;
-
-        query = _status switch
-        {
-            "expired" => query.Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.Expired),
-            "soon" => query.Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.ExpiringSoon),
-            "fresh" => query.Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.Fresh),
-            _ => query
-        };
-
-        query = _sort switch
-        {
-            ItemSort.ExpiryDesc => query.OrderByDescending(x => x.ExpirationDate).ThenBy(x => x.Name),
-            ItemSort.Name => query.OrderBy(x => x.Name),
-            _ => query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Name)
-        };
-
-        _view = query.ToList();
-    }
-
-    private async Task LoadAsync()
-    {
-        _loading = true;
-        _error = null;
-
-        try
-        {
-            var request = new GetPantryItemsRequest
-            {
-                Location = _location,
-                Name = _name,
-                Take = 100
-            };
-
-            using var response = await Api.Pantry.GetAsync(request);
-
-            if (!response.IsSuccessfulWithContent)
-            {
-                Logger.LogWarning("Pantry list load failed with {StatusCode}", response.StatusCode);
-                _error = "load";
-                return;
-            }
-
-            _items = new(response.Content.Items);
-            _totalItems = response.Content.TotalItems;
-            ApplySorting();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Pantry list load failed");
-            _error = "load";
-        }
-        finally
-        {
-            _loading = false;
-        }
-    }
+    private Task ReloadListAsync()
+        => _list is not null ? _list.ReloadAsync() : Task.CompletedTask;
 }

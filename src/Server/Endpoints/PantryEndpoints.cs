@@ -13,20 +13,57 @@ namespace Server.Endpoints;
 internal class PantryEndpoints(ApplicationDbContext db)
 {
     [MapGet("/")]
-    public async Task<Ok<GetPantryItemsResponse>> GetPantryItemsAsync(
+    public async Task<Results<Ok<GetPantryItemsResponse>, ValidationProblem>> GetPantryItemsAsync(
         [AsParameters] GetPantryItemsRequest request,
         CancellationToken ct)
     {
+        if (request.Status is not null && !PantryRules.Statuses.Contains(request.Status))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Status)] = [$"Unknown status. Use one of: {string.Join(", ", PantryRules.Statuses)}."]
+            });
+        }
+
+        if (request.Sort is not null && !PantryRules.Sorts.Contains(request.Sort))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Sort)] = [$"Unknown sort. Use one of: {string.Join(", ", PantryRules.Sorts)}."]
+            });
+        }
+
         var skip = request.Skip ?? 0;
-        var take = request.Take ?? 20;
+        var take = request.Take ?? PantryRules.DefaultPageSize;
+
+        // Server-local day, same rule as the reminder worker and the client helper.
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var horizon = today.AddDays(PantryRules.ExpirySoonDays);
 
         var query = db.Items.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not "all")
+        if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not PantryRules.LocationAll)
             query = query.Where(x => x.Location.Contains(request.Location));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
             query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
+
+        query = request.Status switch
+        {
+            PantryRules.StatusExpired => query.Where(x => x.ExpirationDate < today),
+            PantryRules.StatusSoon => query.Where(x => x.ExpirationDate >= today && x.ExpirationDate <= horizon),
+            PantryRules.StatusFresh => query.Where(x => x.ExpirationDate > horizon),
+            _ => query
+        };
+
+        query = request.Sort switch
+        {
+            PantryRules.SortExpiryDesc => query.OrderByDescending(x => x.ExpirationDate).ThenBy(x => x.Id),
+            PantryRules.SortName => query.OrderBy(x => x.Name).ThenBy(x => x.Id),
+            _ => query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Id)
+        };
+
+        var totalItems = await query.CountAsync(ct);
 
         var items = await query
             .Skip(skip)
@@ -41,8 +78,6 @@ internal class PantryEndpoints(ApplicationDbContext db)
                 x.ExpirationDate,
                 x.HouseholdMemberId))
             .ToListAsync(ct);
-
-        var totalItems = await query.CountAsync(ct);
 
         return TypedResults.Ok(new GetPantryItemsResponse(
             items,

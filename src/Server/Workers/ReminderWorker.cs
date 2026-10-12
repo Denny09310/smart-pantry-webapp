@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Entities;
+using Shared.Models;
 
 namespace Server.Workers;
 
@@ -13,7 +14,7 @@ namespace Server.Workers;
 public sealed class ReminderWorker(IServiceScopeFactory scopes, ILogger<ReminderWorker> log) : BackgroundService
 {
     public const string ExpiryWarningType = "expiry-warning";
-    public const int ReminderDaysAhead = 7;
+    public const int ReminderDaysAhead = PantryRules.ExpirySoonDays;
 
     /// <summary>Server-local time of the daily run.</summary>
     private static readonly TimeSpan RunAt = new(8, 0, 0);

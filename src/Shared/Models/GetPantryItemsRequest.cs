@@ -16,4 +16,13 @@ public record GetPantryItemsRequest
 
     public string? Location { get; set; }
     public string? Name { get; set; }
+
+    /// <summary>Status filter (<c>expired</c>, <c>soon</c>, <c>fresh</c>); null means all.</summary>
+    public string? Status { get; set; }
+
+    /// <summary>
+    /// Sort (<c>expiry-asc</c>, <c>expiry-desc</c>, <c>name</c>);
+    /// defaults to <c>expiry-asc</c> in the handler.
+    /// </summary>
+    public string? Sort { get; set; }
 }

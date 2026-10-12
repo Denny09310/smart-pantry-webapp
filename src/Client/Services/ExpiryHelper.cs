@@ -17,7 +17,7 @@ public enum ExpiryStatus
 public static class ExpiryHelper
 {
     /// <summary>Days ahead that still counts as "expiring soon" (roadmap reminder window).</summary>
-    public const int SoonDays = 7;
+    public const int SoonDays = Shared.Models.PantryRules.ExpirySoonDays;
 
     public static ExpiryStatus GetStatus(DateOnly expiration, DateOnly today)
         => expiration < today ? ExpiryStatus.Expired

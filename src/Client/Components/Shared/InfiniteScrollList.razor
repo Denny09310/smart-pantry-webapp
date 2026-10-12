@@ -1,0 +1,177 @@
+@namespace Client.Components
+@typeparam TItem
+@using Bit.Butil
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@if (_error is not null)
+{
+    <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+        <p class="text-sm">Couldn't load more items. Try again.</p>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadNextAsync">Retry</BbButton>
+    </div>
+}
+
+@foreach (var item in _items)
+{
+    <div @key="@(KeySelector?.Invoke(item) ?? item)">
+        @ItemTemplate(item)
+    </div>
+}
+
+@if (_loading)
+{
+    @if (LoadingTemplate is not null)
+    {
+        @LoadingTemplate
+    }
+    else
+    {
+        <p class="py-2 text-center text-sm text-muted-foreground">Loading…</p>
+    }
+}
+else if (_error is null && _items.Count == 0)
+{
+    @EmptyTemplate
+}
+
+<div @ref="_sentinel" class="h-px" aria-hidden="true"></div>
+
+@code
+{
+    /// <summary>Loads one page: (skip, take, cancellation) to items + total.</summary>
+    [Parameter, EditorRequired]
+    public Func<int, int, CancellationToken, Task<Page<TItem>>> LoadPageAsync { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public RenderFragment EmptyTemplate { get; set; } = default!;
+
+    [Parameter]
+    public RenderFragment? LoadingTemplate { get; set; }
+
+    [Parameter]
+    public Func<TItem, object?>? KeySelector { get; set; }
+
+    [Parameter]
+    public EventCallback<int> TotalChanged { get; set; }
+
+    [Parameter]
+    public int PageSize { get; set; } = 20;
+
+    private readonly List<TItem> _items = new();
+    private int _total = int.MaxValue;
+    private bool _loading;
+    private string? _error;
+    private int _generation;
+    private bool _disposed;
+
+    private ElementReference _sentinel;
+    private ButilSubscription? _subscription;
+    private CancellationTokenSource? _cts;
+
+    private bool HasMore => _items.Count < _total;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _cts = new CancellationTokenSource();
+        await LoadNextAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        _subscription = await _sentinel.ObserveIntersection(JS, OnIntersection, new IntersectionObserverOptions
+        {
+            RootMargin = "0px 0px 200px 0px",
+            MinInterval = TimeSpan.FromMilliseconds(150)
+        });
+    }
+
+    /// <summary>Clears the list and loads the first page (call after filter changes).</summary>
+    public async Task ReloadAsync()
+    {
+        _generation++;
+        _items.Clear();
+        _total = int.MaxValue;
+        _error = null;
+        await LoadNextAsync();
+    }
+
+    private async Task LoadNextAsync()
+    {
+        if (_loading || !HasMore || _disposed)
+            return;
+
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+
+        var generation = _generation;
+
+        try
+        {
+            var page = await LoadPageAsync(_items.Count, PageSize, _cts?.Token ?? CancellationToken.None);
+
+            if (generation != _generation || _disposed)
+                return;
+
+            _items.AddRange(page.Items);
+            _total = page.Total;
+            await TotalChanged.InvokeAsync(_total);
+        }
+        catch (OperationCanceledException) when (_cts?.IsCancellationRequested == true)
+        {
+            // Self-cancellation on dispose; nothing to show.
+        }
+        catch (Exception)
+        {
+            _error = "load";
+        }
+        finally
+        {
+            _loading = false;
+            if (!_disposed)
+                StateHasChanged();
+        }
+    }
+
+    private async void OnIntersection(IntersectionObserverEntry[] entries)
+    {
+        try
+        {
+            if (entries.Length == 0 || !entries[^1].IsIntersecting)
+                return;
+
+            await InvokeAsync(LoadNextAsync);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _disposed = true;
+
+        if (_cts is not null)
+        {
+            await _cts.CancelAsync();
+            _cts.Dispose();
+        }
+
+        if (_subscription is not null)
+        {
+            try
+            {
+                await _subscription.DisposeAsync();
+            }
+            catch (JSDisconnectedException) { }
+        }
+    }
+}
