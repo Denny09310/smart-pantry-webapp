@@ -1,19 +1,20 @@
 ﻿@page "/"
-
+@using Client.Resources
 @inject ServerApi Api
 @inject BottomSheetService Sheet
 @inject DialogService Dialogs
 @inject ToastService Toasts
 @inject ILogger<Home> Logger
+@inject LocalizationService Loc
 
 <header class="flex items-center justify-between gap-2">
-    <h1 class="text-xl font-semibold">Smart Pantry</h1>
+    <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
     <div class="flex items-center gap-2">
         @if (_total > 0)
         {
             <span class="text-sm text-muted-foreground">@_total items</span>
         }
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="Add item" @onclick="OpenAddAsync">
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]" @onclick="OpenAddAsync">
             <LucideIcon Name="plus" Size="18" />
         </BbButton>
         <NotificationsBellButton />
@@ -28,10 +29,10 @@
                 <LucideIcon Name="search" Size="16" />
             </BbInputGroupAddon>
             <BbInputGroupInput @bind-Value="_name" @bind-Value:after="ReloadListAsync"
-                               Placeholder="Search pantry items..." />
+                               Placeholder="@Loc["SearchPlaceholder"]" />
         </BbInputGroup>
     </div>
-    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Open filters"
+    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="@Loc["Filters"]"
               @onclick="OpenFiltersAsync">
         <LucideIcon Name="sliders-horizontal" Size="16" />
         @if (HasFilters)
@@ -68,22 +69,21 @@
         </div>
     </LoadingTemplate>
     <EmptyTemplate>
-        <BbEmpty Title="No items found" Description="Try clearing filters or add one">
+        <BbEmpty Title="@Loc["NoItemsFound"]" Description="@Loc["NoItemsDescription"]">
             <Icon>
                 <LucideIcon Name="search" Size="24" />
             </Icon>
             <ChildContent>
                 <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
                     <LucideIcon Name="plus" Size="16" />
-                    Create
+                    @Loc["AddItemButton"]
                 </BbButton>
             </ChildContent>
         </BbEmpty>
     </EmptyTemplate>
 </InfiniteScrollList>
 
-@code
-{
+@code {
     private InfiniteScrollList<PantryItemDto>? _list;
     private int _total;
 
