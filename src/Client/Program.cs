@@ -2,11 +2,9 @@ using Bit.Brouter;
 using Bit.Butil;
 using BlazorBlueprint.Components;
 using Client.Components;
-using Client.Resources;
 using Client.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.Localization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -19,15 +17,12 @@ builder.Services.AddBitButilServices();
 builder.Services.AddBitBrouterServices(o =>
 {
     o.ViewTransitions = true;
-    o.ScrollBehavior = BrouterScrollMode.ToTop;
-    o.FocusOnNavigateSelector = "h1";
 });
 builder.Services.AddServerApi();
 builder.Services.AddBottomSheet();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddLocalization();
-builder.Services.AddSingleton<Strings>();
 builder.Services.AddScoped<LocalizationService>();
 
 var host = builder.Build();
