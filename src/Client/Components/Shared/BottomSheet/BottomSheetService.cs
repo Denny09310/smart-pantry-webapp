@@ -1,3 +1,4 @@
+using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 
 namespace Client.Services;
@@ -16,47 +17,66 @@ public sealed class SheetOptions
 }
 
 /// <summary>
-/// Opens and closes one global bottom sheet from anywhere. The body is any
-/// component; it closes the sheet via <see cref="CloseAsync"/> and can pass a
-/// result back to whoever awaited <see cref="OpenAsync{TBody}"/>.
+/// Content hosted inside the global bottom sheet.
+/// </summary>
+public sealed record BottomSheetEntry(
+    Type ComponentType,
+    Dictionary<string, object?> Parameters,
+    SheetOptions Options);
+
+/// <summary>
+/// Opens and closes one global bottom sheet from anywhere. Results are
+/// <see cref="DialogResult"/>-typed: bodies close with
+/// <c>CloseAsync(data)</c> and openers read <c>GetData&lt;T&gt;()</c>,
+/// or observe <c>Cancelled</c> for scrim/Escape/cancel dismissals.
+/// Replacing an open sheet cancels the previous open.
 /// </summary>
 public sealed class BottomSheetService
 {
     public event Action? Changed;
 
-    public bool IsOpen { get; private set; }
-    public Type? BodyType { get; private set; }
-    public Dictionary<string, object?> BodyParameters { get; private set; } = new();
-    public SheetOptions Options { get; private set; } = SheetOptions.Default;
+    public BottomSheetEntry? Current { get; private set; }
 
-    private TaskCompletionSource<object?>? _resultSource;
+    public bool IsOpen => Current is not null;
 
-    public Task<object?> OpenAsync<TBody>(
+    private TaskCompletionSource<DialogResult>? _tcs;
+
+    public Task<DialogResult> OpenAsync<TBody>(
         Dictionary<string, object?>? parameters = null,
         SheetOptions? options = null) where TBody : IComponent
     {
-        _resultSource?.TrySetResult(null);
+        _tcs?.TrySetResult(DialogResult.Cancel());
 
-        BodyType = typeof(TBody);
-        BodyParameters = parameters ?? new();
-        Options = options ?? SheetOptions.Default;
-        IsOpen = true;
-
-        _resultSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        Current = new BottomSheetEntry(
+            typeof(TBody),
+            parameters is null ? [] : new Dictionary<string, object?>(parameters),
+            options ?? SheetOptions.Default);
         Changed?.Invoke();
-        return _resultSource.Task;
+
+        return _tcs.Task;
     }
 
-    public Task CloseAsync(object? result = null)
+    public Task CloseAsync(object? data = null)
     {
-        if (!IsOpen)
+        if (Current is null)
             return Task.CompletedTask;
 
-        IsOpen = false;
+        var tcs = _tcs;
+        Current = null;
+        _tcs = null;
         Changed?.Invoke();
 
-        _resultSource?.TrySetResult(result);
-        _resultSource = null;
+        tcs?.TrySetResult(data is null ? DialogResult.Cancel() : DialogResult.Ok(data));
         return Task.CompletedTask;
+    }
+}
+
+public static class BottomSheetServiceExtensions
+{
+    public static IServiceCollection AddBottomSheet(this IServiceCollection services)
+    {
+        services.AddScoped<BottomSheetService>();
+        return services;
     }
 }

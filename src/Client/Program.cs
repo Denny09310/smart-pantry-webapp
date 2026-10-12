@@ -21,7 +21,7 @@ builder.Services.AddBitBrouterServices(o =>
     o.FocusOnNavigateSelector = "h1";
 });
 builder.Services.AddServerApi();
-builder.Services.AddScoped<BottomSheetService>();
+builder.Services.AddBottomSheet();
 builder.Services.AddScoped<MemberService>();
 
 await builder.Build().RunAsync();

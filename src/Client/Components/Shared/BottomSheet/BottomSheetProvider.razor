@@ -42,10 +42,10 @@
     {
         try
         {
-            if (Sheet.IsOpen && Sheet.BodyType is not null)
+            if (Sheet.Current is { } entry)
             {
-                _body = new VisibleBody(Sheet.BodyType, new Dictionary<string, object?>(Sheet.BodyParameters));
-                _options = Sheet.Options;
+                _body = new VisibleBody(entry.ComponentType, new Dictionary<string, object?>(entry.Parameters));
+                _options = entry.Options;
                 _closing = false;
                 _pendingShow = true;
             }
@@ -88,11 +88,11 @@
                 await (_interop?.CloseAsync() ?? ValueTask.CompletedTask);
                 await TeardownAsync();
 
-                if (Sheet.IsOpen && Sheet.BodyType is not null)
+                if (Sheet.Current is { } reopened)
                 {
                     // Reopened while the close animation played.
-                    _body = new VisibleBody(Sheet.BodyType, new Dictionary<string, object?>(Sheet.BodyParameters));
-                    _options = Sheet.Options;
+                    _body = new VisibleBody(reopened.ComponentType, new Dictionary<string, object?>(reopened.Parameters));
+                    _options = reopened.Options;
                     _pendingShow = true;
                 }
                 else

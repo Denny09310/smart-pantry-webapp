@@ -39,7 +39,7 @@
     {
         var result = await Sheet.OpenAsync<MemberSwitcher>();
 
-        if (result is not HouseholdMemberDto member)
+        if (result.Cancelled || result.GetData<HouseholdMemberDto>() is not { } member)
             return;
 
         var confirmed = await Dialogs.ConfirmAsync(

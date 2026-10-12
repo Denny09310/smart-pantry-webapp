@@ -12,13 +12,16 @@ namespace Client.Services;
 internal static class ItemDeletion
 {
     public static async Task HandleAsync(
-        object? result,
+        DialogResult result,
         ServerApi api,
         DialogService dialogs,
         ToastService toasts,
         ILogger logger)
     {
-        if (result is not PantryItemDto item)
+        if (result.Cancelled)
+            return;
+
+        if (result.GetData<PantryItemDto>() is not { } item)
             return;
 
         var confirmed = await dialogs.ConfirmAsync(

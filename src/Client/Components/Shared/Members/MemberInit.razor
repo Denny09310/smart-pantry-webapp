@@ -26,7 +26,7 @@
             var result = await Sheet.OpenAsync<MemberForm>(parameters);
 
             // Creation failed server-side: retry instead of entering a memberless app.
-            if (result is null)
+            if (result.Cancelled)
                 continue;
 
             break;
