@@ -1,3 +1,4 @@
+using Client.Services.Api;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Refit;
 
@@ -9,6 +10,7 @@ internal sealed class ServerApi(IServiceProvider services)
     public IMemberEndpoints Members => services.GetRequiredService<IMemberEndpoints>();
     public INotificationEndpoints Notifications => services.GetRequiredService<INotificationEndpoints>();
     public IPushEndpoints Push => services.GetRequiredService<IPushEndpoints>();
+    public IProductEndpoints Products => services.GetRequiredService<IProductEndpoints>();
 }
 
 internal static class ServerApiExtensions
@@ -34,6 +36,10 @@ internal static class ServerApiExtensions
             httpClientName: "Server.API");
 
         services.AddRefitGeneratedClient<IPushEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IProductEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 
