@@ -82,6 +82,7 @@ Do not claim deployment, external actions, or successful verification unless the
 ## Stack
 
 - .NET 10 solution (`smart-pantry-webapp.slnx`): `src/Client` (Blazor WebAssembly) + `src/Server` (ASP.NET Core) + `src/Shared` (transport contracts) + `tests/Server.Tests` (xUnit). No CI.
+- Routing: Bit.Brouter 10.6.2 replaces `<Router>` in `App.razor` (view transitions on, scroll-to-top, focus `h1`); pages are discovered via `@page` + `AppAssembly` scan. Do not add the built-in `<Router>` back.
 - Build: `dotnet build smart-pantry-webapp.slnx`. Run/debug via the **Server** project (`http://localhost:5125`, `https://localhost:7139`); it serves the Client (`MapStaticAssets` + `MapFallbackToFile("index.html")` in `src/Server/Program.cs`). Run with `ASPNETCORE_ENVIRONMENT=Development` (or a launch profile) — `appsettings.json` has no connection string, so Production startup fails at `MigrateAsync`.
 - Tests: `dotnet test smart-pantry-webapp.slnx` (single test: `dotnet test tests/Server.Tests --filter <Name>`). `PantryApiTests` boot the real host via `WebApplicationFactory` and need local Postgres; each test class gets its own auto-created database, dropped afterwards (base connection override via `SMARTPANTRY_TEST_CONNECTION`).
 - Product plan and phase order live in `ROADMAP.md`; check it before adding features outside the current slice.

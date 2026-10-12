@@ -1,3 +1,4 @@
+using Bit.Brouter;
 using Bit.Butil;
 using BlazorBlueprint.Components;
 using Client.Components;
@@ -13,6 +14,12 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 builder.Services.AddBlazorBlueprintComponents();
 builder.Services.AddBitButilServices();
+builder.Services.AddBitBrouterServices(o =>
+{
+    o.ViewTransitions = true;
+    o.ScrollBehavior = BrouterScrollMode.ToTop;
+    o.FocusOnNavigateSelector = "h1";
+});
 builder.Services.AddServerApi();
 builder.Services.AddScoped<BottomSheetService>();
 builder.Services.AddScoped<MemberService>();

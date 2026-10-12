@@ -1,8 +1,8 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages._404)">
+﻿<Brouter AppAssembly="@typeof(App).Assembly" DefaultLayout="typeof(_Layout)" NotFoundUrl="not-found">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="typeof(_Layout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
-</Router>
+</Brouter>
 
 <MemberInit />
