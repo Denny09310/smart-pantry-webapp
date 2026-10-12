@@ -53,7 +53,7 @@
                 class="bg-card block w-full rounded-md border p-3 text-left">
             <span class="flex items-center justify-between gap-2">
                 <span class="font-medium">@context.Name</span>
-                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
             </span>
             <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                 <span>@context.Quantity @context.Unit</span>

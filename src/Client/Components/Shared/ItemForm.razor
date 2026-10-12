@@ -163,7 +163,8 @@
 
     private ExpiryHelper.ExpiryBanner Banner => ExpiryHelper.GetBanner(
         DateOnly.FromDateTime((Input.ExpirationDate ?? DateTime.Today.AddDays(7)).Date),
-        DateOnly.FromDateTime(DateTime.Today));
+        DateOnly.FromDateTime(DateTime.Today),
+        Loc);
 
     protected override void OnParametersSet()
     {

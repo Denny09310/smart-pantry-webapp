@@ -201,6 +201,27 @@
   <data name="ExpiresOn" xml:space="preserve">
     <value>Expires on</value>
   </data>
+  <data name="ExpiredYesterday" xml:space="preserve">
+    <value>Expired yesterday</value>
+  </data>
+  <data name="ExpiredDaysAgo" xml:space="preserve">
+    <value>Expired {0} days ago</value>
+  </data>
+  <data name="ExpiresToday" xml:space="preserve">
+    <value>Expires today</value>
+  </data>
+  <data name="UseSoonOneDay" xml:space="preserve">
+    <value>Use soon · 1 day left</value>
+  </data>
+  <data name="UseSoonDaysLeft" xml:space="preserve">
+    <value>Use soon · {0} days left</value>
+  </data>
+  <data name="FreshOneDay" xml:space="preserve">
+    <value>Fresh · 1 day left</value>
+  </data>
+  <data name="FreshDaysLeft" xml:space="preserve">
+    <value>Fresh · {0} days left</value>
+  </data>
   <data name="Notes" xml:space="preserve">
     <value>Notes</value>
   </data>

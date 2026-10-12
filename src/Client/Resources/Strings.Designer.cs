@@ -367,11 +367,38 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Expired {0} days ago.
+        /// </summary>
+        public static string ExpiredDaysAgo {
+            get {
+                return ResourceManager.GetString("ExpiredDaysAgo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Expired yesterday.
+        /// </summary>
+        public static string ExpiredYesterday {
+            get {
+                return ResourceManager.GetString("ExpiredYesterday", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Expires on.
         /// </summary>
         public static string ExpiresOn {
             get {
                 return ResourceManager.GetString("ExpiresOn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Expires today.
+        /// </summary>
+        public static string ExpiresToday {
+            get {
+                return ResourceManager.GetString("ExpiresToday", resourceCulture);
             }
         }
         
@@ -408,6 +435,24 @@ namespace Client.Resources {
         public static string Filters {
             get {
                 return ResourceManager.GetString("Filters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Fresh · {0} days left.
+        /// </summary>
+        public static string FreshDaysLeft {
+            get {
+                return ResourceManager.GetString("FreshDaysLeft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Fresh · 1 day left.
+        /// </summary>
+        public static string FreshOneDay {
+            get {
+                return ResourceManager.GetString("FreshOneDay", resourceCulture);
             }
         }
         
@@ -948,6 +993,24 @@ namespace Client.Resources {
         public static string UpdateAvailable {
             get {
                 return ResourceManager.GetString("UpdateAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Use soon · {0} days left.
+        /// </summary>
+        public static string UseSoonDaysLeft {
+            get {
+                return ResourceManager.GetString("UseSoonDaysLeft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Use soon · 1 day left.
+        /// </summary>
+        public static string UseSoonOneDay {
+            get {
+                return ResourceManager.GetString("UseSoonOneDay", resourceCulture);
             }
         }
         

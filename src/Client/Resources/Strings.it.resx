@@ -201,6 +201,27 @@
   <data name="ExpiresOn" xml:space="preserve">
     <value>Scade il</value>
   </data>
+  <data name="ExpiredYesterday" xml:space="preserve">
+    <value>Scaduto ieri</value>
+  </data>
+  <data name="ExpiredDaysAgo" xml:space="preserve">
+    <value>Scaduto {0} giorni fa</value>
+  </data>
+  <data name="ExpiresToday" xml:space="preserve">
+    <value>Scade oggi</value>
+  </data>
+  <data name="UseSoonOneDay" xml:space="preserve">
+    <value>Da consumare · 1 giorno rimasto</value>
+  </data>
+  <data name="UseSoonDaysLeft" xml:space="preserve">
+    <value>Da consumare · {0} giorni rimasti</value>
+  </data>
+  <data name="FreshOneDay" xml:space="preserve">
+    <value>Fresco · 1 giorno rimasto</value>
+  </data>
+  <data name="FreshDaysLeft" xml:space="preserve">
+    <value>Fresco · {0} giorni rimasti</value>
+  </data>
   <data name="Notes" xml:space="preserve">
     <value>Note</value>
   </data>

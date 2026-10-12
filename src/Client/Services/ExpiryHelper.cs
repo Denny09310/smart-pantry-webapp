@@ -24,11 +24,11 @@ public static class ExpiryHelper
             : expiration <= today.AddDays(SoonDays) ? ExpiryStatus.ExpiringSoon
             : ExpiryStatus.Fresh;
 
-    public static string Label(ExpiryStatus status) => status switch
+    public static string Label(ExpiryStatus status, LocalizationService loc) => status switch
     {
-        ExpiryStatus.Expired => "Expired",
-        ExpiryStatus.ExpiringSoon => "Expiring soon",
-        _ => "Fresh"
+        ExpiryStatus.Expired => loc["StatusExpired"],
+        ExpiryStatus.ExpiringSoon => loc["StatusExpiringSoon"],
+        _ => loc["StatusFresh"]
     };
 
     public static BadgeVariant Badge(ExpiryStatus status) => status switch
@@ -41,27 +41,27 @@ public static class ExpiryHelper
     /// <summary>Contextual banner for the editor.</summary>
     public sealed record ExpiryBanner(string Text, string Icon, BadgeVariant Variant);
 
-    public static ExpiryBanner GetBanner(DateOnly expiration, DateOnly today)
+    public static ExpiryBanner GetBanner(DateOnly expiration, DateOnly today, LocalizationService loc)
     {
         var days = expiration.DayNumber - today.DayNumber;
 
         if (days < 0)
             return new ExpiryBanner(
-                days == -1 ? "Expired yesterday" : $"Expired {-days} days ago",
+                days == -1 ? loc["ExpiredYesterday"] : loc["ExpiredDaysAgo", -days],
                 "circle-alert",
                 BadgeVariant.SoftDestructive);
 
         if (days == 0)
-            return new ExpiryBanner("Expires today", "info", BadgeVariant.SoftWarning);
+            return new ExpiryBanner(loc["ExpiresToday"], "info", BadgeVariant.SoftWarning);
 
         if (days <= SoonDays)
             return new ExpiryBanner(
-                days == 1 ? "Use soon · 1 day left" : $"Use soon · {days} days left",
+                days == 1 ? loc["UseSoonOneDay"] : loc["UseSoonDaysLeft", days],
                 "info",
                 BadgeVariant.SoftWarning);
 
         return new ExpiryBanner(
-            days == 1 ? "Fresh · 1 day left" : $"Fresh · {days} days left",
+            days == 1 ? loc["FreshOneDay"] : loc["FreshDaysLeft", days],
             "info",
             BadgeVariant.SoftSuccess);
     }
