@@ -1,8 +1,35 @@
 ﻿@inherits LayoutComponentBase
 
-<main class="p-4 pb-28 space-y-4">
-    @Body
-</main>
+<BbSidebarProvider>
+    <BbSidebar>
+        <BbSidebarHeader>
+            <BbSidebarHeaderContent>
+                <BbSidebarHeaderInfo>
+                    <span class="font-semibold">Smart Pantry</span>
+                </BbSidebarHeaderInfo>
+            </BbSidebarHeaderContent>
+        </BbSidebarHeader>
+        <BbSidebarContent>
+            <BbSidebarMenu>
+                <BbSidebarMenuItem>
+                    <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Tooltip="Pantry">
+                        <LucideIcon Name="package" />
+                        <span>Pantry</span>
+                    </BbSidebarMenuButton>
+                </BbSidebarMenuItem>
+                <BbSidebarMenuItem>
+                    <BbSidebarMenuButton Href="/dashboard" Tooltip="Dashboard">
+                        <LucideIcon Name="clock" />
+                        <span>Dashboard</span>
+                    </BbSidebarMenuButton>
+                </BbSidebarMenuItem>
+            </BbSidebarMenu>
+        </BbSidebarContent>
+    </BbSidebar>
+    <BbSidebarInset Class="space-y-4 p-4 pb-28 md:mx-auto md:w-full md:max-w-7xl md:pb-8">
+        @Body
+    </BbSidebarInset>
+</BbSidebarProvider>
 
 <BottomBar />
 

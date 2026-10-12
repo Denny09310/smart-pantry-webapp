@@ -40,7 +40,7 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 - [x] Build a dashboard with useful at-a-glance pantry and expiry information.
 - [x] Support locations, quantities/units, and expiry dates in everyday workflows.
 - [x] Add loading, empty, validation, and error states.
-- [ ] Make the layouts usable on phone and desktop.
+- [x] Make the layouts usable on phone and desktop.
 - [x] Check BlazorBlueprint first; create custom UI components only when existing components do not fit.
 
 **Done when:** a user can add, browse, edit, and remove pantry items comfortably on desktop and mobile.

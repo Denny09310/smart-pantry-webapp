@@ -66,3 +66,10 @@
     overscroll-behavior: contain;
     touch-action: pan-y;
 }
+
+@media (min-width: 768px) {
+    .sheet-inner {
+        max-width: 42rem;
+        margin-inline: auto;
+    }
+}
