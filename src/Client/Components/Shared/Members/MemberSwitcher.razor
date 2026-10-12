@@ -2,8 +2,6 @@
 @using Client.Models
 @inject MemberService Members
 @inject BottomSheetService Sheet
-@inject DialogService Dialogs
-@inject ToastService Toasts
 @implements IDisposable
 
 <div class="space-y-1">
@@ -108,15 +106,9 @@
 
     private async Task ArchiveAsync(HouseholdMemberDto member)
     {
-        var confirmed = await Dialogs.ConfirmAsync(
-            $"Archive {member.DisplayName}?",
-            "They will disappear from the member list. Their items stay.",
-            new ConfirmDialogOptions { ConfirmText = "Archive", Destructive = true });
-
-        if (!confirmed.Confirmed)
-            return;
-
-        await Members.UpdateMemberAsync(member.Id, member.DisplayName, member.Color, true);
+        // Same rule as item deletion: the confirm renders beneath the
+        // sheet, so close first and let the opener confirm and archive.
+        await Sheet.CloseAsync(member);
     }
 
     private async Task UnarchiveAsync(HouseholdMemberDto member)

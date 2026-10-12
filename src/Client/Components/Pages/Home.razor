@@ -3,6 +3,8 @@
 @using Client.Models
 @inject ServerApi Api
 @inject BottomSheetService Sheet
+@inject DialogService Dialogs
+@inject ToastService Toasts
 @inject ILogger<Home> Logger
 
 <header class="flex items-center justify-between gap-2">
@@ -129,7 +131,9 @@ else if (_view is not null)
 
     private async Task OpenDetailsAsync(string id)
     {
-        await Sheet.OpenAsync<ItemDetailsBody>(new Dictionary<string, object?> { ["ItemId"] = id });
+        var parameters = new Dictionary<string, object?> { ["ItemId"] = id };
+        var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
+        await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger);
         await LoadAsync();
     }
 

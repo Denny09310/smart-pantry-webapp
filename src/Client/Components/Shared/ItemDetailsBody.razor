@@ -1,8 +1,6 @@
 @namespace Client.Components
 @inject BottomSheetService Sheet
 @inject ServerApi Api
-@inject DialogService Dialogs
-@inject ToastService Toasts
 @inject ILogger<ItemDetailsBody> Logger
 
 <div class="space-y-4">
@@ -138,31 +136,11 @@
 
     private async Task DeleteAsync()
     {
-        var confirmed = await Dialogs.ConfirmAsync(
-            "Delete item?",
-            $"“{_item?.Name}” will be permanently removed.",
-            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
-
-        if (!confirmed.Confirmed)
+        if (_item is null)
             return;
 
-        try
-        {
-            using var response = await Api.Pantry.DeleteAsync(ItemId);
-            if (!response.IsSuccessStatusCode)
-            {
-                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", ItemId, response.StatusCode);
-                Toasts.Error("Couldn't delete the item. Try again.");
-                return;
-            }
-
-            Toasts.Success("Item deleted.");
-            await Sheet.CloseAsync();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Item {ItemId} delete failed", ItemId);
-            Toasts.Error("Couldn't delete the item. Try again.");
-        }
+        // The confirm dialog renders beneath the sheet, so close first and
+        // let the opener confirm and delete (see ItemDeletion).
+        await Sheet.CloseAsync(_item);
     }
 }

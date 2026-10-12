@@ -2,6 +2,9 @@
 @using Client.Models
 @inject MemberService Members
 @inject BottomSheetService Sheet
+@inject DialogService Dialogs
+@inject ToastService Toasts
+@inject ILogger<MemberAvatarButton> Logger
 @implements IDisposable
 
 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
@@ -32,5 +35,36 @@
         }
     }
 
-    private Task OpenSwitcherAsync() => Sheet.OpenAsync<MemberSwitcher>();
+    private async Task OpenSwitcherAsync()
+    {
+        var result = await Sheet.OpenAsync<MemberSwitcher>();
+
+        if (result is not HouseholdMemberDto member)
+            return;
+
+        var confirmed = await Dialogs.ConfirmAsync(
+            $"Archive {member.DisplayName}?",
+            "They will disappear from the member list. Their items stay.",
+            new ConfirmDialogOptions { ConfirmText = "Archive", Destructive = true });
+
+        if (!confirmed.Confirmed)
+            return;
+
+        try
+        {
+            var updated = await Members.UpdateMemberAsync(member.Id, member.DisplayName, member.Color, true);
+            if (updated is null)
+            {
+                Toasts.Error("Couldn't archive the member. Try again.");
+                return;
+            }
+
+            Toasts.Success($"{member.DisplayName} archived.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Member {MemberId} archive failed", member.Id);
+            Toasts.Error("Couldn't archive the member. Try again.");
+        }
+    }
 }
