@@ -9,45 +9,53 @@
     <div class="flex flex-none items-center justify-between gap-2">
         <h2 class="text-lg font-semibold">Notifications</h2>
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
-                  Disabled="@(_unreadCount == 0)" @onclick="MarkAllReadAsync">
+                  Disabled="@(_unread == 0)" @onclick="MarkAllReadAsync">
             Mark all read
         </BbButton>
     </div>
 
+    <div class="flex items-center justify-between rounded-lg border p-4">
+        <div class="space-y-0.5">
+            <BbLabel>Notifications</BbLabel>
+            <p class="text-sm text-muted-foreground">Enable push notifications</p>
+        </div>
+        <BbSwitch Checked="Notifications.Enabled" CheckedChanged="ToggleNotificationsAsync" />
+    </div>
+
     <div class="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain py-1 pr-1">
-    <InfiniteScrollList TItem="NotificationDto" @ref="_list" LoadPageAsync="LoadPageAsync"
-                        KeySelector="@(x => x.Id)" PageSize="20">
-        <ItemTemplate>
-            <div class="mb-2">
-                <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
-            </div>
-        </ItemTemplate>
-        <LoadingTemplate>
-            <div class="space-y-2" aria-hidden="true">
-                <BbSkeleton Height="64px" Class="w-full" />
-                <BbSkeleton Height="64px" Class="w-full" />
-            </div>
-        </LoadingTemplate>
-        <EmptyTemplate>
-            <BbEmpty Title="All caught up" Description="New expiry reminders will appear here">
-                <Icon>
-                    <LucideIcon Name="bell" Size="24" />
-                </Icon>
-            </BbEmpty>
-        </EmptyTemplate>
-    </InfiniteScrollList>
+        <InfiniteScrollList TItem="NotificationDto" @ref="_list" LoadPageAsync="LoadPageAsync"
+                            KeySelector="@(x => x.Id)" PageSize="20">
+            <ItemTemplate>
+                <div class="mb-2">
+                    <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
+                </div>
+            </ItemTemplate>
+            <LoadingTemplate>
+                <div class="space-y-2" aria-hidden="true">
+                    <BbSkeleton Height="64px" Class="w-full" />
+                    <BbSkeleton Height="64px" Class="w-full" />
+                </div>
+            </LoadingTemplate>
+            <EmptyTemplate>
+                <BbEmpty Title="All caught up" Description="New expiry reminders will appear here">
+                    <Icon>
+                        <LucideIcon Name="bell" Size="24" />
+                    </Icon>
+                </BbEmpty>
+            </EmptyTemplate>
+        </InfiniteScrollList>
     </div>
 </div>
 
 @code
 {
     private InfiniteScrollList<NotificationDto>? _list;
-    private int _unreadCount;
+    private int _unread;
 
     protected override void OnInitialized()
     {
         Notifications.Changed += OnChanged;
-        _unreadCount = Notifications.UnreadCount;
+        _unread = Notifications.Unread;
     }
 
     public void Dispose() => Notifications.Changed -= OnChanged;
@@ -56,7 +64,7 @@
     {
         try
         {
-            _unreadCount = Notifications.UnreadCount;
+            _unread = Notifications.Unread;
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
@@ -76,7 +84,7 @@
             throw new HttpRequestException($"Notifications load failed with {response.StatusCode}.");
         }
 
-        _unreadCount = response.Content.UnreadCount;
+        _unread = response.Content.UnreadCount;
         return new Page<NotificationDto>(response.Content.Items.ToList(), response.Content.TotalCount);
     }
 
@@ -97,5 +105,11 @@
         await Notifications.MarkAllReadAsync();
         if (_list is not null)
             await _list.ReloadAsync();
+    }
+
+    private async Task ToggleNotificationsAsync(bool value)
+    {
+        if (value)
+            await Notifications.EnableAsync();
     }
 }

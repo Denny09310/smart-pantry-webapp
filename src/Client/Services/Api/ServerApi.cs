@@ -8,6 +8,7 @@ internal sealed class ServerApi(IServiceProvider services)
     public IPantryEndpoints Pantry => services.GetRequiredService<IPantryEndpoints>();
     public IMemberEndpoints Members => services.GetRequiredService<IMemberEndpoints>();
     public INotificationEndpoints Notifications => services.GetRequiredService<INotificationEndpoints>();
+    public IPushEndpoints Push => services.GetRequiredService<IPushEndpoints>();
 }
 
 internal static class ServerApiExtensions
@@ -29,6 +30,10 @@ internal static class ServerApiExtensions
             httpClientName: "Server.API");
 
         services.AddRefitGeneratedClient<INotificationEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IPushEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 

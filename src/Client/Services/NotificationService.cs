@@ -4,9 +4,14 @@ namespace Client.Services;
 /// In-app notification state: unread badge count plus read/mark-all
 /// operations. The panel itself loads the list on open.
 /// </summary>
-internal sealed class NotificationService(ServerApi api, ILogger<NotificationService> log)
+internal sealed class NotificationService(
+    ServerApi api,
+    Bit.Butil.Notification notification,
+    Bit.Butil.Push push,
+    ILogger<NotificationService> log)
 {
-    public int UnreadCount { get; private set; }
+    public int Unread { get; private set; }
+    public bool Enabled { get; private set; }
 
     public event Action? Changed;
 
@@ -58,12 +63,41 @@ internal sealed class NotificationService(ServerApi api, ILogger<NotificationSer
         }
     }
 
+    public async Task EnableAsync()
+    {
+        try
+        {
+            if (!await notification.IsSupported())
+                return;
+
+            var result = await notification.RequestPermission();
+
+            if (result is not Bit.Butil.NotificationPermission.Granted)
+                return;
+
+            if (!await push.IsSupported())
+                return;
+
+            using var response = await api.Push.GetPushNotificationKeyAsync();
+
+            if (!response.IsSuccessfulWithContent)
+                return;
+
+            var info = await push.Subscribe(response.Content.PublicKey);
+            Enabled = info.IsActive;
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Enabling notification failed.");
+        }
+    }
+
     private void SetCount(int count)
     {
-        if (UnreadCount == count)
+        if (Unread == count)
             return;
 
-        UnreadCount = count;
+        Unread = count;
         Changed?.Invoke();
     }
 }
