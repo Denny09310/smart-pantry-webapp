@@ -5,8 +5,9 @@
 <nav aria-label="Primary"
      class="fixed inset-x-4 bottom-4 pb-[env(safe-area-inset-bottom)] z-30 rounded-2xl border bg-background/95 backdrop-blur shadow-lg md:hidden"
      style="view-transition-name: bottom-nav;">
-    <div class="flex justify-center gap-4 p-2">
-        <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="@ActiveTokens" class="@BaseTokens" title="@Loc["Pantry"]">
+    <div class="flex justify-evenly gap-4 p-2">
+        <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="@ActiveTokens" class="@BaseTokens"
+                 title="@Loc["Pantry"]">
             <LucideIcon Name="package" Size="24" />
         </NavLink>
         <NavLink href="/settings" ActiveClass="@ActiveTokens" class="@BaseTokens" title="@Loc["Settings"]">
