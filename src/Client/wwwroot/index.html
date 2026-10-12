@@ -30,12 +30,11 @@
 </head>
 
 <body>
-    <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+    <div id="app" class="max-h-dvh flex flex-col items-center justify-center">
+        <div class="flex flex-col items-center justify-center h-full w-full">
+            <img src="icon-192.png" alt="Smart Pantry" class="w-20 h-20 rounded-xl mb-4" />
+            <div class="loading-progress-text text-center text-muted-foreground text-sm">Loading...</div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
