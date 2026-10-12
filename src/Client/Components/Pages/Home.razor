@@ -13,6 +13,9 @@
         {
             <span class="text-sm text-muted-foreground">@_total items</span>
         }
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="Add item" @onclick="OpenAddAsync">
+            <LucideIcon Name="plus" Size="18" />
+        </BbButton>
         <NotificationsBellButton />
         <MemberAvatarButton />
     </div>
@@ -79,12 +82,6 @@
     </EmptyTemplate>
 </InfiniteScrollList>
 
-<BbFab AriaLabel="Add item" Class="bottom-24 md:bottom-6" OnClick="OpenAddAsync">
-    <Icon>
-        <LucideIcon Name="plus" Size="24" />
-    </Icon>
-</BbFab>
-
 @code
 {
     private InfiniteScrollList<PantryItemDto>? _list;
@@ -130,16 +127,22 @@
 
     private async Task OpenAddAsync()
     {
-        await Sheet.OpenAsync<ItemForm>();
-        await ReloadListAsync();
+        var result = await Sheet.OpenAsync<ItemForm>();
+        if (!result.Cancelled)
+            await ReloadListAsync();
     }
 
     private async Task OpenDetailsAsync(string id)
     {
-        var parameters = new Dictionary<string, object?> { ["ItemId"] = id };
+        var parameters = new Dictionary<string, object?>
+        {
+            ["ItemId"] = id
+        };
+        
         var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
         await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger);
-        await ReloadListAsync();
+        if (!result.Cancelled)
+            await ReloadListAsync();
     }
 
     private async Task OpenFiltersAsync()
