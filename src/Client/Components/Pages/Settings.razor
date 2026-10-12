@@ -1,0 +1,155 @@
+@page "/settings"
+@using Client.Resources
+@using Client.Models
+@inject LocalizationService Loc
+@inject MemberService Members
+@inject BottomSheetService Sheet
+@inject ToastService Toasts
+@implements IDisposable
+
+<div class="flex h-full flex-col">
+    <div class="flex-none">
+        <h1 class="text-xl font-semibold">@Loc["Settings"]</h1>
+        <p class="text-sm text-muted-foreground">@Loc["SelectLanguage"]</p>
+    </div>
+
+    <div class="min-h-0 flex-1 touch-pan-y space-y-6 overflow-y-auto overscroll-contain py-1 pr-1">
+        @* Language Section *@
+        <section class="space-y-3">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["Language"]</h2>
+            <div class="space-y-2">
+                @foreach (var culture in LocalizationService.SupportedCultures)
+                {
+                    var isSelected = Loc.CurrentCulture.Name == culture.Name;
+                    <button type="button"
+                            class="flex items-center justify-between w-full rounded-lg border p-3 @(isSelected ? "bg-primary/10 border-primary" : "bg-card")"
+                            @onclick="@(() => ChangeLanguageAsync(culture.Name))">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg">@GetFlagEmoji(culture.Name)</span>
+                            <div>
+                                <p class="font-medium">@GetCultureDisplayName(culture.Name)</p>
+                                <p class="text-xs text-muted-foreground">@culture.NativeName</p>
+                            </div>
+                        </div>
+                        @if (isSelected)
+                        {
+                            <LucideIcon Name="check" Size="20" Class="text-primary" />
+                        }
+                    </button>
+                }
+            </div>
+        </section>
+
+        @* User Section *@
+        <section class="space-y-3">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["User"]</h2>
+            <div class="space-y-2">
+                @foreach (var member in Members.ActiveMembers)
+                {
+                    var isSelected = member.Id == Members.CurrentMemberId;
+                    <button type="button"
+                            class="flex items-center justify-between w-full rounded-lg border p-3 @(isSelected ? "bg-primary/10 border-primary" : "bg-card")"
+                            @onclick="@(() => SelectMemberAsync(member.Id))">
+                        <div class="flex items-center gap-3">
+                            <BbAvatar>
+                                <BbAvatarFallback
+                                    style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
+                                    @MemberDisplay.Initials(member.DisplayName)
+                                </BbAvatarFallback>
+                            </BbAvatar>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium truncate">@member.DisplayName</p>
+                                <p class="text-xs text-muted-foreground">
+                                    @(isSelected ? Loc["Current"] : Loc["TapToSwitch"])
+                                </p>
+                            </div>
+                        </div>
+                        @if (isSelected)
+                        {
+                            <LucideIcon Name="check" Size="20" Class="text-primary" />
+                        }
+                    </button>
+                }
+
+                <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="OpenMemberManagerAsync">
+                    <LucideIcon Name="users" Size="18" class="mr-2" />
+                    @Loc["HouseholdMembers"]
+                </BbButton>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Members.Changed += OnChanged;
+        Loc.CultureChanged += OnCultureChanged;
+    }
+
+    public void Dispose()
+    {
+        Members.Changed -= OnChanged;
+        Loc.CultureChanged -= OnCultureChanged;
+    }
+
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async void OnCultureChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async Task ChangeLanguageAsync(string cultureName)
+    {
+        await Loc.SetCultureAsync(cultureName);
+        Toasts.Success($"{GetCultureDisplayName(cultureName)} selected");
+    }
+
+    private async Task SelectMemberAsync(string memberId)
+    {
+        await Members.SelectMemberAsync(memberId);
+    }
+
+    private async Task OpenMemberManagerAsync()
+    {
+        await Sheet.OpenAsync<MemberSwitcher>();
+    }
+
+    private static string GetFlagEmoji(string cultureName)
+    {
+        return cultureName switch
+        {
+            "en-US" => "🇺🇸",
+            "it-IT" => "🇮🇹",
+            _ => "🏳️"
+        };
+    }
+
+    private static string GetCultureDisplayName(string cultureName)
+    {
+        return cultureName switch
+        {
+            "en-US" => "English",
+            "it-IT" => "Italiano",
+            _ => cultureName
+        };
+    }
+}
