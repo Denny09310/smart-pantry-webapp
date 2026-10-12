@@ -6,7 +6,8 @@
 <div class="space-y-4">
     <div class="flex items-start justify-between gap-2">
         <h2 class="text-lg font-semibold">Item details</h2>
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Close" @onclick="() => Sheet.CloseAsync()">
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Close"
+                  @onclick="() => Sheet.CloseAsync()">
             <LucideIcon Name="x" Size="16" />
         </BbButton>
     </div>
@@ -73,7 +74,8 @@
     }
 </div>
 
-@code {
+@code
+{
     [Parameter, EditorRequired]
     public string ItemId { get; set; } = string.Empty;
 

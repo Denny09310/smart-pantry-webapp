@@ -18,7 +18,8 @@
     </BbAvatar>
 </BbButton>
 
-@code {
+@code
+{
     protected override void OnInitialized() => Members.Changed += OnChanged;
 
     public void Dispose() => Members.Changed -= OnChanged;

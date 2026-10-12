@@ -19,7 +19,8 @@
     </section>
 }
 
-@code {
+@code
+{
     private sealed record VisibleBody(Type Type, Dictionary<string, object?> Parameters);
 
     private VisibleBody? _body;

@@ -62,6 +62,7 @@ These instructions apply across the Smart Pantry repository.
 ## 8. Code quality and verification
 
 - Follow local naming, formatting, API, component, and error-handling conventions.
+- Razor style: `@code` opening brace on its own line.
 - Keep changes focused; avoid unrelated refactoring.
 - Add or update tests for changed behavior, especially authorization, household isolation, invitations, expiry boundaries, and reminder deduplication.
 - Run relevant tests first, then build/test the solution when practical. Report only commands actually run and their real results.

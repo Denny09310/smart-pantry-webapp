@@ -147,17 +147,23 @@ else if (_view is not null)
             ["Sort"] = _sort
         };
 
-        if (await Sheet.OpenAsync<FilterSheetBody>(parameters) is { Cancelled: false } result
-            && result.GetData<FilterSheetBody.SelectedFilters>() is { } filters)
-        {
-            var locationChanged = filters.Location != _location;
-            (_location, _status, _sort) = (filters.Location, filters.Status, filters.Sort);
+        var result = await Sheet.OpenAsync<FilterSheetBody>(parameters);
 
-            if (locationChanged)
-                await LoadAsync();
-            else
-                ApplySorting();
-        }
+        if (result.Cancelled)
+            return;
+
+        var data = result.GetData<FilterSheetBody.SelectedFilters>();
+
+        if (data is not { } filters)
+            return;
+
+        var changed = filters.Location != _location;
+        (_location, _status, _sort) = (filters.Location, filters.Status, filters.Sort);
+
+        if (changed)
+            await LoadAsync();
+        else
+            ApplySorting();
     }
 
     private void ApplySorting()
@@ -195,8 +201,6 @@ else if (_view is not null)
 
         try
         {
-            // Household scale: one page of up to 100 items; status filter
-            // and sorting apply client-side over the fetched page.
             var request = new GetPantryItemsRequest
             {
                 Location = _location,

@@ -41,7 +41,8 @@
     </div>
 </div>
 
-@code {
+@code
+{
     public sealed record SelectedFilters(string? Location, string Status, ItemSort Sort);
 
     [Parameter] public string? Location { get; set; }
