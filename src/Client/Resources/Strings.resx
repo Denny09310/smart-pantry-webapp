@@ -414,4 +414,10 @@
   <data name="Reload" xml:space="preserve">
     <value>Reload</value>
   </data>
+  <data name="ChangeUser" xml:space="preserve">
+    <value>Change user</value>
+  </data>
+  <data name="NoUserSelected" xml:space="preserve">
+    <value>No user selected</value>
+  </data>
 </root>

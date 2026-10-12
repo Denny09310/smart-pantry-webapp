@@ -1,5 +1,4 @@
 @page "/settings"
-@using Client.Resources
 @using Client.Models
 @inject LocalizationService Loc
 @inject MemberService Members
@@ -10,77 +9,74 @@
 <div class="flex h-full flex-col">
     <div class="flex-none">
         <h1 class="text-xl font-semibold">@Loc["Settings"]</h1>
-        <p class="text-sm text-muted-foreground">@Loc["SelectLanguage"]</p>
     </div>
 
     <div class="min-h-0 flex-1 touch-pan-y space-y-6 overflow-y-auto overscroll-contain py-1 pr-1">
         @* Language Section *@
         <section class="space-y-3">
             <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["Language"]</h2>
-            <div class="space-y-2">
+            <BbSelect TValue="string" Value="@Loc.CurrentCulture.Name" ValueChanged="@ChangeLanguageAsync"
+                      Placeholder="@Loc["SelectLanguage"]">
                 @foreach (var culture in LocalizationService.SupportedCultures)
                 {
-                    var isSelected = Loc.CurrentCulture.Name == culture.Name;
-                    <button type="button"
-                            class="flex items-center justify-between w-full rounded-lg border p-3 @(isSelected ? "bg-primary/10 border-primary" : "bg-card")"
-                            @onclick="@(() => ChangeLanguageAsync(culture.Name))">
-                        <div class="flex items-center gap-3">
+                    <BbSelectItem Value="@culture.Name">
+                        <span class="flex items-center gap-2">
                             <span class="text-lg">@GetFlagEmoji(culture.Name)</span>
-                            <div>
-                                <p class="font-medium">@GetCultureDisplayName(culture.Name)</p>
-                                <p class="text-xs text-muted-foreground">@culture.NativeName</p>
-                            </div>
-                        </div>
-                        @if (isSelected)
-                        {
-                            <LucideIcon Name="check" Size="20" Class="text-primary" />
-                        }
-                    </button>
+                            <span>@GetCultureDisplayName(culture.Name)</span>
+                        </span>
+                    </BbSelectItem>
                 }
-            </div>
+            </BbSelect>
         </section>
 
         @* User Section *@
         <section class="space-y-3">
             <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["User"]</h2>
-            <div class="space-y-2">
-                @foreach (var member in Members.ActiveMembers)
-                {
-                    var isSelected = member.Id == Members.CurrentMemberId;
-                    <button type="button"
-                            class="flex items-center justify-between w-full rounded-lg border p-3 @(isSelected ? "bg-primary/10 border-primary" : "bg-card")"
-                            @onclick="@(() => SelectMemberAsync(member.Id))">
-                        <div class="flex items-center gap-3">
+            
+            <BbField>
+                <BbFieldLabel Class="text-sm font-medium">@Loc["CurrentUser"]</BbFieldLabel>
+                <BbFieldContent>
+                    @if (Members.CurrentMember is { } current)
+                    {
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
                             <BbAvatar>
                                 <BbAvatarFallback
-                                    style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
-                                    @MemberDisplay.Initials(member.DisplayName)
+                                    style="@($"background-color: {current.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(current.Color)}")">
+                                    @MemberDisplay.Initials(current.DisplayName)
                                 </BbAvatarFallback>
                             </BbAvatar>
                             <div class="min-w-0 flex-1">
-                                <p class="font-medium truncate">@member.DisplayName</p>
-                                <p class="text-xs text-muted-foreground">
-                                    @(isSelected ? Loc["Current"] : Loc["TapToSwitch"])
-                                </p>
+                                <p class="font-medium">@current.DisplayName</p>
+                                <p class="text-xs text-muted-foreground">@Loc["Current"]</p>
                             </div>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                      OnClick="OpenMemberManagerAsync" AriaLabel="@Loc["ChangeUser"]">
+                                <LucideIcon Name="chevron-right" Size="18" />
+                            </BbButton>
                         </div>
-                        @if (isSelected)
-                        {
-                            <LucideIcon Name="check" Size="20" Class="text-primary" />
-                        }
-                    </button>
-                }
+                    }
+                    else
+                    {
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+                            <BbAvatar>
+                                <BbAvatarFallback Class="text-muted-foreground">?</BbAvatarFallback>
+                            </BbAvatar>
+                            <p class="text-muted-foreground">@Loc["NoUserSelected"]</p>
+                        </div>
+                    }
+                </BbFieldContent>
+            </BbField>
 
-                <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="OpenMemberManagerAsync">
-                    <LucideIcon Name="users" Size="18" class="mr-2" />
-                    @Loc["HouseholdMembers"]
-                </BbButton>
-            </div>
+            <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="OpenMemberManagerAsync">
+                <LucideIcon Name="users" Size="18" class="mr-2" />
+                @Loc["HouseholdMembers"]
+            </BbButton>
         </section>
     </div>
 </div>
 
-@code {
+@code
+{
     protected override void OnInitialized()
     {
         Members.Changed += OnChanged;
@@ -121,11 +117,6 @@
     {
         await Loc.SetCultureAsync(cultureName);
         Toasts.Success($"{GetCultureDisplayName(cultureName)} selected");
-    }
-
-    private async Task SelectMemberAsync(string memberId)
-    {
-        await Members.SelectMemberAsync(memberId);
     }
 
     private async Task OpenMemberManagerAsync()
