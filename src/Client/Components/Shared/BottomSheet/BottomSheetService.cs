@@ -14,6 +14,13 @@ public sealed class SheetOptions
     public int InitialSnapIndex { get; init; } = 1;
 
     public bool CloseOnScrimClick { get; init; } = true;
+
+    /// <summary>
+    /// Master dismissal switch: when false, scrim clicks, Escape, and the
+    /// close gesture are all ignored. Used for mandatory flows (first member)
+    /// where cancelling would strand the app.
+    /// </summary>
+    public bool Dismissible { get; init; } = true;
 }
 
 /// <summary>

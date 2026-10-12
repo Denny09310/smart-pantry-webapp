@@ -24,7 +24,8 @@
         while (Members.Members.Count == 0 && !Members.LoadFailed)
         {
             var parameters = new Dictionary<string, object?> { ["AllowCancel"] = false };
-            var result = await Sheet.OpenAsync<MemberForm>(parameters);
+            var options = new SheetOptions { Dismissible = false };
+            var result = await Sheet.OpenAsync<MemberForm>(parameters, options);
 
             // Creation failed server-side: retry instead of entering a memberless app.
             if (result.Cancelled)

@@ -135,18 +135,21 @@
     }
 
     private Task OnScrimClick()
-        => _options.CloseOnScrimClick ? Sheet.CloseAsync() : Task.CompletedTask;
+        => _options.Dismissible && _options.CloseOnScrimClick ? Sheet.CloseAsync() : Task.CompletedTask;
 
     [JSInvokable]
     public Task NotifyClosed()
     {
+        if (!_options.Dismissible)
+            return Task.CompletedTask;
+
         _gestureClosed = true;
         return Sheet.CloseAsync();
     }
 
     [JSInvokable]
     public Task NotifyEscape()
-        => Sheet.CloseAsync();
+        => _options.Dismissible ? Sheet.CloseAsync() : Task.CompletedTask;
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
