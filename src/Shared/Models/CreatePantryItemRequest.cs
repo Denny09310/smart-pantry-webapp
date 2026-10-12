@@ -10,4 +10,7 @@ public record CreatePantryItemRequest(
     [property: Required, MaxLength(32)] string Unit,
     [property: Required, MaxLength(64)] string Location,
     [property: MaxLength(2000)] string? Notes,
-    DateOnly ExpirationDate);
+    DateOnly ExpirationDate,
+    [property: MaxLength(32)] string? Barcode = null,
+    [property: MaxLength(2)] string? NutriScore = null,
+    NutritionFacts? Nutrition = null);

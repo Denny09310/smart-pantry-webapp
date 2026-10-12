@@ -8,4 +8,7 @@ public record PantryItemDto(
     string Location,
     string? Notes,
     DateOnly ExpirationDate,
-    string? HouseholdMemberId);
+    string? HouseholdMemberId,
+    string? Barcode,
+    string? NutriScore,
+    NutritionFacts? Nutrition);
