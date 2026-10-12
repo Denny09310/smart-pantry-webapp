@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Push;
+namespace Server.Models;
 
 /// <summary>
 /// VAPID keys for Web Push. Both keys are optional: without them the

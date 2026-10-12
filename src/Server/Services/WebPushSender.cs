@@ -1,9 +1,33 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+
+using Server.Models;
+
 using WebPush;
 
-namespace Server.Push;
+namespace Server.Services;
+
+public enum PushSendOutcome
+{
+    Delivered,
+    InvalidSubscription,
+    Failed,
+    NotConfigured
+}
+
+public sealed record WebPushSenderRequest(
+    string Endpoint,
+    string P256dh,
+    string Auth,
+    string Title,
+    string Body,
+    string Url);
+
+public interface IPushSender
+{
+    Task<PushSendOutcome> TrySendAsync(WebPushSenderRequest request, CancellationToken ct);
+}
 
 /// <summary>
 /// Sends Web Push messages with the configured VAPID keys. Never throws:

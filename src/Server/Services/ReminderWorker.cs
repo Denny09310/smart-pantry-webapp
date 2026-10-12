@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Entities;
-using Server.Push;
+using Server.Services;
 using Shared.Models;
 
-namespace Server.Workers;
+namespace Server.Services;
 
 /// <summary>
 /// Daily expiry reminder check: one in-app notification per item entering the

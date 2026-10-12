@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Server.Data;
 using Server.Data.Entities;
-using Server.Workers;
+using Server.Services;
 
 namespace Server.Tests;
 
