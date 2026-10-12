@@ -1,6 +1,7 @@
 @namespace Client.Components
 @using System.ComponentModel.DataAnnotations
 @using Client.Models
+@using Client.Components.Shared.BarcodeScanner
 @inject BottomSheetService Sheet
 @inject MemberService Members
 @inject ServerApi Api
@@ -20,6 +21,13 @@
         <CustomValidator @ref="_customValidator" />
 
         <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+                @* Barcode Scanner *@
+                <div class="space-y-2">
+                    <BbLabel Class="text-sm font-medium">Scan barcode (optional)</BbLabel>
+                    <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" />
+                    <p class="text-xs text-muted-foreground">Scans EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, ITF. Auto-fills product name, brand, and nutrition info.</p>
+                </div>
+
                 @* Item name *@
                 <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
                     <div class="flex items-center justify-between">
@@ -157,6 +165,9 @@
         if (Item is { } item && _editingId != item.Id)
         {
             _editingId = item.Id;
+            _scannedBarcode = item.Barcode;
+            _scannedNutriScore = item.NutriScore;
+            _scannedNutrition = item.Nutrition;
             Input = new InputModel
             {
                 Name = item.Name,
@@ -170,9 +181,61 @@
         else if (Item is null && _editingId is not null)
         {
             _editingId = null;
+            _scannedBarcode = null;
+            _scannedNutriScore = null;
+            _scannedNutrition = null;
             Input = new InputModel();
         }
     }
+
+    private async Task OnBarcodeScannedAsync(string barcode)
+    {
+        if (string.IsNullOrWhiteSpace(barcode))
+            return;
+
+        try
+        {
+            using var response = await Api.Products.LookupAsync(barcode);
+            if (response.IsSuccessfulWithContent && response.Content is ProductLookupDto product)
+            {
+                // Pre-fill form with product data
+                if (!string.IsNullOrWhiteSpace(product.Name))
+                    Input.Name = product.Name;
+
+                if (!string.IsNullOrWhiteSpace(product.Brand))
+                    Input.Notes = string.IsNullOrWhiteSpace(Input.Notes)
+                        ? product.Brand
+                        : $"{Input.Notes}, {product.Brand}";
+
+                if (product.Quantity.HasValue && product.Quantity.Value > 0)
+                    Input.Quantity = product.Quantity.Value;
+
+                if (!string.IsNullOrWhiteSpace(product.Unit))
+                    Input.Unit = product.Unit;
+
+                // Store barcode and nutrition info for saving
+                _scannedBarcode = product.Barcode;
+                _scannedNutriScore = product.NutriScore;
+                _scannedNutrition = product.Nutrition;
+
+                Toasts.Success("Product found! Details pre-filled.");
+                StateHasChanged();
+            }
+            else
+            {
+                Toasts.Info("Product not in database. You can add it manually.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Barcode lookup failed for {Barcode}", barcode);
+            Toasts.Error("Couldn't look up product. Try again or add manually.");
+        }
+    }
+
+    private string? _scannedBarcode;
+    private string? _scannedNutriScore;
+    private NutritionFacts? _scannedNutrition;
 
     private void IncrementQuantity()
     {
