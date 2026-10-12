@@ -7,19 +7,19 @@
 @inject ToastService Toasts
 @inject ILogger<ItemForm> Logger
 
-<div class="space-y-4">
-    <div>
+<div class="flex h-full flex-col">
+    <div class="flex-none">
         <h2 class="text-lg font-semibold">@(Item is null ? "Add item" : "Edit item")</h2>
         <p class="text-sm text-muted-foreground">
             @(Item is null ? "Register a new batch with its expiry date." : "Update the batch details.")
         </p>
     </div>
 
-    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync">
+    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col">
         <DataAnnotationsValidator />
         <CustomValidator @ref="_customValidator" />
 
-        <div class="space-y-4">
+        <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
                 @* Item name *@
                 <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
                     <div class="flex items-center justify-between">
@@ -123,7 +123,7 @@
                 </div>
             </div>
 
-            <div class="shrink-0 space-y-1 border-t pt-3">
+            <div class="flex-none space-y-1 border-t pt-3">
                 <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving" IconPosition="IconPosition.Start">
                     <Icon>
                         <LucideIcon Name="save" Size="16" />

@@ -2,9 +2,10 @@
 @using Client.Models
 @inject BottomSheetService Sheet
 
-<div class="space-y-5">
-    <h2 class="text-lg font-semibold">Filters</h2>
+<div class="flex h-full flex-col">
+    <h2 class="flex-none text-lg font-semibold">Filters</h2>
 
+    <div class="min-h-0 flex-1 touch-pan-y space-y-5 overflow-y-auto overscroll-contain py-1 pr-1">
     <div>
         <span class="mb-1 block text-sm font-medium">Location</span>
         <BbChipSet @bind-Value="_location" Class="scrollbar-none!" Wrap="false">
@@ -34,8 +35,9 @@
             <option value="@ItemSort.Name">Name A–Z</option>
         </BbNativeSelect>
     </div>
+    </div>
 
-    <div class="grid grid-cols-2 gap-2">
+    <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
         <BbButton Variant="ButtonVariant.Outline" Type="ButtonType.Button" @onclick="Reset">Reset</BbButton>
         <BbButton Type="ButtonType.Button" @onclick="ApplyAsync">Apply filters</BbButton>
     </div>

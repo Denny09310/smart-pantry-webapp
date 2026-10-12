@@ -3,15 +3,16 @@
 @inject ServerApi Api
 @inject ILogger<ItemDetailsBody> Logger
 
-<div class="space-y-4">
-    <div class="flex items-start justify-between gap-2">
+<div class="flex h-full flex-col">
+    <div class="flex flex-none items-start justify-between gap-2">
         <h2 class="text-lg font-semibold">Item details</h2>
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Close"
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" AriaLabel="Close"
                   @onclick="() => Sheet.CloseAsync()">
             <LucideIcon Name="x" Size="16" />
         </BbButton>
     </div>
 
+    <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
     @if (_loading)
     {
         <div class="space-y-2" aria-hidden="true">
@@ -63,8 +64,12 @@
                 </div>
             }
         </dl>
+    }
+    </div>
 
-        <div class="grid grid-cols-2 gap-2">
+    @if (_item is not null && _error is null)
+    {
+        <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
             <BbButton Variant="ButtonVariant.Outline" @onclick="OpenEditAsync">
                 <LucideIcon Name="pencil" Size="16" />
                 Edit

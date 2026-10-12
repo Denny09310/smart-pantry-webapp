@@ -62,9 +62,9 @@
 .sheet-body {
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 @media (min-width: 768px) {
