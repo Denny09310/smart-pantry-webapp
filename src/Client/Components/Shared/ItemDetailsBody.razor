@@ -13,58 +13,58 @@
     </div>
 
     <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
-    @if (_loading)
-    {
-        <div class="space-y-2" aria-hidden="true">
-            <BbSkeleton Height="28px" Class="w-2/3" />
-            <BbSkeleton Height="16px" Class="w-full" />
-            <BbSkeleton Height="16px" Class="w-4/5" />
-        </div>
-    }
-    else if (_error is not null)
-    {
-        <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
-            <p class="text-sm">Couldn't load the item. Try again.</p>
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
-        </div>
-    }
-    else if (_item is null)
-    {
-        <BbEmpty Title="Item not found" Description="It may have been deleted">
-            <Icon>
-                <LucideIcon Name="search" Size="24" />
-            </Icon>
-        </BbEmpty>
-    }
-    else
-    {
-        var status = ExpiryHelper.GetStatus(_item.ExpirationDate, _today);
-        <header class="space-y-2">
-            <h3 class="text-xl font-semibold">@_item.Name</h3>
-            <div class="flex flex-wrap gap-2">
-                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
-                <BbBadge Variant="BadgeVariant.Outline">@_item.Location</BbBadge>
+        @if (_loading)
+        {
+            <div class="space-y-2" aria-hidden="true">
+                <BbSkeleton Height="28px" Class="w-2/3" />
+                <BbSkeleton Height="16px" Class="w-full" />
+                <BbSkeleton Height="16px" Class="w-4/5" />
             </div>
-        </header>
-
-        <dl class="space-y-2 rounded-md border p-4 text-sm">
-            <div class="flex justify-between gap-2">
-                <dt class="text-muted-foreground">Quantity</dt>
-                <dd>@_item.Quantity @_item.Unit</dd>
+        }
+        else if (_error is not null)
+        {
+            <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+                <p class="text-sm">Couldn't load the item. Try again.</p>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
             </div>
-            <div class="flex justify-between gap-2">
-                <dt class="text-muted-foreground">Expires on</dt>
-                <dd>@_item.ExpirationDate.ToString("MMM d, yyyy")</dd>
-            </div>
-            @if (!string.IsNullOrWhiteSpace(_item.Notes))
-            {
-                <div class="space-y-1">
-                    <dt class="text-muted-foreground">Notes</dt>
-                    <dd>@_item.Notes</dd>
+        }
+        else if (_item is null)
+        {
+            <BbEmpty Title="Item not found" Description="It may have been deleted">
+                <Icon>
+                    <LucideIcon Name="search" Size="24" />
+                </Icon>
+            </BbEmpty>
+        }
+        else
+        {
+            var status = ExpiryHelper.GetStatus(_item.ExpirationDate, _today);
+            <header class="space-y-2">
+                <h3 class="text-xl font-semibold">@_item.Name</h3>
+                <div class="flex flex-wrap gap-2">
+                    <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+                    <BbBadge Variant="BadgeVariant.Outline">@_item.Location</BbBadge>
                 </div>
-            }
-        </dl>
-    }
+            </header>
+
+            <dl class="space-y-2 rounded-md border p-4 text-sm">
+                <div class="flex justify-between gap-2">
+                    <dt class="text-muted-foreground">Quantity</dt>
+                    <dd>@_item.Quantity @_item.Unit</dd>
+                </div>
+                <div class="flex justify-between gap-2">
+                    <dt class="text-muted-foreground">Expires on</dt>
+                    <dd>@_item.ExpirationDate.ToString("MMM d, yyyy")</dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_item.Notes))
+                {
+                    <div class="space-y-1">
+                        <dt class="text-muted-foreground">Notes</dt>
+                        <dd>@_item.Notes</dd>
+                    </div>
+                }
+            </dl>
+        }
     </div>
 
     @if (_item is not null && _error is null)

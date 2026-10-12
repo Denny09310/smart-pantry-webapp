@@ -28,7 +28,8 @@
                                Placeholder="Search pantry items..." />
         </BbInputGroup>
     </div>
-    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Open filters" @onclick="OpenFiltersAsync">
+    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Open filters"
+              @onclick="OpenFiltersAsync">
         <LucideIcon Name="sliders-horizontal" Size="16" />
         @if (HasFilters)
         {

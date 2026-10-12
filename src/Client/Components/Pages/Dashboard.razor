@@ -41,7 +41,7 @@ else
             <div class="text-xs text-muted-foreground">Items</div>
         </div>
         <div class="rounded-md border p-3">
-            <div class="text-2xl font-semibold">@_expiringSoon</div>
+            <div class="text-2xl font-semibold">@_expiring</div>
             <div class="text-xs text-muted-foreground">Expiring soon</div>
         </div>
         <div class="rounded-md border p-3">
@@ -63,7 +63,8 @@ else
                 {
                     var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
                     <li @key="item.Id">
-                        <button type="button" @onclick="() => OpenDetailsAsync(item.Id)" class="flex w-full items-center justify-between gap-2 rounded-md border p-3 text-left">
+                        <button type="button" @onclick="() => OpenDetailsAsync(item.Id)"
+                                class="flex w-full items-center justify-between gap-2 rounded-md border p-3 text-left">
                             <span>
                                 <span class="block font-medium">@item.Name</span>
                                 <span class="block text-sm text-muted-foreground">@item.ExpirationDate.ToString("MMM d")</span>
@@ -83,7 +84,7 @@ else
     private string? _error;
 
     private int _total;
-    private int _expiringSoon;
+    private int _expiring;
     private int _expired;
     private List<PantryItemDto> _attention = new();
     private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
@@ -120,7 +121,7 @@ else
             var items = response.Content.Items.ToList();
             _total = response.Content.TotalItems;
             _expired = items.Count(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.Expired);
-            _expiringSoon = items.Count(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.ExpiringSoon);
+            _expiring = items.Count(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.ExpiringSoon);
             _attention = items
                 .Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) != ExpiryStatus.Fresh)
                 .OrderBy(x => x.ExpirationDate)

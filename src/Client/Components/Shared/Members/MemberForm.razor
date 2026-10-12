@@ -22,8 +22,8 @@
                 <BbFieldLabel For="member-name" Class="text-sm font-medium">Display name *</BbFieldLabel>
                 <BbFieldContent>
                     <BbInputGroup Class="bg-card">
-                        <BbInputGroupInput Id="member-name" @bind-Value="Input.DisplayName"
-                                           Placeholder="e.g. Alex" UpdateTiming="UpdateTiming.Immediate" />
+                        <BbInputGroupInput Id="member-name" @bind-Value="Input.DisplayName" Placeholder="e.g. Alex"
+                                           UpdateTiming="UpdateTiming.Immediate" />
                     </BbInputGroup>
                     <BbFieldError Errors="@context.GetValidationMessages(() => Input.DisplayName)" />
                 </BbFieldContent>
@@ -34,8 +34,7 @@
                 <div class="flex flex-wrap gap-2">
                     @foreach (var color in Palette)
                     {
-                        <button type="button" aria-label="@($"Use color {color}")"
-                                @onclick="@(() => Input.Color = color)"
+                        <button type="button" aria-label="@($"Use color {color}")" @onclick="@(() => Input.Color = color)"
                                 class="@ColorClass(color)" style="background-color: @color">
                             @if (Input.Color == color)
                             {
@@ -53,7 +52,8 @@
             </BbButton>
             @if (AllowCancel)
             {
-                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button" OnClick="() => Sheet.CloseAsync()">
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
+                          OnClick="() => Sheet.CloseAsync()">
                     Cancel
                 </BbButton>
             }

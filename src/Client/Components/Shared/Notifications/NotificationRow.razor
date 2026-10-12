@@ -1,8 +1,8 @@
 @namespace Client.Components
 @using BlazorBlueprint.Primitives.SwipeArea
 
-<BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY"
-             OnSwipe="HandleSwipe" OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
+<BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY" OnSwipe="HandleSwipe"
+             OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
     <div class="relative overflow-hidden rounded-md border">
         <div class="absolute inset-y-0 right-0 flex items-stretch">
             <button type="button" @onclick="ViewAsync"

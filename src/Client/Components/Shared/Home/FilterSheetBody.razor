@@ -6,35 +6,35 @@
     <h2 class="flex-none text-lg font-semibold">Filters</h2>
 
     <div class="min-h-0 flex-1 touch-pan-y space-y-5 overflow-y-auto overscroll-contain py-1 pr-1">
-    <div>
-        <span class="mb-1 block text-sm font-medium">Location</span>
-        <BbChipSet @bind-Value="_location" Class="scrollbar-none!" Wrap="false">
-            <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
-            @foreach (var location in PantryLocations.Values)
-            {
-                <BbChip Value="@(location)">@location</BbChip>
-            }
-        </BbChipSet>
-    </div>
+        <div>
+            <span class="mb-1 block text-sm font-medium">Location</span>
+            <BbChipSet @bind-Value="_location" Class="scrollbar-none!" Wrap="false">
+                <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
+                @foreach (var location in PantryLocations.Values)
+                {
+                    <BbChip Value="@(location)">@location</BbChip>
+                }
+            </BbChipSet>
+        </div>
 
-    <div>
-        <span class="mb-1 block text-sm font-medium">Status</span>
-        <BbChipSet @bind-Value="_status" Class="scrollbar-none!" Wrap="false">
-            <BbChip Value="@PantryRules.StatusAll">All statuses</BbChip>
-            <BbChip Value="@PantryRules.StatusExpired">Expired</BbChip>
-            <BbChip Value="@PantryRules.StatusSoon">Expiring soon</BbChip>
-            <BbChip Value="@PantryRules.StatusFresh">Fresh</BbChip>
-        </BbChipSet>
-    </div>
+        <div>
+            <span class="mb-1 block text-sm font-medium">Status</span>
+            <BbChipSet @bind-Value="_status" Class="scrollbar-none!" Wrap="false">
+                <BbChip Value="@PantryRules.StatusAll">All statuses</BbChip>
+                <BbChip Value="@PantryRules.StatusExpired">Expired</BbChip>
+                <BbChip Value="@PantryRules.StatusSoon">Expiring soon</BbChip>
+                <BbChip Value="@PantryRules.StatusFresh">Fresh</BbChip>
+            </BbChipSet>
+        </div>
 
-    <div>
-        <span class="mb-1 block text-sm font-medium">Sort by</span>
-        <BbNativeSelect TValue="ItemSort" @bind-Value="_sort" AriaLabel="Sort items">
-            <option value="@ItemSort.ExpiryAsc">Expiring first</option>
-            <option value="@ItemSort.ExpiryDesc">Expiring last</option>
-            <option value="@ItemSort.Name">Name A–Z</option>
-        </BbNativeSelect>
-    </div>
+        <div>
+            <span class="mb-1 block text-sm font-medium">Sort by</span>
+            <BbNativeSelect TValue="ItemSort" @bind-Value="_sort" AriaLabel="Sort items">
+                <option value="@ItemSort.ExpiryAsc">Expiring first</option>
+                <option value="@ItemSort.ExpiryDesc">Expiring last</option>
+                <option value="@ItemSort.Name">Name A–Z</option>
+            </BbNativeSelect>
+        </div>
     </div>
 
     <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">

@@ -3,12 +3,10 @@
 @inject BottomSheetService Sheet
 @implements IDisposable
 
-<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-          AriaLabel="Open notifications"
-          OnClick="OpenAsync">
-    @if (Notifications.UnreadCount > 0)
+<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="Open notifications" OnClick="OpenAsync">
+    @if (Notifications.Unread > 0)
     {
-        <BbNotificationBadge Count="@Notifications.UnreadCount">
+        <BbNotificationBadge Count="@Notifications.Unread">
             <LucideIcon Name="bell" Size="18" />
         </BbNotificationBadge>
     }
