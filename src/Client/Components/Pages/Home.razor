@@ -1,14 +1,16 @@
 ﻿@page "/"
 
+@using Client.Models
 @inject ServerApi Api
+@inject BottomSheetService Sheet
+@inject ILogger<Home> Logger
 
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Smart Pantry</h1>
-    <div class="inline-flex items-center gap-2">
-        <BbButton Size="ButtonSize.Small" Class="h-8 min-w-16">
-            Add
-        </BbButton>
-    </div>
+    @if (_totalItems > 0)
+    {
+        <span class="text-sm text-muted-foreground">@_totalItems items</span>
+    }
 </header>
 
 <BbInputGroup>
@@ -19,74 +21,122 @@
 </BbInputGroup>
 
 <BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Class="scrollbar-none!" Wrap="false">
-    <BbChip Value="@("all")">All locations</BbChip>
-    <BbChip Value="@("fridge")">Fridge</BbChip>
-    <BbChip Value="@("pantry")">Pantry</BbChip>
-    <BbChip Value="@("freezer")">Freezer</BbChip>
-    <BbChip Value="@("cabinet")">Cabinet</BbChip>
+    <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
+    @foreach (var location in PantryLocations.Values)
+    {
+        <BbChip Value="@(location)">@location</BbChip>
+    }
 </BbChipSet>
 
-@if (_items is null)
+@if (_loading)
 {
-    <em>Loading...</em>
+    <div class="space-y-2" aria-hidden="true">
+        <BbSkeleton Height="64px" Class="w-full" />
+        <BbSkeleton Height="64px" Class="w-full" />
+        <BbSkeleton Height="64px" Class="w-full" />
+    </div>
 }
-else if (_items.Count == 0)
+else if (_error is not null)
+{
+    <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+        <p class="text-sm">Couldn't load pantry items. Try again.</p>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
+    </div>
+}
+else if (_items is not null && _items.Count == 0)
 {
     <BbEmpty Title="No items found" Description="Try clearing filters or add one">
         <Icon>
             <LucideIcon Name="search" Size="24" />
         </Icon>
         <ChildContent>
-            <BbButton Variant="ButtonVariant.Outline" @onclick="CreateItemAsync">
+            <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
                 <LucideIcon Name="plus" Size="16" />
                 Create
             </BbButton>
         </ChildContent>
     </BbEmpty>
 }
-else
+else if (_items is not null)
 {
-    <ul>
+    <ul class="space-y-2">
         @foreach (var item in _items)
         {
-            <li @key="item.Id">@item.Name</li>
+            var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
+            <li @key="item.Id">
+                <a href="@($"/items/{item.Id}")" class="block rounded-md border p-3">
+                    <span class="flex items-center justify-between gap-2">
+                        <span class="font-medium">@item.Name</span>
+                        <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+                    </span>
+                    <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>@item.Quantity @item.Unit</span>
+                        <BbBadge Variant="BadgeVariant.Outline">@item.Location</BbBadge>
+                        <span>@item.ExpirationDate.ToString("MMM d")</span>
+                    </span>
+                </a>
+            </li>
         }
     </ul>
 }
 
-@code
-{
+<BbFab AriaLabel="Add item" Class="bottom-24" OnClick="OpenAddAsync">
+    <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+</BbFab>
+
+@code {
     private List<PantryItemDto>? _items;
     private int _totalItems;
+    private bool _loading = true;
+    private string? _error;
 
-    private string? _location = "all", _name;
+    private string? _location = PantryLocations.All, _name;
+    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
     }
 
-    private async Task LoadAsync()
+    private async Task OpenAddAsync()
     {
-        var request = new GetPantryItemsRequest
-        {
-            Location = _location,
-            Name = _name
-        };
-        
-        using var response = await Api.Pantry.GetAsync(request);
-
-        if (!response.IsSuccessfulWithContent)
-            return;
-
-        var content = response.Content;
-
-        _items = new(content.Items);
-        _totalItems = content.TotalItems;
+        if (await Sheet.OpenAsync<ItemForm>() is "saved")
+            await LoadAsync();
     }
 
-    private void CreateItemAsync()
+    private async Task LoadAsync()
     {
-        
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var request = new GetPantryItemsRequest
+            {
+                Location = _location,
+                Name = _name
+            };
+
+            using var response = await Api.Pantry.GetAsync(request);
+
+            if (!response.IsSuccessfulWithContent)
+            {
+                Logger.LogWarning("Pantry list load failed with {StatusCode}", response.StatusCode);
+                _error = "load";
+                return;
+            }
+
+            _items = new(response.Content.Items);
+            _totalItems = response.Content.TotalItems;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Pantry list load failed");
+            _error = "load";
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 }

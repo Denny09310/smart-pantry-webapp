@@ -1,0 +1,170 @@
+@page "/items/{id}"
+
+@inject ServerApi Api
+@inject BottomSheetService Sheet
+@inject DialogService Dialogs
+@inject ToastService Toasts
+@inject NavigationManager Navigation
+@inject ILogger<ItemDetails> Logger
+
+<div class="space-y-4">
+    <NavLink href="/" class="inline-flex items-center gap-1 text-sm">
+        <LucideIcon Name="arrow-left" Size="16" />
+        Pantry
+    </NavLink>
+
+    @if (_loading)
+    {
+        <div class="space-y-2" aria-hidden="true">
+            <BbSkeleton Height="28px" Class="w-2/3" />
+            <BbSkeleton Height="16px" Class="w-full" />
+            <BbSkeleton Height="16px" Class="w-4/5" />
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+            <p class="text-sm">Couldn't load the item. Try again.</p>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
+        </div>
+    }
+    else if (_item is null)
+    {
+        <BbEmpty Title="Item not found" Description="It may have been deleted">
+            <Icon>
+                <LucideIcon Name="search" Size="24" />
+            </Icon>
+            <ChildContent>
+                <NavLink href="/">
+                    <BbButton Variant="ButtonVariant.Outline">Back to pantry</BbButton>
+                </NavLink>
+            </ChildContent>
+        </BbEmpty>
+    }
+    else
+    {
+        var status = ExpiryHelper.GetStatus(_item.ExpirationDate, _today);
+        <header class="space-y-2">
+            <h1 class="text-xl font-semibold">@_item.Name</h1>
+            <div class="flex flex-wrap gap-2">
+                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+                <BbBadge Variant="BadgeVariant.Outline">@_item.Location</BbBadge>
+            </div>
+        </header>
+
+        <dl class="space-y-2 rounded-md border p-4 text-sm">
+            <div class="flex justify-between gap-2">
+                <dt class="text-muted-foreground">Quantity</dt>
+                <dd>@_item.Quantity @_item.Unit</dd>
+            </div>
+            <div class="flex justify-between gap-2">
+                <dt class="text-muted-foreground">Expires on</dt>
+                <dd>@_item.ExpirationDate.ToString("MMM d, yyyy")</dd>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_item.Notes))
+            {
+                <div class="space-y-1">
+                    <dt class="text-muted-foreground">Notes</dt>
+                    <dd>@_item.Notes</dd>
+                </div>
+            }
+        </dl>
+
+        <div class="grid grid-cols-2 gap-2">
+            <BbButton Variant="ButtonVariant.Outline" @onclick="OpenEditAsync">
+                <LucideIcon Name="pencil" Size="16" />
+                Edit
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Destructive" @onclick="DeleteAsync">Delete</BbButton>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private PantryItemDto? _item;
+    private string? _loadedId;
+    private bool _loading = true;
+    private string? _error;
+    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id == _loadedId)
+            return;
+
+        _loadedId = Id;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _item = null;
+
+        try
+        {
+            using var response = await Api.Pantry.GetByIdAsync(Id);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return;
+
+            if (!response.IsSuccessfulWithContent)
+            {
+                Logger.LogWarning("Item {ItemId} load failed with {StatusCode}", Id, response.StatusCode);
+                _error = "load";
+                return;
+            }
+
+            _item = response.Content;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Item {ItemId} load failed", Id);
+            _error = "load";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenEditAsync()
+    {
+        var parameters = new Dictionary<string, object?> { ["ItemId"] = Id };
+        if (await Sheet.OpenAsync<ItemForm>(parameters) is "saved")
+            await LoadAsync();
+    }
+
+    private async Task DeleteAsync()
+    {
+        var confirmed = await Dialogs.ConfirmAsync(
+            "Delete item?",
+            $"“{_item?.Name}” will be permanently removed.",
+            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
+
+        if (!confirmed.Confirmed)
+            return;
+
+        try
+        {
+            using var response = await Api.Pantry.DeleteAsync(Id);
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", Id, response.StatusCode);
+                Toasts.Error("Couldn't delete the item. Try again.");
+                return;
+            }
+
+            Toasts.Success("Item deleted.");
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Item {ItemId} delete failed", Id);
+            Toasts.Error("Couldn't delete the item. Try again.");
+        }
+    }
+}

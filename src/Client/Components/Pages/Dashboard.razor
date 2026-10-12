@@ -1,0 +1,125 @@
+@page "/dashboard"
+
+@inject ServerApi Api
+@inject ILogger<Dashboard> Logger
+
+<header>
+    <h1 class="text-xl font-semibold">Dashboard</h1>
+</header>
+
+@if (_loading)
+{
+    <div class="space-y-2" aria-hidden="true">
+        <div class="grid grid-cols-3 gap-2">
+            <BbSkeleton Height="72px" Class="w-full" />
+            <BbSkeleton Height="72px" Class="w-full" />
+            <BbSkeleton Height="72px" Class="w-full" />
+        </div>
+        <BbSkeleton Height="64px" Class="w-full" />
+        <BbSkeleton Height="64px" Class="w-full" />
+    </div>
+}
+else if (_error is not null)
+{
+    <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+        <p class="text-sm">Couldn't load the dashboard. Try again.</p>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="rounded-md border p-3">
+            <div class="text-2xl font-semibold">@_total</div>
+            <div class="text-xs text-muted-foreground">Items</div>
+        </div>
+        <div class="rounded-md border p-3">
+            <div class="text-2xl font-semibold">@_expiringSoon</div>
+            <div class="text-xs text-muted-foreground">Expiring soon</div>
+        </div>
+        <div class="rounded-md border p-3">
+            <div class="text-2xl font-semibold">@_expired</div>
+            <div class="text-xs text-muted-foreground">Expired</div>
+        </div>
+    </div>
+
+    <section class="space-y-2">
+        <h2 class="text-base font-semibold">Needs attention</h2>
+        @if (_attention.Count == 0)
+        {
+            <p class="text-sm text-muted-foreground">Nothing expiring this week. Nice.</p>
+        }
+        else
+        {
+            <ul class="space-y-2">
+                @foreach (var item in _attention)
+                {
+                    var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
+                    <li @key="item.Id">
+                        <a href="@($"/items/{item.Id}")" class="flex items-center justify-between gap-2 rounded-md border p-3">
+                            <span>
+                                <span class="block font-medium">@item.Name</span>
+                                <span class="block text-sm text-muted-foreground">@item.ExpirationDate.ToString("MMM d")</span>
+                            </span>
+                            <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+
+    private int _total;
+    private int _expiringSoon;
+    private int _expired;
+    private List<PantryItemDto> _attention = new();
+    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            // Household scale: one page of up to 100 items covers the counts.
+            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest { Take = 100 });
+
+            if (!response.IsSuccessfulWithContent)
+            {
+                Logger.LogWarning("Dashboard load failed with {StatusCode}", response.StatusCode);
+                _error = "load";
+                return;
+            }
+
+            var items = response.Content.Items.ToList();
+            _total = response.Content.TotalItems;
+            _expired = items.Count(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.Expired);
+            _expiringSoon = items.Count(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.ExpiringSoon);
+            _attention = items
+                .Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) != ExpiryStatus.Fresh)
+                .OrderBy(x => x.ExpirationDate)
+                .Take(10)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Dashboard load failed");
+            _error = "load";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

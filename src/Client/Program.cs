@@ -12,5 +12,6 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 builder.Services.AddBlazorBlueprintComponents();
 builder.Services.AddServerApi();
+builder.Services.AddScoped<BottomSheetService>();
 
 await builder.Build().RunAsync();

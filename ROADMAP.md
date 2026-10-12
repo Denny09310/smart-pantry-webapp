@@ -36,12 +36,12 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 3 — Core Blazor UI
 
-- [ ] Build the pantry list, item details/edit form, and add-item flow.
-- [ ] Build a dashboard with useful at-a-glance pantry and expiry information.
-- [ ] Support locations, quantities/units, and expiry dates in everyday workflows.
-- [ ] Add loading, empty, validation, and error states.
+- [x] Build the pantry list, item details/edit form, and add-item flow.
+- [x] Build a dashboard with useful at-a-glance pantry and expiry information.
+- [x] Support locations, quantities/units, and expiry dates in everyday workflows.
+- [x] Add loading, empty, validation, and error states.
 - [ ] Make the layouts usable on phone and desktop.
-- [ ] Check BlazorBlueprint first; create custom UI components only when existing components do not fit.
+- [x] Check BlazorBlueprint first; create custom UI components only when existing components do not fit.
 
 **Done when:** a user can add, browse, edit, and remove pantry items comfortably on desktop and mobile.
 

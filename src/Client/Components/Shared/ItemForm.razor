@@ -1,0 +1,173 @@
+@namespace Client.Components
+@using Client.Models
+@inject BottomSheetService Sheet
+@inject ServerApi Api
+@inject ToastService Toasts
+@inject ILogger<ItemForm> Logger
+
+<div class="space-y-4">
+    <h2 class="text-lg font-semibold">@(ItemId is null ? "Add item" : "Edit item")</h2>
+
+    @if (_loading)
+    {
+        <div class="space-y-2" aria-hidden="true">
+            <BbSkeleton Height="16px" Class="w-full" />
+            <BbSkeleton Height="16px" Class="w-4/5" />
+            <BbSkeleton Height="16px" Class="w-3/5" />
+        </div>
+    }
+    else
+    {
+        <EditForm Model="_model" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <CustomValidator @ref="_customValidator" />
+
+            <div class="grid gap-4">
+                <div>
+                    <label class="mb-1 block text-sm font-medium" for="item-name">Name</label>
+                    <InputText id="item-name" @bind-Value="_model.Name" placeholder="Milk" />
+                    <ValidationMessage For="() => _model.Name" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium" for="item-qty">Quantity</label>
+                        <InputNumber id="item-qty" @bind-Value="_model.Quantity" min="0" step="any" />
+                        <ValidationMessage For="() => _model.Quantity" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium" for="item-unit">Unit</label>
+                        <InputText id="item-unit" @bind-Value="_model.Unit" placeholder="pcs, g, L…" />
+                        <ValidationMessage For="() => _model.Unit" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium" for="item-location">Location</label>
+                    <BbNativeSelect TValue="string" id="item-location" @bind-Value="_model.Location">
+                        @foreach (var location in PantryLocations.Values)
+                        {
+                            <option value="@location">@location</option>
+                        }
+                    </BbNativeSelect>
+                    <ValidationMessage For="() => _model.Location" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium" for="item-expiry">Expires on</label>
+                    <InputDate id="item-expiry" @bind-Value="_model.ExpirationDate" />
+                    <ValidationMessage For="() => _model.ExpirationDate" />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium" for="item-notes">Notes (optional)</label>
+                    <InputTextArea id="item-notes" @bind-Value="_model.Notes" rows="2" />
+                    <ValidationMessage For="() => _model.Notes" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-4">
+                <BbButton Variant="ButtonVariant.Outline" @onclick="() => Sheet.CloseAsync()">Cancel</BbButton>
+                <BbButton Type="ButtonType.Submit" Disabled="_saving">
+                    @(_saving ? "Saving…" : "Save")
+                </BbButton>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter] public string? ItemId { get; set; }
+
+    private ItemFormModel _model = new();
+    private CustomValidator? _customValidator;
+    private string? _loadedForId = "__none__";
+    private bool _loading;
+    private bool _saving;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ItemId == _loadedForId)
+            return;
+
+        _loadedForId = ItemId;
+
+        if (ItemId is null)
+        {
+            _model = new();
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            using var response = await Api.Pantry.GetByIdAsync(ItemId);
+            if (response.IsSuccessfulWithContent)
+            {
+                _model = ItemFormModel.FromDto(response.Content);
+            }
+            else
+            {
+                Logger.LogWarning("Failed to load item {ItemId} for editing: {StatusCode}", ItemId, response.StatusCode);
+                Toasts.Error("Couldn't load the item. Try again.");
+                await Sheet.CloseAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load item {ItemId} for editing", ItemId);
+            Toasts.Error("Couldn't load the item. Try again.");
+            await Sheet.CloseAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            if (ItemId is null)
+            {
+                using var response = await Api.Pantry.CreateAsync(_model.ToCreateRequest());
+                if (!await HandleSavedAsync(response, "Item added."))
+                    return;
+            }
+            else
+            {
+                using var response = await Api.Pantry.UpdateAsync(ItemId, _model.ToUpdateRequest());
+                if (!await HandleSavedAsync(response, "Item updated."))
+                    return;
+            }
+
+            await Sheet.CloseAsync("saved");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task<bool> HandleSavedAsync<T>(ApiResponse<T> response, string successMessage)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            Toasts.Success(successMessage);
+            return true;
+        }
+
+        var errors = await ApiErrors.ReadValidationErrorsAsync(response.Error);
+        if (errors is not null)
+        {
+            _customValidator?.DisplayErrors(errors);
+            return false;
+        }
+
+        Logger.LogWarning("Save failed with {StatusCode}", response.StatusCode);
+        Toasts.Error("Couldn't save. Try again.");
+        return false;
+    }
+}
