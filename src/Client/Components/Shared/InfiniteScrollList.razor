@@ -64,6 +64,7 @@ else if (_error is null && _items.Count == 0)
     private readonly List<TItem> _items = new();
     private int _total = int.MaxValue;
     private bool _loading;
+    private Task? _loadTask;
     private string? _error;
     private int _generation;
     private bool _disposed;
@@ -99,10 +100,38 @@ else if (_error is null && _items.Count == 0)
         _items.Clear();
         _total = int.MaxValue;
         _error = null;
-        await LoadNextAsync();
+        StateHasChanged();
+
+        // A load already running would discard its result on the generation
+        // check and leave the list empty: let it finish, then load fresh.
+        if (_loadTask is { IsCompleted: false } running)
+        {
+            try
+            {
+                await running;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        if (!_disposed)
+            await LoadNextAsync();
     }
 
-    private async Task LoadNextAsync()
+    private Task LoadNextAsync()
+    {
+        if (_loading || !HasMore || _disposed)
+            return Task.CompletedTask;
+
+        _loadTask = LoadNextCoreAsync();
+        return _loadTask;
+    }
+
+    private async Task LoadNextCoreAsync()
     {
         if (_loading || !HasMore || _disposed)
             return;

@@ -745,6 +745,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Camera access was denied..
+        /// </summary>
+        public static string ScannerDenied {
+            get {
+                return ResourceManager.GetString("ScannerDenied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Camera scanning isn&apos;t supported on this device..
+        /// </summary>
+        public static string ScannerUnsupported {
+            get {
+                return ResourceManager.GetString("ScannerUnsupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Search pantry items....
         /// </summary>
         public static string SearchPlaceholder {

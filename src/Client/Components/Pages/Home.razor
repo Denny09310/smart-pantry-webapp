@@ -6,6 +6,7 @@
 @inject ToastService Toasts
 @inject ILogger<Home> Logger
 @inject LocalizationService Loc
+@implements IDisposable
 
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
@@ -28,7 +29,7 @@
             <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
                 <LucideIcon Name="search" Size="16" />
             </BbInputGroupAddon>
-            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="ReloadListAsync"
+            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="OnSearchInput"
                                Placeholder="@Loc["SearchPlaceholder"]" />
         </BbInputGroup>
     </div>
@@ -86,6 +87,7 @@
 @code {
     private InfiniteScrollList<PantryItemDto>? _list;
     private int _total;
+    private CancellationTokenSource? _searchCts;
 
     private string? _location = PantryLocations.All, _name;
     private string _status = PantryRules.StatusAll;
@@ -170,4 +172,32 @@
 
     private Task ReloadListAsync()
         => _list is not null ? _list.ReloadAsync() : Task.CompletedTask;
+
+    /// <summary>Debounced search: one reload per pause in typing, not per keystroke.</summary>
+    private void OnSearchInput()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        _ = DebouncedReloadAsync(_searchCts.Token);
+    }
+
+    private async Task DebouncedReloadAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(300, ct);
+            await InvokeAsync(ReloadListAsync);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by newer input; nothing to do.
+        }
+    }
+
+    public void Dispose()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+    }
 }
