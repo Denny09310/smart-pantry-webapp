@@ -82,6 +82,71 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
     }
 
     [Fact]
+    public async Task StatusAll_ReturnsUnfiltered()
+    {
+        var prefix = $"test-all-{Guid.CreateVersion7()}";
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var expired = await SeedItemAsync($"{prefix}-expired", today.AddDays(-1));
+        var fresh = await SeedItemAsync($"{prefix}-fresh", today.AddDays(30));
+
+        try
+        {
+            using var response = await _client.GetAsync($"/api/pantry?name={prefix}&status=all");
+            response.EnsureSuccessStatusCode();
+            var page = await response.Content.ReadFromJsonAsync<GetPantryItemsResponse>();
+            Assert.NotNull(page);
+            var ids = page.Items.Select(x => x.Id).ToList();
+            Assert.Contains(expired.Id, ids);
+            Assert.Contains(fresh.Id, ids);
+        }
+        finally
+        {
+            await DeleteItemAsync(expired.Id);
+            await DeleteItemAsync(fresh.Id);
+        }
+    }
+
+    [Fact]
+    public async Task LocationFilter_IsCaseInsensitiveExactMatch()
+    {
+        var prefix = $"test-loc-{Guid.CreateVersion7()}";
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        string id;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var item = new PantryItem
+            {
+                Name = $"{prefix}-fridge",
+                Quantity = 1,
+                Unit = "pcs",
+                Location = "Fridge",
+                ExpirationDate = today.AddDays(5)
+            };
+            db.Items.Add(item);
+            await db.SaveChangesAsync();
+            id = item.Id;
+        }
+
+        try
+        {
+            var upper = await _client.GetFromJsonAsync<GetPantryItemsResponse>(
+                $"/api/pantry?name={prefix}&location=FRIDGE");
+            Assert.NotNull(upper);
+            Assert.Contains(upper.Items, x => x.Id == id);
+
+            var partial = await _client.GetFromJsonAsync<GetPantryItemsResponse>(
+                $"/api/pantry?name={prefix}&location=frid");
+            Assert.NotNull(partial);
+            Assert.DoesNotContain(partial.Items, x => x.Id == id);
+        }
+        finally
+        {
+            await DeleteItemAsync(id);
+        }
+    }
+
+    [Fact]
     public async Task SortName_ReturnsAlphabeticalOrder()
     {
         var prefix = $"test-sort-{Guid.CreateVersion7()}";

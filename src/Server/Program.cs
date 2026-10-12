@@ -40,6 +40,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseExceptionHandler();
+
 app.MapEndpointHandlers();
 
 app.MapStaticAssets();

@@ -17,7 +17,10 @@ internal class PantryEndpoints(ApplicationDbContext db)
         [AsParameters] GetPantryItemsRequest request,
         CancellationToken ct)
     {
-        if (request.Status is not null && !PantryRules.Statuses.Contains(request.Status))
+        // "all" is documented as unfiltered: normalize before validating.
+        var status = request.Status is PantryRules.StatusAll ? null : request.Status;
+
+        if (status is not null && !PantryRules.Statuses.Contains(status))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
@@ -42,13 +45,14 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         var query = db.Items.AsNoTracking();
 
+        // Closed location set: exact match, case-insensitive like Name.
         if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not PantryRules.LocationAll)
-            query = query.Where(x => x.Location.Contains(request.Location));
+            query = query.Where(x => EF.Functions.ILike(x.Location, request.Location));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
             query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
 
-        query = request.Status switch
+        query = status switch
         {
             PantryRules.StatusExpired => query.Where(x => x.ExpirationDate < today),
             PantryRules.StatusSoon => query.Where(x => x.ExpirationDate >= today && x.ExpirationDate <= horizon),
@@ -88,7 +92,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
     }
 
     [MapPost("/")]
-    public async Task<Results<Ok<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
+    public async Task<Results<Created<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
         [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
@@ -110,7 +114,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
 
-        return TypedResults.Ok(ToDto(entry));
+        return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
     }
 
     [MapGet("/{id}")]

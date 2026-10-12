@@ -57,11 +57,14 @@ internal class NotificationEndpoints(ApplicationDbContext db)
             .Select(x => new { x.Name, x.ExpirationDate })
             .FirstOrDefaultAsync(ct);
 
+        if (item is null)
+            return NotificationNotFound(entry.PantryItemId);
+
         return TypedResults.Ok(new NotificationDto(
             entry.Id,
             entry.PantryItemId,
-            item?.Name ?? string.Empty,
-            item?.ExpirationDate ?? default,
+            item.Name,
+            item.ExpirationDate,
             entry.CreatedAt,
             entry.ReadAt));
     }

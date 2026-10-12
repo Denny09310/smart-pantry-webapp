@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+
 using Server.Data;
 using Server.Data.Entities;
 using Server.Services;
@@ -93,6 +95,18 @@ public sealed class ReminderWorker(
                 await db.SaveChangesAsync(ct);
                 created++;
                 reminded.Add((item.Id, item.Name, item.ExpirationDate));
+            }
+            catch (OperationCanceledException)
+            {
+                // Shutting down: stop at once instead of failing every rest item.
+                db.ChangeTracker.Clear();
+                throw;
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg
+                && pg.SqlState == PostgresErrorCodes.UniqueViolation)
+            {
+                // Lost a race with an overlapping run: the reminder already exists.
+                db.ChangeTracker.Clear();
             }
             catch (Exception ex)
             {

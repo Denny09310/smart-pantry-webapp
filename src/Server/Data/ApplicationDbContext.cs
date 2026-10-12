@@ -22,6 +22,10 @@ public class ApplicationDbContext(
             entity.Property(x => x.Unit).HasMaxLength(32);
             entity.Property(x => x.Location).HasMaxLength(64);
             entity.Property(x => x.Notes).HasMaxLength(2000);
+            entity.Property(x => x.Barcode).HasMaxLength(32);
+            entity.Property(x => x.NutriScore).HasMaxLength(2);
+
+            entity.HasIndex(x => x.ExpirationDate);
 
             entity.HasOne(x => x.HouseholdMember)
                 .WithMany()
@@ -44,7 +48,7 @@ public class ApplicationDbContext(
                 .HasForeignKey(x => x.PantryItemId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(x => new { x.PantryItemId, x.ExpirationDate, x.Type });
+            entity.HasIndex(x => new { x.PantryItemId, x.ExpirationDate, x.Type }).IsUnique();
         });
 
         modelBuilder.Entity<PushSubscription>(entity =>

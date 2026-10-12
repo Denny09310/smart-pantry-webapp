@@ -48,6 +48,18 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
     }
 
     [Fact]
+    public async Task Create_WhitespaceName_ReturnsValidationProblem()
+    {
+        var response = await _client.PostAsJsonAsync("/api/members",
+            new CreateHouseholdMemberRequest("   "));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.NotNull(doc);
+        Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("DisplayName", out _));
+    }
+
+    [Fact]
     public async Task Update_RenameAndArchive_RoundTrips()
     {
         var created = await CreateMemberAsync($"test-member-{Guid.CreateVersion7()}");

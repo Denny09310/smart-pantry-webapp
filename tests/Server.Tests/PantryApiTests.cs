@@ -70,7 +70,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
 
             try
             {
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
                 var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
                 Assert.NotNull(created);
                 Assert.Equal(member.Id, created.HouseholdMemberId);
@@ -102,7 +102,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         try
         {
             // Attribution is a label, never access control: unknown members resolve to null.
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
             Assert.NotNull(created);
             Assert.Null(created.HouseholdMemberId);
@@ -123,7 +123,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
 
         try
         {
-            Assert.Equal(HttpStatusCode.OK, create.StatusCode);
+            Assert.Equal(HttpStatusCode.Created, create.StatusCode);
             var created = await create.Content.ReadFromJsonAsync<PantryItemDto>();
             Assert.NotNull(created);
             Assert.False(string.IsNullOrWhiteSpace(created.Id));

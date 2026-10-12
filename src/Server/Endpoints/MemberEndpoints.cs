@@ -33,6 +33,15 @@ internal class MemberEndpoints(ApplicationDbContext db)
         CreateHouseholdMemberRequest request,
         CancellationToken ct)
     {
+        // [Required] passes whitespace: reject it before Trim stores "".
+        if (string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.DisplayName)] = ["Display name must not be blank."]
+            });
+        }
+
         var entry = new HouseholdMember
         {
             DisplayName = request.DisplayName.Trim(),
@@ -54,6 +63,14 @@ internal class MemberEndpoints(ApplicationDbContext db)
         var entry = await db.Members.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entry is null)
             return MemberNotFound(id);
+
+        if (string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.DisplayName)] = ["Display name must not be blank."]
+            });
+        }
 
         entry.DisplayName = request.DisplayName.Trim();
         entry.Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim();

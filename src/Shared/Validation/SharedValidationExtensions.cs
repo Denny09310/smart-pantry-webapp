@@ -3,8 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Shared.Validation;
 
 /// <summary>
-/// Registers the Shared assembly with the validation source generator so that
-/// Minimal API validation metadata is produced for the transport contracts.
+/// Ensures validation services are registered for the transport contracts.
+/// The source generator emits metadata per assembly for
+/// <c>[ValidatableType]</c> roots; this call (like the host's own
+/// <c>AddValidation()</c>) registers the runtime services that consume it.
 /// Called from the host app alongside its own <c>AddValidation()</c>.
 /// </summary>
 public static class SharedValidationExtensions
