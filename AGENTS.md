@@ -108,6 +108,6 @@ Do not claim deployment, external actions, or successful verification unless the
 ## UI
 
 - BlazorBlueprint 4.1.0 (`Bb*` components, Lucide icons) — check its components/patterns before building custom UI. `_Layout.razor` already hosts `BbPortalHost`, `BbToastProvider`, `BbDialogProvider` (required for portal/toast/dialog components).
-- Mobile-first: phone UI is the current target (bottom nav in `_Layout.razor`, bottom-sheet forms, native date/select inputs for OS pickers); desktop layout is explicitly deferred. Never create a `Client.Components.Shared` namespace — it hijacks `@using Shared.Models` resolution; shared components live in `Client.Components` via `@namespace`.
+- Mobile-first: phone UI is the current target (custom floating `BottomBar` + bottom-sheet forms in `_Layout.razor`, native date/select inputs for OS pickers); desktop layout is explicitly deferred. Never create a `Client.Components.Shared` namespace — it hijacks `@using Shared.Models` resolution; shared components live in `Client.Components` via `@namespace`.
 - Bottom sheets are custom, not `BbSheet`: global `BottomSheetService` + `BottomSheetProvider` (handle, snap points, pan-to-close, colocated JS, isolated CSS; the body region scrolls, the sheet itself never does). Page-only components go in `Shared/<Page>/`, cross-page ones at `Shared/` root.
 - PWA shell (manifest, icons, service worker) already exists in `Client/wwwroot`; offline sync stays out of scope per roadmap.

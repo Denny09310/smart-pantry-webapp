@@ -1,0 +1,23 @@
+@namespace Client.Components
+
+<nav aria-label="Primary" class="fixed inset-x-4 bottom-4 z-30 rounded-2xl border bg-background shadow-lg">
+    <div class="flex items-center justify-around gap-2 px-2 pb-[env(safe-area-inset-bottom)] pt-2">
+        <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="@ActiveTokens" class="@ItemBase">
+            <LucideIcon Name="package" Size="20" />
+            Pantry
+        </NavLink>
+        <NavLink href="/dashboard" ActiveClass="@ActiveTokens" class="@ItemBase">
+            <LucideIcon Name="clock" Size="20" />
+            Dashboard
+        </NavLink>
+    </div>
+</nav>
+
+@code
+{
+    private const string ItemBase =
+        "flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-xs " +
+        "hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring";
+
+    private const string ActiveTokens = "bg-primary/10 text-primary";
+}

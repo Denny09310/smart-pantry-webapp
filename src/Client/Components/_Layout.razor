@@ -1,19 +1,10 @@
 ﻿@inherits LayoutComponentBase
-@implements IDisposable
-@inject NavigationManager Navigation
 
 <main class="p-4 pb-28 space-y-4">
     @Body
 </main>
 
-<BbBottomNav Value="@_activeTab" AriaLabel="Primary">
-    <BbBottomNavItem Value="pantry" Label="Pantry" Href="/">
-        <Icon><LucideIcon Name="package" Size="20" /></Icon>
-    </BbBottomNavItem>
-    <BbBottomNavItem Value="dashboard" Label="Dashboard" Href="/dashboard">
-        <Icon><LucideIcon Name="clock" Size="20" /></Icon>
-    </BbBottomNavItem>
-</BbBottomNav>
+<BottomBar />
 
 <!-- Required for portal-based components (Popover, Dialog, Select, etc.) -->
 <BbPortalHost />
@@ -26,29 +17,3 @@
 
 <!-- Global bottom sheet (BottomSheetService) -->
 <BottomSheetProvider />
-
-@code {
-    private string _activeTab = "pantry";
-
-    protected override void OnInitialized()
-    {
-        UpdateActiveTab();
-        Navigation.LocationChanged += HandleLocationChanged;
-    }
-
-    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        UpdateActiveTab();
-        _ = InvokeAsync(StateHasChanged);
-    }
-
-    private void UpdateActiveTab()
-    {
-        var path = Navigation.ToBaseRelativePath(Navigation.Uri);
-        _activeTab = path.StartsWith("dashboard", StringComparison.OrdinalIgnoreCase)
-            ? "dashboard"
-            : "pantry";
-    }
-
-    public void Dispose() => Navigation.LocationChanged -= HandleLocationChanged;
-}

@@ -133,7 +133,10 @@
 
     private async Task OpenEditAsync()
     {
-        var parameters = new Dictionary<string, object?> { ["ItemId"] = Id };
+        if (_item is null)
+            return;
+
+        var parameters = new Dictionary<string, object?> { ["Item"] = _item };
         if (await Sheet.OpenAsync<ItemForm>(parameters) is "saved")
             await LoadAsync();
     }

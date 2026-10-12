@@ -1,4 +1,5 @@
 @namespace Client.Components
+@using System.ComponentModel.DataAnnotations
 @using Client.Models
 @inject BottomSheetService Sheet
 @inject ServerApi Api
@@ -6,139 +7,219 @@
 @inject ILogger<ItemForm> Logger
 
 <div class="space-y-4">
-    <h2 class="text-lg font-semibold">@(ItemId is null ? "Add item" : "Edit item")</h2>
+    <div>
+        <h2 class="text-lg font-semibold">@(Item is null ? "Add item" : "Edit item")</h2>
+        <p class="text-sm text-muted-foreground">
+            @(Item is null ? "Register a new batch with its expiry date." : "Update the batch details.")
+        </p>
+    </div>
 
-    @if (_loading)
-    {
-        <div class="space-y-2" aria-hidden="true">
-            <BbSkeleton Height="16px" Class="w-full" />
-            <BbSkeleton Height="16px" Class="w-4/5" />
-            <BbSkeleton Height="16px" Class="w-3/5" />
-        </div>
-    }
-    else
-    {
-        <EditForm Model="_model" OnValidSubmit="SaveAsync">
-            <DataAnnotationsValidator />
-            <CustomValidator @ref="_customValidator" />
+    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync">
+        <DataAnnotationsValidator />
+        <CustomValidator @ref="_customValidator" />
 
-            <div class="grid gap-4">
-                <div>
-                    <label class="mb-1 block text-sm font-medium" for="item-name">Name</label>
-                    <InputText id="item-name" @bind-Value="_model.Name" placeholder="Milk" />
-                    <ValidationMessage For="() => _model.Name" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium" for="item-qty">Quantity</label>
-                        <InputNumber id="item-qty" @bind-Value="_model.Quantity" min="0" step="any" />
-                        <ValidationMessage For="() => _model.Quantity" />
+        <div class="space-y-4">
+                @* Item name *@
+                <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
+                    <div class="flex items-center justify-between">
+                        <BbFieldLabel For="item-name" Class="text-sm font-medium">Item name *</BbFieldLabel>
+                        <span class="text-xs text-muted-foreground">Required</span>
                     </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium" for="item-unit">Unit</label>
-                        <InputText id="item-unit" @bind-Value="_model.Unit" placeholder="pcs, g, L…" />
-                        <ValidationMessage For="() => _model.Unit" />
-                    </div>
-                </div>
+                    <BbFieldContent>
+                        <BbInputGroup Class="bg-card">
+                            <BbInputGroupInput Id="item-name" @bind-Value="Input.Name"
+                                               Placeholder="e.g. Tomato passata, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
+                        </BbInputGroup>
+                        <BbFieldError Errors="@context.GetValidationMessages(() => Input.Name)" />
+                    </BbFieldContent>
+                </BbField>
 
-                <div>
-                    <label class="mb-1 block text-sm font-medium" for="item-location">Location</label>
-                    <BbNativeSelect TValue="string" id="item-location" @bind-Value="_model.Location">
-                        @foreach (var location in PantryLocations.Values)
+                @* Quantity & unit *@
+                <div class="space-y-2">
+                    <BbLabel Class="text-sm font-medium">Quantity and unit</BbLabel>
+
+                    <div class="flex items-center justify-between rounded-lg bg-muted p-1">
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button" AriaLabel="Decrease quantity"
+                                  OnClick="DecrementQuantity">
+                            <LucideIcon Name="minus" Size="16" />
+                        </BbButton>
+                        <div class="flex flex-col items-center leading-none">
+                            <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
+                            <span class="text-xs text-muted-foreground">@Input.Unit</span>
+                        </div>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button" AriaLabel="Increase quantity"
+                                  OnClick="IncrementQuantity">
+                            <LucideIcon Name="plus" Size="16" />
+                        </BbButton>
+                    </div>
+                    <ValidationMessage For="@(() => Input.Quantity)" class="text-sm text-destructive" />
+
+                    <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
+                        @foreach (var unit in PantryLocations.Units)
                         {
-                            <option value="@location">@location</option>
+                            <BbChip Value="@(unit)">@unit</BbChip>
                         }
-                    </BbNativeSelect>
-                    <ValidationMessage For="() => _model.Location" />
+                    </BbChipSet>
+                    <ValidationMessage For="@(() => Input.Unit)" class="text-sm text-destructive" />
                 </div>
 
-                <div>
-                    <label class="mb-1 block text-sm font-medium" for="item-expiry">Expires on</label>
-                    <InputDate id="item-expiry" @bind-Value="_model.ExpirationDate" />
-                    <ValidationMessage For="() => _model.ExpirationDate" />
+                @* Location *@
+                <div class="space-y-2">
+                    <BbLabel Class="text-sm font-medium">Location</BbLabel>
+                    <BbToggleGroup @bind-Value="Input.Location" Type="ToggleGroupType.Single" Required="true"
+                                   Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
+                        <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="package" Size="20" />
+                            <span class="text-xs font-medium">Pantry</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("fridge")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="refrigerator" Size="20" />
+                            <span class="text-xs font-medium">Fridge</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("freezer")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="snowflake" Size="20" />
+                            <span class="text-xs font-medium">Freezer</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("cabinet")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="archive" Size="20" />
+                            <span class="text-xs font-medium">Cabinet</span>
+                        </BbToggleGroupItem>
+                    </BbToggleGroup>
+                    <ValidationMessage For="@(() => Input.Location)" class="text-sm text-destructive" />
                 </div>
 
-                <div>
-                    <label class="mb-1 block text-sm font-medium" for="item-notes">Notes (optional)</label>
-                    <InputTextArea id="item-notes" @bind-Value="_model.Notes" rows="2" />
-                    <ValidationMessage For="() => _model.Notes" />
+                @* Expiry *@
+                <BbField>
+                    <BbFieldLabel Class="text-sm font-medium">Duration and expiry</BbFieldLabel>
+                    <BbFieldContent>
+                        <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)" DateFormat="dd/MM/yyyy"
+                                      Placeholder="Pick a date" Class="w-full" />
+                        <ValidationMessage For="@(() => Input.ExpirationDate)" class="text-sm text-destructive" />
+                    </BbFieldContent>
+                </BbField>
+
+                <div class="space-y-2">
+                    <span class="text-xs text-muted-foreground">Shortcuts</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(3))">+3 days</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(7))">+1 week</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(30))">+1 month</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(182))">+6 months</BbButton>
+                    </div>
+                    <BbBadge Variant="@Banner.Variant">
+                        <BbBadgeIcon Name="@Banner.Icon" />
+                        @Banner.Text
+                    </BbBadge>
+                </div>
+
+                @* Notes *@
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <BbLabel For="batch-notes" Class="text-sm font-medium">Batch notes</BbLabel>
+                        <span class="text-xs text-muted-foreground">Optional</span>
+                    </div>
+                    <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened" rows="2" />
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 pt-4">
-                <BbButton Variant="ButtonVariant.Outline" @onclick="() => Sheet.CloseAsync()">Cancel</BbButton>
-                <BbButton Type="ButtonType.Submit" Disabled="_saving">
-                    @(_saving ? "Saving…" : "Save")
+            <div class="shrink-0 space-y-1 border-t pt-3">
+                <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving" IconPosition="IconPosition.Start">
+                    <Icon>
+                        <LucideIcon Name="save" Size="16" />
+                    </Icon>
+                    <ChildContent>@(Item is null ? "Save item" : "Save changes")</ChildContent>
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button" OnClick="() => Sheet.CloseAsync()">
+                    Cancel
                 </BbButton>
             </div>
         </EditForm>
-    }
 </div>
 
 @code {
-    [Parameter] public string? ItemId { get; set; }
+    /// <summary>When set, the form edits this item instead of creating a new one.</summary>
+    [Parameter]
+    public PantryItemDto? Item { get; set; }
 
-    private ItemFormModel _model = new();
-    private CustomValidator? _customValidator;
-    private string? _loadedForId = "__none__";
-    private bool _loading;
     private bool _saving;
+    private InputModel Input { get; set; } = new();
+    private string? _editingId;
+    private CustomValidator? _customValidator;
 
-    protected override async Task OnParametersSetAsync()
+    private ExpiryHelper.ExpiryBanner Banner => ExpiryHelper.GetBanner(
+        DateOnly.FromDateTime((Input.ExpirationDate ?? DateTime.Today.AddDays(7)).Date),
+        DateOnly.FromDateTime(DateTime.Today));
+
+    protected override void OnParametersSet()
     {
-        if (ItemId == _loadedForId)
-            return;
-
-        _loadedForId = ItemId;
-
-        if (ItemId is null)
+        if (Item is { } item && _editingId != item.Id)
         {
-            _model = new();
-            return;
-        }
-
-        _loading = true;
-        try
-        {
-            using var response = await Api.Pantry.GetByIdAsync(ItemId);
-            if (response.IsSuccessfulWithContent)
+            _editingId = item.Id;
+            Input = new InputModel
             {
-                _model = ItemFormModel.FromDto(response.Content);
-            }
-            else
-            {
-                Logger.LogWarning("Failed to load item {ItemId} for editing: {StatusCode}", ItemId, response.StatusCode);
-                Toasts.Error("Couldn't load the item. Try again.");
-                await Sheet.CloseAsync();
-            }
+                Name = item.Name,
+                Quantity = item.Quantity,
+                Unit = item.Unit,
+                Location = item.Location,
+                Notes = item.Notes,
+                ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue)
+            };
         }
-        catch (Exception ex)
+        else if (Item is null && _editingId is not null)
         {
-            Logger.LogError(ex, "Failed to load item {ItemId} for editing", ItemId);
-            Toasts.Error("Couldn't load the item. Try again.");
-            await Sheet.CloseAsync();
-        }
-        finally
-        {
-            _loading = false;
+            _editingId = null;
+            Input = new InputModel();
         }
     }
 
-    private async Task SaveAsync()
+    private void IncrementQuantity()
     {
+        if (Input.Quantity < 9999)
+            Input.Quantity++;
+    }
+
+    private void DecrementQuantity()
+    {
+        if (Input.Quantity > 0)
+            Input.Quantity--;
+    }
+
+    private void SetExpiry(int daysFromToday)
+    {
+        Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (Input.ExpirationDate is null)
+            return;
+
         _saving = true;
         try
         {
-            if (ItemId is null)
+            if (Item is null)
             {
-                using var response = await Api.Pantry.CreateAsync(_model.ToCreateRequest());
+                using var response = await Api.Pantry.CreateAsync(new CreatePantryItemRequest(
+                    Input.Name.Trim(),
+                    Input.Quantity,
+                    Input.Unit,
+                    Input.Location,
+                    string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
+                    DateOnly.FromDateTime(Input.ExpirationDate.Value)));
+
                 if (!await HandleSavedAsync(response, "Item added."))
                     return;
             }
             else
             {
-                using var response = await Api.Pantry.UpdateAsync(ItemId, _model.ToUpdateRequest());
+                using var response = await Api.Pantry.UpdateAsync(Item.Id, new UpdatePantryItemRequest(
+                    Input.Name.Trim(),
+                    Input.Quantity,
+                    Input.Unit,
+                    Input.Location,
+                    string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
+                    DateOnly.FromDateTime(Input.ExpirationDate.Value)));
+
                 if (!await HandleSavedAsync(response, "Item updated."))
                     return;
             }
@@ -169,5 +250,27 @@
         Logger.LogWarning("Save failed with {StatusCode}", response.StatusCode);
         Toasts.Error("Couldn't save. Try again.");
         return false;
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Range(0, 9999)]
+        public double Quantity { get; set; } = 1;
+
+        [Required]
+        public string Unit { get; set; } = "pcs";
+
+        [Required]
+        public string Location { get; set; } = "pantry";
+
+        [Required]
+        public DateTime? ExpirationDate { get; set; } = DateTime.Today.AddDays(7);
+
+        [StringLength(2000)]
+        public string? Notes { get; set; }
     }
 }

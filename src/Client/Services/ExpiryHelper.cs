@@ -37,4 +37,32 @@ public static class ExpiryHelper
         ExpiryStatus.ExpiringSoon => BadgeVariant.Warning,
         _ => BadgeVariant.SoftSuccess
     };
+
+    /// <summary>Contextual banner for the editor.</summary>
+    public sealed record ExpiryBanner(string Text, string Icon, BadgeVariant Variant);
+
+    public static ExpiryBanner GetBanner(DateOnly expiration, DateOnly today)
+    {
+        var days = expiration.DayNumber - today.DayNumber;
+
+        if (days < 0)
+            return new ExpiryBanner(
+                days == -1 ? "Expired yesterday" : $"Expired {-days} days ago",
+                "circle-alert",
+                BadgeVariant.SoftDestructive);
+
+        if (days == 0)
+            return new ExpiryBanner("Expires today", "info", BadgeVariant.SoftWarning);
+
+        if (days <= SoonDays)
+            return new ExpiryBanner(
+                days == 1 ? "Use soon · 1 day left" : $"Use soon · {days} days left",
+                "info",
+                BadgeVariant.SoftWarning);
+
+        return new ExpiryBanner(
+            days == 1 ? "Fresh · 1 day left" : $"Fresh · {days} days left",
+            "info",
+            BadgeVariant.SoftSuccess);
+    }
 }
