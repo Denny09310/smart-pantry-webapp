@@ -90,6 +90,7 @@ namespace Server.Data.Migrations
                         .HasName("pk_notifications");
 
                     b.HasIndex("PantryItemId", "ExpirationDate", "Type")
+                        .IsUnique()
                         .HasDatabaseName("ix_notifications_pantry_item_id_expiration_date_type");
 
                     b.ToTable("notifications", (string)null);
@@ -102,7 +103,8 @@ namespace Server.Data.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("Barcode")
-                        .HasColumnType("text")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("barcode");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -135,7 +137,8 @@ namespace Server.Data.Migrations
                         .HasColumnName("notes");
 
                     b.Property<string>("NutriScore")
-                        .HasColumnType("text")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
                         .HasColumnName("nutri_score");
 
                     b.Property<string>("NutritionJson")
@@ -158,6 +161,9 @@ namespace Server.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_items");
+
+                    b.HasIndex("ExpirationDate")
+                        .HasDatabaseName("ix_items_expiration_date");
 
                     b.HasIndex("HouseholdMemberId")
                         .HasDatabaseName("ix_items_household_member_id");
