@@ -93,17 +93,16 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 **Done when:** a supported browser can subscribe, unsubscribe, and store its subscription safely, with denial and failure paths handled.
 
-## Phase 9 — Expiry push notifications
+## Phase 9 — Barcode scanning & OpenFoodFacts integration
 
-- [x] Extend the reminder worker to send push notifications for the agreed expiry reminder.
-- [x] Keep in-app notifications as the durable history; push delivery is best-effort.
-- [x] Deduplicate reminders using the intended notification identity (such as item, expiry date, reminder type, and target subscription/recipient).
-- [x] Ensure one failed push does not block delivery attempts to other subscriptions.
-- [x] Disable or remove subscriptions rejected as invalid by the push service.
-- [x] Configure service-worker notification display and click behavior so a click opens the relevant app screen where possible.
-- [x] Test expired items, upcoming items, repeated runs, denied permission, offline devices, and invalid subscriptions.
+- [x] Add barcode scanner using the platform BarcodeDetector API (EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, ITF).
+- [x] Integrate OpenFoodFacts API to look up product name, brand, quantity, unit, Nutri-Score, and nutrition facts per 100g.
+- [x] Persist scanned barcode, Nutri-Score, and nutrition JSON on the pantry item.
+- [x] Pre-fill the item form when a barcode is recognized; allow manual override.
+- [x] Fall back to local database for previously scanned items when offline or API unavailable.
+- [x] Handle missing products gracefully - show info toast and let user fill manually.
 
-**Done when:** the reminder worker creates the in-app record and attempts push delivery reliably without duplicate notifications or cascading failures.
+**Done when:** a user can scan a product barcode and have the form pre-filled with accurate product data, with sensible fallbacks.
 
 ## Phase 10 — Production security and recovery
 
@@ -141,7 +140,7 @@ Keep native apps, offline synchronization, email reminders, recipes, barcode/OCR
 6. In-app notifications and worker
 7. PWA installation
 8. Push subscriptions
-9. Expiry push delivery
+9. Barcode scanning & OpenFoodFacts
 10. Production security and recovery
 11. Tests, diagnostics, and release
 
