@@ -91,6 +91,163 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
     }
 
+    [Fact]
+    public async Task Post_MalformedExpirationDate_ReturnsBadRequest()
+    {
+        using var content = new StringContent(
+            """{"name":"Milk","quantity":1,"unit":"L","location":"fridge","expirationDate":"not-a-date"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+        var response = await _client.PostAsync("/api/pantry", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetById_UnknownId_ReturnsNotFoundProblem()
+    {
+        var response = await _client.GetAsync($"/api/pantry/{Guid.CreateVersion7()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        Assert.NotNull(doc);
+        Assert.Equal(404, doc.RootElement.GetProperty("status").GetInt32());
+    }
+
+    [Fact]
+    public async Task GetById_Existing_ReturnsItem()
+    {
+        var name = $"test-item-{Guid.CreateVersion7()}";
+        var created = await CreateItemAsync(name);
+
+        try
+        {
+            var response = await _client.GetAsync($"/api/pantry/{created.Id}");
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var item = await response.Content.ReadFromJsonAsync<PantryItemDto>();
+            Assert.NotNull(item);
+            Assert.Equal(created.Id, item.Id);
+            Assert.Equal(name, item.Name);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
+    }
+
+    [Fact]
+    public async Task Put_UnknownId_ReturnsNotFound()
+    {
+        var response = await _client.PutAsJsonAsync(
+            $"/api/pantry/{Guid.CreateVersion7()}",
+            new UpdatePantryItemRequest("Milk", 1, "L", "fridge", null,
+                DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_InvalidRequest_ReturnsValidationProblem()
+    {
+        var name = $"test-item-{Guid.CreateVersion7()}";
+        var created = await CreateItemAsync(name);
+
+        try
+        {
+            var response = await _client.PutAsJsonAsync($"/api/pantry/{created.Id}",
+                new UpdatePantryItemRequest("", -1, "L", "fridge", null,
+                    DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))));
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
+    }
+
+    [Fact]
+    public async Task Put_UnknownMember_ReturnsValidationProblem()
+    {
+        var name = $"test-item-{Guid.CreateVersion7()}";
+        var created = await CreateItemAsync(name);
+
+        try
+        {
+            var response = await _client.PutAsJsonAsync($"/api/pantry/{created.Id}",
+                new UpdatePantryItemRequest("Milk", 1, "L", "fridge", null,
+                    DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+                    HouseholdMemberId: "does-not-exist"));
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
+    }
+
+    [Fact]
+    public async Task Put_ValidRequest_UpdatesItem()
+    {
+        var name = $"test-item-{Guid.CreateVersion7()}";
+        var created = await CreateItemAsync(name);
+
+        try
+        {
+            var response = await _client.PutAsJsonAsync($"/api/pantry/{created.Id}",
+                new UpdatePantryItemRequest("Oat milk", 2, "L", "pantry", "updated",
+                    DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14))));
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var updated = await response.Content.ReadFromJsonAsync<PantryItemDto>();
+            Assert.NotNull(updated);
+            Assert.Equal("Oat milk", updated.Name);
+            Assert.Equal(2, updated.Quantity);
+            Assert.Equal("pantry", updated.Location);
+
+            var fetched = await _client.GetFromJsonAsync<PantryItemDto>($"/api/pantry/{created.Id}");
+            Assert.NotNull(fetched);
+            Assert.Equal("Oat milk", fetched.Name);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
+    }
+
+    [Fact]
+    public async Task Delete_UnknownId_ReturnsNotFound()
+    {
+        var response = await _client.DeleteAsync($"/api/pantry/{Guid.CreateVersion7()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_Existing_RemovesItem()
+    {
+        var name = $"test-item-{Guid.CreateVersion7()}";
+        var created = await CreateItemAsync(name);
+
+        var delete = await _client.DeleteAsync($"/api/pantry/{created.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var fetch = await _client.GetAsync($"/api/pantry/{created.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, fetch.StatusCode);
+    }
+
+    private async Task<PantryItemDto> CreateItemAsync(string name)
+    {
+        var response = await _client.PostAsJsonAsync("/api/pantry", new CreatePantryItemRequest(
+            name, 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))));
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
+        Assert.NotNull(created);
+        return created;
+    }
+
     private async Task DeleteItemsByNameAsync(string name)
     {
         using var scope = _factory.Services.CreateScope();

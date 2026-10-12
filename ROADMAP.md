@@ -26,11 +26,11 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 2 — Pantry API and persistence
 
-- [ ] Implement Minimal API endpoints to list, create, read, update, and delete pantry items.
-- [ ] Validate required fields, quantities, units, and expiry dates at the API boundary.
-- [ ] Return the shared DTOs rather than exposing EF entities directly.
-- [ ] Handle missing records and invalid requests consistently.
-- [ ] Add tests for CRUD behavior and validation.
+- [x] Implement Minimal API endpoints to list, create, read, update, and delete pantry items.
+- [x] Validate required fields, quantities, units, and expiry dates at the API boundary.
+- [x] Return the shared DTOs rather than exposing EF entities directly.
+- [x] Handle missing records and invalid requests consistently.
+- [x] Add tests for CRUD behavior and validation.
 
 **Done when:** pantry data can be managed through the API and the main success/error cases are covered by tests.
 
