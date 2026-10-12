@@ -1,23 +1,24 @@
 @namespace Client.Components
+@inject LocalizationService Loc
 
 <nav aria-label="Primary"
      class="fixed inset-x-4 bottom-4 pb-[env(safe-area-inset-bottom)] z-30 rounded-2xl border bg-background shadow-lg md:hidden"
      style="view-transition-name: bottom-nav;">
     <div class="flex gap-1 p-2">
-        <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="@ActiveTokens" class="@ItemBase">
+        <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="@ActiveTokens" class="@BaseTokens">
             <LucideIcon Name="package" Size="20" />
-            Pantry
+            @Loc["Pantry"]
         </NavLink>
-        <NavLink href="/dashboard" ActiveClass="@ActiveTokens" class="@ItemBase">
-            <LucideIcon Name="clock" Size="20" />
-            Dashboard
+        <NavLink href="/settings" ActiveClass="@ActiveTokens" class="@BaseTokens">
+            <LucideIcon Name="settings" Size="20" />
+            @Loc["Settings"]
         </NavLink>
     </div>
 </nav>
 
 @code
 {
-    private const string ItemBase =
+    private const string BaseTokens =
         "flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-xs " +
         "hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring";
 
