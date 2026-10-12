@@ -18,12 +18,12 @@
     <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
 </BbInputGroup>
 
-<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Class="flex-nowrap overflow-x-auto scrollbar-none">
-    <BbChip Value="@("all")" Class="text-nowrap">All locations</BbChip>
-    <BbChip Value="@("fridge")" Class="text-nowrap">Fridge</BbChip>
-    <BbChip Value="@("pantry")" Class="text-nowrap">Pantry</BbChip>
-    <BbChip Value="@("freezer")" Class="text-nowrap">Freezer</BbChip>
-    <BbChip Value="@("cabinet")" Class="text-nowrap">Cabinet</BbChip>
+<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Class="scrollbar-none!" Wrap="false">
+    <BbChip Value="@("all")">All locations</BbChip>
+    <BbChip Value="@("fridge")">Fridge</BbChip>
+    <BbChip Value="@("pantry")">Pantry</BbChip>
+    <BbChip Value="@("freezer")">Freezer</BbChip>
+    <BbChip Value="@("cabinet")">Cabinet</BbChip>
 </BbChipSet>
 
 @if (_items is null)
@@ -32,8 +32,17 @@
 }
 else if (_items.Count == 0)
 {
-    <p>No items in the pantry yet</p>
-    <button type="button" @onclick="CreateItemAsync">Create one</button>
+    <BbEmpty Title="No items found" Description="Try clearing filters or add one">
+        <Icon>
+            <LucideIcon Name="search" Size="24" />
+        </Icon>
+        <ChildContent>
+            <BbButton Variant="ButtonVariant.Outline" @onclick="CreateItemAsync">
+                <LucideIcon Name="plus" Size="16" />
+                Create
+            </BbButton>
+        </ChildContent>
+    </BbEmpty>
 }
 else
 {
