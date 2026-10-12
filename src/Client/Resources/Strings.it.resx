@@ -282,6 +282,12 @@
   <data name="StartCamera" xml:space="preserve">
     <value>Avvia fotocamera</value>
   </data>
+  <data name="ScannerUnsupported" xml:space="preserve">
+    <value>La scansione con fotocamera non è supportata su questo dispositivo.</value>
+  </data>
+  <data name="ScannerDenied" xml:space="preserve">
+    <value>Accesso alla fotocamera negato.</value>
+  </data>
   <data name="ProductFound" xml:space="preserve">
     <value>Prodotto trovato! Dettagli pre-compilati.</value>
   </data>

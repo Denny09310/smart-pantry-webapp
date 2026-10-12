@@ -1,12 +1,17 @@
+@namespace Client.Components
 @using Bit.Butil
 @inject MediaDevices MediaDevices
 @inject BarcodeDetector BarcodeDetector
+@inject ToastService Toasts
+@inject LocalizationService Loc
 @implements IAsyncDisposable
 
 <div class="relative" @ref="_containerRef">
+    @* Always rendered (hidden when idle) so the element reference exists
+        before the stream attaches — AttachTo a missing element silently fails. *@
+    <video @ref="_videoRef" class="@(_isScanning ? "w-full h-48 object-cover rounded-lg" : "hidden")" autoplay playsinline muted></video>
     @if (_isScanning)
     {
-        <video @ref="_videoRef" class="w-full h-48 object-cover rounded-lg" autoplay playsinline muted></video>
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div class="w-56 h-28 border-2 border-primary/50 rounded-lg relative">
                 <div class="absolute left-0 right-0 h-0.5 bg-primary animate-scan"></div>
@@ -36,9 +41,9 @@
     ElementReference _containerRef;
     ElementReference _videoRef;
     private bool _isScanning = false;
+    private bool _disposed;
     private MediaStreamHandle? _stream;
     private ButilSubscription? _scanSubscription;
-    private CancellationTokenSource? _cts;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -50,7 +55,7 @@
 
     public async Task StartScanningAsync()
     {
-        if (_isScanning) return;
+        if (_isScanning || _disposed) return;
 
         try
         {
@@ -58,7 +63,7 @@
             var supported = await MediaDevices.IsSupported();
             if (!supported)
             {
-                // Could show error
+                Toasts.Error(Loc["ScannerUnsupported"]);
                 return;
             }
 
@@ -71,39 +76,46 @@
             if (_stream == null)
             {
                 // User denied permission
+                Toasts.Error(Loc["ScannerDenied"]);
                 return;
             }
 
             // Attach stream to video element
             await _stream.AttachTo(_videoRef);
-            
+
             // Play the video
             await _videoRef.Play();
 
             _isScanning = true;
             StateHasChanged();
 
-            // Start barcode detection loop
-            _cts = new CancellationTokenSource();
+            // Formats match the server rule: 8, 12, or 13 digits only.
             _scanSubscription = await BarcodeDetector.StartScan(
                 _videoRef,
                 OnBarcodesDetected,
-                formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "code_93", "codabar", "itf"],
+                formats: ["ean_13", "ean_8", "upc_a", "upc_e"],
                 intervalMs: 250);
         }
         catch (Exception)
         {
-            // Could log error
-            await StopScanningAsync();
+            await ReleaseAsync();
         }
     }
 
     public async Task StopScanningAsync()
     {
-        if (!_isScanning) return;
+        if (!_isScanning && _stream is null && _scanSubscription is null)
+            return;
 
         _isScanning = false;
+        await ReleaseAsync();
 
+        if (!_disposed)
+            StateHasChanged();
+    }
+
+    private async Task ReleaseAsync()
+    {
         if (_scanSubscription != null)
         {
             await _scanSubscription.DisposeAsync();
@@ -115,27 +127,22 @@
             await _stream.DisposeAsync();
             _stream = null;
         }
-
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = null;
-
-        StateHasChanged();
     }
 
-    private async void OnBarcodesDetected(DetectedBarcode[] barcodes)
-    {
-        if (!_isScanning || barcodes.Length == 0) return;
-
-        var barcode = barcodes[0].RawValue;
-        
-        // Validate barcode format
-        if (IsValidBarcode(barcode))
+    private void OnBarcodesDetected(DetectedBarcode[] barcodes)
+        => _ = InvokeAsync(async () =>
         {
-            await OnBarcodeScanned.InvokeAsync(barcode);
-            await StopScanningAsync();
-        }
-    }
+            if (_disposed || !_isScanning || barcodes.Length == 0) return;
+
+            var barcode = barcodes[0].RawValue;
+
+            // Validate barcode format
+            if (IsValidBarcode(barcode))
+            {
+                await OnBarcodeScanned.InvokeAsync(barcode);
+                await StopScanningAsync();
+            }
+        });
 
     private static bool IsValidBarcode(string barcode)
     {
@@ -145,6 +152,8 @@
 
     public async ValueTask DisposeAsync()
     {
-        await StopScanningAsync();
+        _disposed = true;
+        _isScanning = false;
+        await ReleaseAsync();
     }
 }

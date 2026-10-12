@@ -282,6 +282,12 @@
   <data name="StartCamera" xml:space="preserve">
     <value>Start Camera</value>
   </data>
+  <data name="ScannerUnsupported" xml:space="preserve">
+    <value>Camera scanning isn't supported on this device.</value>
+  </data>
+  <data name="ScannerDenied" xml:space="preserve">
+    <value>Camera access was denied.</value>
+  </data>
   <data name="ProductFound" xml:space="preserve">
     <value>Product found! Details pre-filled.</value>
   </data>
