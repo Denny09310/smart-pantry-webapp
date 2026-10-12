@@ -47,10 +47,10 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 4 — Expiry status and everyday usability
 
-- [ ] Derive expiry status from the expiry date (for example, expired, expiring soon, and okay); avoid storing a value that can become stale.
-- [ ] Use consistent date-only semantics for expiry dates and test boundary dates.
-- [ ] Sort and filter the list by expiry date, status, and location where useful.
-- [ ] Make status labels understandable and consistent across dashboard, list, and item details.
+- [x] Derive expiry status from the expiry date (for example, expired, expiring soon, and okay); avoid storing a value that can become stale.
+- [x] Use consistent date-only semantics for expiry dates and test boundary dates.
+- [x] Sort and filter the list by expiry date, status, and location where useful.
+- [x] Make status labels understandable and consistent across dashboard, list, and item details.
 
 **Done when:** the same item has a consistent status everywhere, including on date boundaries and after the date changes.
 

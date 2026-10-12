@@ -1,6 +1,7 @@
 @page "/dashboard"
 
 @inject ServerApi Api
+@inject BottomSheetService Sheet
 @inject ILogger<Dashboard> Logger
 
 <header>
@@ -56,13 +57,13 @@ else
                 {
                     var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
                     <li @key="item.Id">
-                        <a href="@($"/items/{item.Id}")" class="flex items-center justify-between gap-2 rounded-md border p-3">
+                        <button type="button" @onclick="() => OpenDetailsAsync(item.Id)" class="flex w-full items-center justify-between gap-2 rounded-md border p-3 text-left">
                             <span>
                                 <span class="block font-medium">@item.Name</span>
                                 <span class="block text-sm text-muted-foreground">@item.ExpirationDate.ToString("MMM d")</span>
                             </span>
                             <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
-                        </a>
+                        </button>
                     </li>
                 }
             </ul>
@@ -82,6 +83,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAsync();
+    }
+
+    private async Task OpenDetailsAsync(string id)
+    {
+        await Sheet.OpenAsync<ItemDetailsBody>(new Dictionary<string, object?> { ["ItemId"] = id });
         await LoadAsync();
     }
 

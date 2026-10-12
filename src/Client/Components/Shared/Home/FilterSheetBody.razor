@@ -1,0 +1,82 @@
+@namespace Client.Components
+@using Client.Models
+@inject BottomSheetService Sheet
+
+<div class="space-y-5">
+    <h2 class="text-lg font-semibold">Filters</h2>
+
+    <div>
+        <span class="mb-1 block text-sm font-medium">Location</span>
+        <BbChipSet @bind-Value="_location" Class="scrollbar-none!" Wrap="false">
+            <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
+            @foreach (var location in PantryLocations.Values)
+            {
+                <BbChip Value="@(location)">@location</BbChip>
+            }
+        </BbChipSet>
+    </div>
+
+    <div>
+        <span class="mb-1 block text-sm font-medium">Status</span>
+        <BbChipSet @bind-Value="_status" Class="scrollbar-none!" Wrap="false">
+            <BbChip Value="@("all")">All statuses</BbChip>
+            <BbChip Value="@("expired")">Expired</BbChip>
+            <BbChip Value="@("soon")">Expiring soon</BbChip>
+            <BbChip Value="@("fresh")">Fresh</BbChip>
+        </BbChipSet>
+    </div>
+
+    <div>
+        <span class="mb-1 block text-sm font-medium">Sort by</span>
+        <BbNativeSelect TValue="ItemSort" @bind-Value="_sort" AriaLabel="Sort items">
+            <option value="@ItemSort.ExpiryAsc">Expiring first</option>
+            <option value="@ItemSort.ExpiryDesc">Expiring last</option>
+            <option value="@ItemSort.Name">Name A–Z</option>
+        </BbNativeSelect>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+        <BbButton Variant="ButtonVariant.Outline" Type="ButtonType.Button" @onclick="Reset">Reset</BbButton>
+        <BbButton Type="ButtonType.Button" @onclick="ApplyAsync">Apply filters</BbButton>
+    </div>
+</div>
+
+@code {
+    public sealed record SelectedFilters(string? Location, string Status, ItemSort Sort);
+
+    [Parameter] public string? Location { get; set; }
+    [Parameter] public string Status { get; set; } = "all";
+    [Parameter] public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
+
+    private string? _location = PantryLocations.All;
+    private string _status = "all";
+    private ItemSort _sort = ItemSort.ExpiryAsc;
+
+    private string? _seenLocation = "__none__";
+    private string _seenStatus = "__none__";
+    private ItemSort? _seenSort;
+
+    protected override void OnParametersSet()
+    {
+        if (_seenSort is null || Location != _seenLocation || Status != _seenStatus || Sort != _seenSort)
+        {
+            _seenLocation = Location;
+            _seenStatus = Status;
+            _seenSort = Sort;
+
+            _location = Location;
+            _status = Status;
+            _sort = Sort;
+        }
+    }
+
+    private void Reset()
+    {
+        _location = PantryLocations.All;
+        _status = "all";
+        _sort = ItemSort.ExpiryAsc;
+    }
+
+    private Task ApplyAsync()
+        => Sheet.CloseAsync(new SelectedFilters(_location, _status, _sort));
+}

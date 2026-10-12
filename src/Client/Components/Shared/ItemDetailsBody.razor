@@ -1,17 +1,17 @@
-@page "/items/{id}"
-
-@inject ServerApi Api
+@namespace Client.Components
 @inject BottomSheetService Sheet
+@inject ServerApi Api
 @inject DialogService Dialogs
 @inject ToastService Toasts
-@inject NavigationManager Navigation
-@inject ILogger<ItemDetails> Logger
+@inject ILogger<ItemDetailsBody> Logger
 
 <div class="space-y-4">
-    <NavLink href="/" class="inline-flex items-center gap-1 text-sm">
-        <LucideIcon Name="arrow-left" Size="16" />
-        Pantry
-    </NavLink>
+    <div class="flex items-start justify-between gap-2">
+        <h2 class="text-lg font-semibold">Item details</h2>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="Close" @onclick="() => Sheet.CloseAsync()">
+            <LucideIcon Name="x" Size="16" />
+        </BbButton>
+    </div>
 
     @if (_loading)
     {
@@ -34,18 +34,13 @@
             <Icon>
                 <LucideIcon Name="search" Size="24" />
             </Icon>
-            <ChildContent>
-                <NavLink href="/">
-                    <BbButton Variant="ButtonVariant.Outline">Back to pantry</BbButton>
-                </NavLink>
-            </ChildContent>
         </BbEmpty>
     }
     else
     {
         var status = ExpiryHelper.GetStatus(_item.ExpirationDate, _today);
         <header class="space-y-2">
-            <h1 class="text-xl font-semibold">@_item.Name</h1>
+            <h3 class="text-xl font-semibold">@_item.Name</h3>
             <div class="flex flex-wrap gap-2">
                 <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
                 <BbBadge Variant="BadgeVariant.Outline">@_item.Location</BbBadge>
@@ -81,7 +76,8 @@
 </div>
 
 @code {
-    [Parameter] public string Id { get; set; } = string.Empty;
+    [Parameter, EditorRequired]
+    public string ItemId { get; set; } = string.Empty;
 
     private PantryItemDto? _item;
     private string? _loadedId;
@@ -91,10 +87,10 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Id == _loadedId)
+        if (ItemId == _loadedId)
             return;
 
-        _loadedId = Id;
+        _loadedId = ItemId;
         await LoadAsync();
     }
 
@@ -106,14 +102,14 @@
 
         try
         {
-            using var response = await Api.Pantry.GetByIdAsync(Id);
+            using var response = await Api.Pantry.GetByIdAsync(ItemId);
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return;
 
             if (!response.IsSuccessfulWithContent)
             {
-                Logger.LogWarning("Item {ItemId} load failed with {StatusCode}", Id, response.StatusCode);
+                Logger.LogWarning("Item {ItemId} load failed with {StatusCode}", ItemId, response.StatusCode);
                 _error = "load";
                 return;
             }
@@ -122,7 +118,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Item {ItemId} load failed", Id);
+            Logger.LogError(ex, "Item {ItemId} load failed", ItemId);
             _error = "load";
         }
         finally
@@ -136,9 +132,8 @@
         if (_item is null)
             return;
 
-        var parameters = new Dictionary<string, object?> { ["Item"] = _item };
-        if (await Sheet.OpenAsync<ItemForm>(parameters) is "saved")
-            await LoadAsync();
+        // Replaces this body; saving closes the sheet and the list behind refreshes.
+        await Sheet.OpenAsync<ItemForm>(new Dictionary<string, object?> { ["Item"] = _item });
     }
 
     private async Task DeleteAsync()
@@ -153,20 +148,20 @@
 
         try
         {
-            using var response = await Api.Pantry.DeleteAsync(Id);
+            using var response = await Api.Pantry.DeleteAsync(ItemId);
             if (!response.IsSuccessStatusCode)
             {
-                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", Id, response.StatusCode);
+                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", ItemId, response.StatusCode);
                 Toasts.Error("Couldn't delete the item. Try again.");
                 return;
             }
 
             Toasts.Success("Item deleted.");
-            Navigation.NavigateTo("/");
+            await Sheet.CloseAsync();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Item {ItemId} delete failed", Id);
+            Logger.LogError(ex, "Item {ItemId} delete failed", ItemId);
             Toasts.Error("Couldn't delete the item. Try again.");
         }
     }

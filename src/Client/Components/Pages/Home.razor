@@ -13,20 +13,23 @@
     }
 </header>
 
-<BbInputGroup>
-    <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
-        <LucideIcon Name="search" Size="16" />
-    </BbInputGroupAddon>
-    <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
-</BbInputGroup>
-
-<BbChipSet @bind-Value="_location" @bind-Value:after="LoadAsync" Class="scrollbar-none!" Wrap="false">
-    <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
-    @foreach (var location in PantryLocations.Values)
-    {
-        <BbChip Value="@(location)">@location</BbChip>
-    }
-</BbChipSet>
+<div class="flex gap-2">
+    <div class="flex-1">
+        <BbInputGroup>
+            <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+                <LucideIcon Name="search" Size="16" />
+            </BbInputGroupAddon>
+            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="LoadAsync" Placeholder="Search pantry items..." />
+        </BbInputGroup>
+    </div>
+    <BbButton Variant="ButtonVariant.Outline" AriaLabel="Open filters" @onclick="OpenFiltersAsync">
+        <LucideIcon Name="sliders-horizontal" Size="16" />
+        @if (_hasActiveFilters)
+        {
+            <span class="h-2 w-2 rounded-full bg-primary"></span>
+        }
+    </BbButton>
+</div>
 
 @if (_loading)
 {
@@ -43,55 +46,72 @@ else if (_error is not null)
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
     </div>
 }
-else if (_items is not null && _items.Count == 0)
+else if (_view is not null)
 {
-    <BbEmpty Title="No items found" Description="Try clearing filters or add one">
-        <Icon>
-            <LucideIcon Name="search" Size="24" />
-        </Icon>
-        <ChildContent>
-            <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
-                <LucideIcon Name="plus" Size="16" />
-                Create
-            </BbButton>
-        </ChildContent>
-    </BbEmpty>
-}
-else if (_items is not null)
-{
-    <ul class="space-y-2">
-        @foreach (var item in _items)
-        {
-            var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
-            <li @key="item.Id">
-                <a href="@($"/items/{item.Id}")" class="block rounded-md border p-3">
-                    <span class="flex items-center justify-between gap-2">
-                        <span class="font-medium">@item.Name</span>
-                        <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
-                    </span>
-                    <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>@item.Quantity @item.Unit</span>
-                        <BbBadge Variant="BadgeVariant.Outline">@item.Location</BbBadge>
-                        <span>@item.ExpirationDate.ToString("MMM d")</span>
-                    </span>
-                </a>
-            </li>
-        }
-    </ul>
+    <div class="flex items-center justify-between gap-2">
+        <span class="text-sm text-muted-foreground">@_view.Count shown</span>
+    </div>
+
+    @if (_view.Count == 0)
+    {
+        <BbEmpty Title="No items found" Description="Try clearing filters or add one">
+            <Icon>
+                <LucideIcon Name="search" Size="24" />
+            </Icon>
+            <ChildContent>
+                <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
+                    <LucideIcon Name="plus" Size="16" />
+                    Create
+                </BbButton>
+            </ChildContent>
+        </BbEmpty>
+    }
+    else
+    {
+        <ul class="space-y-2">
+            @foreach (var item in _view)
+            {
+                var status = ExpiryHelper.GetStatus(item.ExpirationDate, _today);
+                <li @key="item.Id">
+                    <button type="button" @onclick="() => OpenDetailsAsync(item.Id)"
+                            class="block w-full rounded-md border p-3 text-left">
+                        <span class="flex items-center justify-between gap-2">
+                            <span class="font-medium">@item.Name</span>
+                            <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status)</BbBadge>
+                        </span>
+                        <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>@item.Quantity @item.Unit</span>
+                            <BbBadge Variant="BadgeVariant.Outline">@item.Location</BbBadge>
+                            <span>@item.ExpirationDate.ToString("MMM d")</span>
+                        </span>
+                    </button>
+                </li>
+            }
+        </ul>
+    }
 }
 
 <BbFab AriaLabel="Add item" Class="bottom-24 md:bottom-6" OnClick="OpenAddAsync">
-    <Icon><LucideIcon Name="plus" Size="24" /></Icon>
+    <Icon>
+        <LucideIcon Name="plus" Size="24" />
+    </Icon>
 </BbFab>
 
-@code {
+@code
+{
     private List<PantryItemDto>? _items;
+    private List<PantryItemDto>? _view;
     private int _totalItems;
     private bool _loading = true;
     private string? _error;
 
     private string? _location = PantryLocations.All, _name;
+    private string _status = "all";
+    private ItemSort _sort = ItemSort.ExpiryAsc;
     private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
+
+    private bool _hasActiveFilters =>
+        _location != PantryLocations.All || _status != "all" || _sort != ItemSort.ExpiryAsc;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,8 +120,63 @@ else if (_items is not null)
 
     private async Task OpenAddAsync()
     {
-        if (await Sheet.OpenAsync<ItemForm>() is "saved")
-            await LoadAsync();
+        await Sheet.OpenAsync<ItemForm>();
+        await LoadAsync();
+    }
+
+    private async Task OpenDetailsAsync(string id)
+    {
+        await Sheet.OpenAsync<ItemDetailsBody>(new Dictionary<string, object?> { ["ItemId"] = id });
+        await LoadAsync();
+    }
+
+    private async Task OpenFiltersAsync()
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            ["Location"] = _location,
+            ["Status"] = _status,
+            ["Sort"] = _sort
+        };
+
+        if (await Sheet.OpenAsync<FilterSheetBody>(parameters) is FilterSheetBody.SelectedFilters filters)
+        {
+            var locationChanged = filters.Location != _location;
+            (_location, _status, _sort) = (filters.Location, filters.Status, filters.Sort);
+
+            if (locationChanged)
+                await LoadAsync();
+            else
+                ApplySorting();
+        }
+    }
+
+    private void ApplySorting()
+    {
+        if (_items is null)
+        {
+            _view = null;
+            return;
+        }
+
+        IEnumerable<PantryItemDto> query = _items;
+
+        query = _status switch
+        {
+            "expired" => query.Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.Expired),
+            "soon" => query.Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.ExpiringSoon),
+            "fresh" => query.Where(x => ExpiryHelper.GetStatus(x.ExpirationDate, _today) == ExpiryStatus.Fresh),
+            _ => query
+        };
+
+        query = _sort switch
+        {
+            ItemSort.ExpiryDesc => query.OrderByDescending(x => x.ExpirationDate).ThenBy(x => x.Name),
+            ItemSort.Name => query.OrderBy(x => x.Name),
+            _ => query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Name)
+        };
+
+        _view = query.ToList();
     }
 
     private async Task LoadAsync()
@@ -111,10 +186,13 @@ else if (_items is not null)
 
         try
         {
+            // Household scale: one page of up to 100 items; status filter
+            // and sorting apply client-side over the fetched page.
             var request = new GetPantryItemsRequest
             {
                 Location = _location,
-                Name = _name
+                Name = _name,
+                Take = 100
             };
 
             using var response = await Api.Pantry.GetAsync(request);
@@ -128,6 +206,7 @@ else if (_items is not null)
 
             _items = new(response.Content.Items);
             _totalItems = response.Content.TotalItems;
+            ApplySorting();
         }
         catch (Exception ex)
         {
