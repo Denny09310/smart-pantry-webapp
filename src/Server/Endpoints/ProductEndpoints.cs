@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Data.Entities;
 using Server.Services;
 using Shared.Models;
-using static Shared.Models.NutritionFactsExtensions;
 
 namespace Server.Endpoints;
 
@@ -23,7 +21,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
 
         // Try OpenFoodFacts first
         var product = await lookup.LookupAsync(request.Barcode, ct);
-        
+
         if (product is not null)
             return TypedResults.Ok(product);
 

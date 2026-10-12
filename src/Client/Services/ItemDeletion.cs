@@ -1,5 +1,4 @@
 using BlazorBlueprint.Components;
-using Refit;
 using Shared.Models;
 
 namespace Client.Services;
