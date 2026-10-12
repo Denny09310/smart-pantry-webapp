@@ -75,10 +75,10 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 7 — PWA installation
 
-- [ ] Add the web app manifest, app icons, and service worker.
-- [ ] Configure the app to be installable and serve it over HTTPS in deployed environments.
-- [ ] Test installation and app launch on supported desktop and mobile browsers.
-- [ ] Keep offline editing/synchronization out of scope unless it becomes a separate requirement.
+- [x] Add the web app manifest, app icons, and service worker.
+- [x] Configure the app to be installable and serve it over HTTPS in deployed environments.
+- [x] Test installation and app launch on supported desktop and mobile browsers.
+- [x] Keep offline editing/synchronization out of scope unless it becomes a separate requirement.
 
 **Done when:** the app can be installed and launched as a PWA on the target browsers.
 

@@ -1,0 +1,187 @@
+@namespace Client.Components
+@inject Bit.Butil.ServiceWorker Worker
+@inject Bit.Butil.Document Document
+@inject NavigationManager Nav
+@inject ToastService Toasts
+@inject ILogger<UpdateNotifier> Logger
+@implements IAsyncDisposable
+
+@code
+{
+    private Bit.Butil.ButilSubscription? _subscription;
+    private Bit.Butil.ButilSubscription? _visibility;
+    private bool _shown;
+    private bool _started;
+    private bool _reloading;
+    private bool _checking;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        _started = true;
+
+        try
+        {
+            if (!await Worker.IsSupported())
+                return;
+
+            _subscription = await Worker.SubscribeControllerChange(OnControllerChange);
+
+            // Full page loads already trigger the browser's own update check.
+            await CheckForUpdateAsync();
+
+            // While the app stays open nothing navigates, so no further
+            // check would ever run: re-check each time the tab becomes
+            // visible again instead of polling on a timer.
+            _visibility = await Document.SubscribeVisibilityChange(OnVisibilityChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Update check setup failed.");
+        }
+    }
+
+    private async void OnVisibilityChanged(Bit.Butil.VisibilityState state)
+    {
+        try
+        {
+            if (state != Bit.Butil.VisibilityState.Visible)
+                return;
+
+            await InvokeAsync(CheckForUpdateAsync);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        if (_checking)
+            return;
+
+        _checking = true;
+
+        try
+        {
+            // The worker is registered by index.html at page load; here we only
+            // ask whether an update check finds something new, then look for a
+            // worker parked in waiting.
+            await Worker.Update();
+
+            var registration = await Worker.GetRegistration();
+
+            if (registration.IsRegistered && registration.WaitingState is not null)
+                await ShowUpdateToastAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Update check failed.");
+        }
+        finally
+        {
+            _checking = false;
+        }
+    }
+
+    private async void OnControllerChange()
+    {
+        try
+        {
+            await InvokeAsync(ReloadAsync);
+        }
+        catch (Exception)
+        {
+            // Page is going away; nothing left to render.
+        }
+    }
+
+    private Task ReloadAsync()
+    {
+        if (_reloading)
+            return Task.CompletedTask;
+
+        _reloading = true;
+        Nav.NavigateTo(Nav.Uri, forceLoad: true);
+
+        return Task.CompletedTask;
+    }
+
+    private async Task ShowUpdateToastAsync()
+    {
+        if (_shown)
+            return;
+
+        _shown = true;
+
+        await InvokeAsync(() => Toasts.Show(new ToastData
+        {
+            Title = "Update available",
+            Description = "A new version was downloaded. Reload to use it.",
+            Variant = ToastVariant.Info,
+            Duration = 0,
+            ActionText = "Reload",
+            OnAction = () => _ = ActivateAsync(),
+        }));
+    }
+
+    private async Task ActivateAsync()
+    {
+        try
+        {
+            await Worker.SkipWaiting();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Update activation failed; reloading.");
+        }
+
+        // The click must never die silently: if no controller change arrives
+        // (no waiting worker, stuck activation), reload anyway.
+        await Task.Delay(4000);
+
+        if (!_disposed)
+            await ReloadAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+
+        if (_visibility is not null)
+        {
+            try
+            {
+                await _visibility.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Visibility subscription disposal failed.");
+            }
+            finally
+            {
+                _visibility = null;
+            }
+        }
+
+        if (_subscription is not null)
+        {
+            try
+            {
+                await _subscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Update subscription disposal failed.");
+            }
+            finally
+            {
+                _subscription = null;
+            }
+        }
+    }
+}
