@@ -4,8 +4,9 @@
 @inject BottomSheetService Sheet
 @inject ILogger<Dashboard> Logger
 
-<header>
+<header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Dashboard</h1>
+    <MemberAvatarButton />
 </header>
 
 @if (_loading)

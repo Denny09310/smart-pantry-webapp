@@ -52,16 +52,65 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
     }
 
     [Fact]
-    public async Task Post_UnknownMember_ReturnsValidationProblem()
+    public async Task Post_WithMemberHeader_StampsItem()
     {
-        var response = await _client.PostAsJsonAsync("/api/pantry", new CreatePantryItemRequest(
-            "Milk", 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-            HouseholdMemberId: "does-not-exist"));
+        var member = await CreateMemberAsync($"test-member-{Guid.CreateVersion7()}");
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>();
-        Assert.NotNull(doc);
-        Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("HouseholdMemberId", out _));
+        try
+        {
+            var name = $"test-milk-{Guid.CreateVersion7()}";
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/pantry")
+            {
+                Content = JsonContent.Create(new CreatePantryItemRequest(
+                    name, 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))))
+            };
+            request.Headers.Add("X-Member-Id", member.Id);
+
+            var response = await _client.SendAsync(request);
+
+            try
+            {
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
+                Assert.NotNull(created);
+                Assert.Equal(member.Id, created.HouseholdMemberId);
+            }
+            finally
+            {
+                await DeleteItemsByNameAsync(name);
+            }
+        }
+        finally
+        {
+            await DeleteMemberAsync(member.Id);
+        }
+    }
+
+    [Fact]
+    public async Task Post_WithUnknownMemberHeader_CreatesUnattributedItem()
+    {
+        var name = $"test-milk-{Guid.CreateVersion7()}";
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/pantry")
+        {
+            Content = JsonContent.Create(new CreatePantryItemRequest(
+                name, 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))))
+        };
+        request.Headers.Add("X-Member-Id", "does-not-exist");
+
+        var response = await _client.SendAsync(request);
+
+        try
+        {
+            // Attribution is a label, never access control: unknown members resolve to null.
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
+            Assert.NotNull(created);
+            Assert.Null(created.HouseholdMemberId);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
     }
 
     [Fact]
@@ -168,27 +217,6 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
     }
 
     [Fact]
-    public async Task Put_UnknownMember_ReturnsValidationProblem()
-    {
-        var name = $"test-item-{Guid.CreateVersion7()}";
-        var created = await CreateItemAsync(name);
-
-        try
-        {
-            var response = await _client.PutAsJsonAsync($"/api/pantry/{created.Id}",
-                new UpdatePantryItemRequest("Milk", 1, "L", "fridge", null,
-                    DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-                    HouseholdMemberId: "does-not-exist"));
-
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-        finally
-        {
-            await DeleteItemsByNameAsync(name);
-        }
-    }
-
-    [Fact]
     public async Task Put_ValidRequest_UpdatesItem()
     {
         var name = $"test-item-{Guid.CreateVersion7()}";
@@ -246,6 +274,23 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         var created = await response.Content.ReadFromJsonAsync<PantryItemDto>();
         Assert.NotNull(created);
         return created;
+    }
+
+    private async Task<HouseholdMemberDto> CreateMemberAsync(string displayName)
+    {
+        var response = await _client.PostAsJsonAsync("/api/members",
+            new CreateHouseholdMemberRequest(displayName));
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<HouseholdMemberDto>();
+        Assert.NotNull(created);
+        return created;
+    }
+
+    private async Task DeleteMemberAsync(string id)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
     }
 
     private async Task DeleteItemsByNameAsync(string name)

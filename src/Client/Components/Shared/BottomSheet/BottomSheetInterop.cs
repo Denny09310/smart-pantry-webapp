@@ -6,7 +6,7 @@ namespace Client.Components;
 /// <summary>Typed wrapper around the colocated bottom sheet JS module.</summary>
 public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
 {
-    internal const string ModulePath = "./Components/Shared/BottomSheetProvider.razor.js";
+    internal const string ModulePath = "./Components/Shared/BottomSheet/BottomSheetProvider.razor.js";
     internal const string ShowMethod = "show";
     internal const string CloseMethod = "close";
     internal const string DisposeMethod = "dispose";

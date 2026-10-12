@@ -56,10 +56,10 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 5 — Household member profiles
 
-- [ ] Let the household create, rename, and archive simple member profiles.
-- [ ] Use profiles only to distinguish people in the household; do not add credentials, authentication, or authorization roles.
-- [ ] Where the product needs attribution (such as who an item belongs to or who recorded an action), link that data to a profile explicitly.
-- [ ] Define how archived profiles appear in historical records and whether they can be selected for new activity.
+- [x] Let the household create, rename, and archive simple member profiles.
+- [x] Use profiles only to distinguish people in the household; do not add credentials, authentication, or authorization roles.
+- [x] Where the product needs attribution (such as who an item belongs to or who recorded an action), link that data to a profile explicitly.
+- [x] Define how archived profiles appear in historical records and whether they can be selected for new activity.
 
 **Done when:** multiple people can be represented distinctly in one household instance without any login system.
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Entities;
@@ -51,17 +52,9 @@ internal class PantryEndpoints(ApplicationDbContext db)
     [MapPost("/")]
     public async Task<Results<Ok<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
+        [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
     {
-        if (request.HouseholdMemberId is not null &&
-            !await db.Members.AnyAsync(x => x.Id == request.HouseholdMemberId, ct))
-        {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [nameof(request.HouseholdMemberId)] = ["Unknown household member."]
-            });
-        }
-
         var entry = new PantryItem
         {
             Name = request.Name,
@@ -70,7 +63,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
             Location = request.Location,
             Notes = request.Notes,
             ExpirationDate = request.ExpirationDate,
-            HouseholdMemberId = request.HouseholdMemberId
+            HouseholdMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
         db.Items.Add(entry);
@@ -102,22 +95,13 @@ internal class PantryEndpoints(ApplicationDbContext db)
         if (entry is null)
             return ItemNotFound(id);
 
-        if (request.HouseholdMemberId is not null &&
-            !await db.Members.AnyAsync(x => x.Id == request.HouseholdMemberId, ct))
-        {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [nameof(request.HouseholdMemberId)] = ["Unknown household member."]
-            });
-        }
-
+        // Attribution records who added the item and never changes afterwards.
         entry.Name = request.Name;
         entry.Quantity = request.Quantity;
         entry.Unit = request.Unit;
         entry.Location = request.Location;
         entry.Notes = request.Notes;
         entry.ExpirationDate = request.ExpirationDate;
-        entry.HouseholdMemberId = request.HouseholdMemberId;
         entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
@@ -141,6 +125,19 @@ internal class PantryEndpoints(ApplicationDbContext db)
         => TypedResults.Problem(
             statusCode: StatusCodes.Status404NotFound,
             detail: $"Pantry item '{id}' was not found.");
+
+    /// <summary>
+    /// Attribution is a label, never access control: unknown or missing
+    /// members resolve to null instead of failing the write.
+    /// </summary>
+    private async Task<string?> ResolveMemberIdAsync(string? memberId, CancellationToken ct)
+        => string.IsNullOrWhiteSpace(memberId)
+            ? null
+            : await db.Members
+                .AsNoTracking()
+                .Where(x => x.Id == memberId)
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync(ct);
 
     private static PantryItemDto ToDto(PantryItem item) => new(
         item.Id,

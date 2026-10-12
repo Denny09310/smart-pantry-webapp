@@ -10,5 +10,4 @@ public record CreatePantryItemRequest(
     [property: Required, MaxLength(32)] string Unit,
     [property: Required, MaxLength(64)] string Location,
     [property: MaxLength(2000)] string? Notes,
-    DateOnly ExpirationDate,
-    string? HouseholdMemberId = null);
+    DateOnly ExpirationDate);

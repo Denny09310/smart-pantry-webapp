@@ -12,11 +12,12 @@ namespace Server.Tests;
 /// </summary>
 public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    public const string TestDatabase = "smart_pantry_tests";
+    public string TestDatabase { get; } = $"smart_pantry_tests_{Guid.CreateVersion7():N}";
 
-    public static string ConnectionString =>
-        Environment.GetEnvironmentVariable("SMARTPANTRY_TEST_CONNECTION")
-        ?? $"Server=localhost;Database={TestDatabase};Uid=postgres;Pwd=mypassword123";
+    public string ConnectionString =>
+        Environment.GetEnvironmentVariable("SMARTPANTRY_TEST_CONNECTION") is { } configured
+            ? new NpgsqlConnectionStringBuilder(configured) { Database = TestDatabase }.ConnectionString
+            : $"Server=localhost;Database={TestDatabase};Uid=postgres;Pwd=mypassword123";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -35,13 +36,33 @@ public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         _ = Services; // Build the host: Program.cs runs migrations on the test database.
     }
 
-    Task IAsyncLifetime.DisposeAsync()
+    async Task IAsyncLifetime.DisposeAsync()
     {
+        try
+        {
+            var maintenance = new NpgsqlConnectionStringBuilder(ConnectionString)
+            {
+                Database = "postgres"
+            }.ConnectionString;
+
+            NpgsqlConnection.ClearAllPools();
+
+            await using var connection = new NpgsqlConnection(maintenance);
+            await connection.OpenAsync();
+
+            await using var drop = new NpgsqlCommand(
+                $"DROP DATABASE IF EXISTS \"{TestDatabase}\" WITH (FORCE)", connection);
+            await drop.ExecuteNonQueryAsync();
+        }
+        catch
+        {
+            // Best effort: leftover test databases are harmless.
+        }
+
         Dispose();
-        return Task.CompletedTask;
     }
 
-    private static async Task RecreateDatabaseAsync()
+    private async Task RecreateDatabaseAsync()
     {
         var maintenance = new NpgsqlConnectionStringBuilder(ConnectionString)
         {

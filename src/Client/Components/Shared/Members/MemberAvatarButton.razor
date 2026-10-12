@@ -1,0 +1,36 @@
+@namespace Client.Components
+@using Client.Models
+@inject MemberService Members
+@inject BottomSheetService Sheet
+@implements IDisposable
+
+<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+          AriaLabel="Switch member"
+          OnClick="OpenSwitcherAsync">
+    <BbAvatar Class="h-6 w-6">
+        <BbAvatarFallback Class="text-[10px]"
+                          style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
+            @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.DisplayName) : "?")
+        </BbAvatarFallback>
+    </BbAvatar>
+</BbButton>
+
+@code {
+    protected override void OnInitialized() => Members.Changed += OnChanged;
+
+    public void Dispose() => Members.Changed -= OnChanged;
+
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private Task OpenSwitcherAsync() => Sheet.OpenAsync<MemberSwitcher>();
+}

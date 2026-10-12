@@ -1,0 +1,78 @@
+using Microsoft.AspNetCore.Generated.Attributes;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
+using Server.Data;
+using Server.Data.Entities;
+using Shared.Models;
+
+namespace Server.Endpoints;
+
+[Tags("Members")]
+[MapGroup("/api/members")]
+internal class MemberEndpoints(ApplicationDbContext db)
+{
+    [MapGet("/")]
+    public async Task<Ok<List<HouseholdMemberDto>>> GetMembersAsync(CancellationToken ct)
+    {
+        var members = await db.Members
+            .AsNoTracking()
+            .OrderBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .Select(x => new HouseholdMemberDto(
+                x.Id,
+                x.DisplayName,
+                x.Color,
+                x.IsArchived))
+            .ToListAsync(ct);
+
+        return TypedResults.Ok(members);
+    }
+
+    [MapPost("/")]
+    public async Task<Results<Created<HouseholdMemberDto>, ValidationProblem>> CreateMemberAsync(
+        CreateHouseholdMemberRequest request,
+        CancellationToken ct)
+    {
+        var entry = new HouseholdMember
+        {
+            DisplayName = request.DisplayName.Trim(),
+            Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim()
+        };
+
+        db.Members.Add(entry);
+        await db.SaveChangesAsync(ct);
+
+        return TypedResults.Created($"/api/members/{entry.Id}", ToDto(entry));
+    }
+
+    [MapPut("/{id}")]
+    public async Task<Results<Ok<HouseholdMemberDto>, ProblemHttpResult, ValidationProblem>> UpdateMemberAsync(
+        string id,
+        UpdateHouseholdMemberRequest request,
+        CancellationToken ct)
+    {
+        var entry = await db.Members.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (entry is null)
+            return MemberNotFound(id);
+
+        entry.DisplayName = request.DisplayName.Trim();
+        entry.Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim();
+        entry.IsArchived = request.IsArchived;
+        entry.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+
+        return TypedResults.Ok(ToDto(entry));
+    }
+
+    private static ProblemHttpResult MemberNotFound(string id)
+        => TypedResults.Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            detail: $"Household member '{id}' was not found.");
+
+    private static HouseholdMemberDto ToDto(HouseholdMember member) => new(
+        member.Id,
+        member.DisplayName,
+        member.Color,
+        member.IsArchived);
+}

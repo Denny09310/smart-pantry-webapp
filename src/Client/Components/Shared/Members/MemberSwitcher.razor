@@ -1,0 +1,126 @@
+@namespace Client.Components
+@using Client.Models
+@inject MemberService Members
+@inject BottomSheetService Sheet
+@inject DialogService Dialogs
+@inject ToastService Toasts
+@implements IDisposable
+
+<div class="space-y-1">
+    <h2 class="text-lg font-semibold">Household members</h2>
+    <p class="text-sm text-muted-foreground">Who is using this device? New items are attributed to the current member.</p>
+
+            @foreach (var member in Members.ActiveMembers)
+    {
+        <div @key="member.Id" class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
+            <BbAvatar>
+                <BbAvatarFallback style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
+                    @MemberDisplay.Initials(member.DisplayName)
+                </BbAvatarFallback>
+            </BbAvatar>
+            <button type="button" class="min-w-0 flex-1 text-left" @onclick="@(() => SelectAsync(member.Id))">
+                <p class="truncate text-sm font-medium">@member.DisplayName</p>
+                <p class="text-xs text-muted-foreground">
+                    @(member.Id == Members.CurrentMemberId ? "Current" : "Tap to switch")
+                </p>
+            </button>
+            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                      AriaLabel="@($"Rename {member.DisplayName}")"
+                      OnClick="@(() => RenameAsync(member))">
+                <LucideIcon Name="pencil" Size="16" />
+            </BbButton>
+            @if (Members.ActiveMembers.Count() > 1)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                          AriaLabel="@($"Archive {member.DisplayName}")"
+                          OnClick="@(() => ArchiveAsync(member))">
+                    <LucideIcon Name="archive" Size="16" />
+                </BbButton>
+            }
+        </div>
+    }
+
+    @if (Members.Members.Any(m => m.IsArchived))
+    {
+        <div class="space-y-1 pt-2">
+            <p class="text-xs font-medium uppercase text-muted-foreground">Archived</p>
+            @foreach (var member in Members.Members.Where(m => m.IsArchived))
+            {
+                <div @key="member.Id" class="flex items-center gap-3 rounded-lg p-2 opacity-60">
+                    <BbAvatar>
+                        <BbAvatarFallback style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
+                            @MemberDisplay.Initials(member.DisplayName)
+                        </BbAvatarFallback>
+                    </BbAvatar>
+                    <p class="min-w-0 flex-1 truncate text-sm font-medium">@member.DisplayName</p>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                              AriaLabel="@($"Unarchive {member.DisplayName}")"
+                              OnClick="@(() => UnarchiveAsync(member))">
+                        <LucideIcon Name="archive-restore" Size="16" />
+                    </BbButton>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="border-t pt-3">
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button" OnClick="CreateAsync">
+            <LucideIcon Name="plus" Size="16" />
+            Add member
+        </BbButton>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized() => Members.Changed += OnChanged;
+
+    public void Dispose() => Members.Changed -= OnChanged;
+
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async Task SelectAsync(string id)
+    {
+        await Members.SelectMemberAsync(id);
+        await Sheet.CloseAsync(id);
+    }
+
+    private async Task CreateAsync()
+    {
+        await Sheet.OpenAsync<MemberForm>();
+        await Sheet.OpenAsync<MemberSwitcher>();
+    }
+
+    private async Task RenameAsync(HouseholdMemberDto member)
+    {
+        await Sheet.OpenAsync<MemberForm>(new Dictionary<string, object?> { ["EditMember"] = member });
+        await Sheet.OpenAsync<MemberSwitcher>();
+    }
+
+    private async Task ArchiveAsync(HouseholdMemberDto member)
+    {
+        var confirmed = await Dialogs.ConfirmAsync(
+            $"Archive {member.DisplayName}?",
+            "They will disappear from the member list. Their items stay.",
+            new ConfirmDialogOptions { ConfirmText = "Archive", Destructive = true });
+
+        if (!confirmed.Confirmed)
+            return;
+
+        await Members.UpdateMemberAsync(member.Id, member.DisplayName, member.Color, true);
+    }
+
+    private async Task UnarchiveAsync(HouseholdMemberDto member)
+    {
+        await Members.UpdateMemberAsync(member.Id, member.DisplayName, member.Color, false);
+    }
+}

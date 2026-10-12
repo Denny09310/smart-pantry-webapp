@@ -1,0 +1,35 @@
+@namespace Client.Components
+@inject MemberService Members
+@inject ToastService Toasts
+@inject BottomSheetService Sheet
+
+@code {
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+            return;
+
+        _started = true;
+        await Members.InitializeAsync();
+
+        if (Members.LoadFailed)
+        {
+            Toasts.Error("Couldn't load household members.");
+            return;
+        }
+
+        while (Members.Members.Count == 0 && !Members.LoadFailed)
+        {
+            var parameters = new Dictionary<string, object?> { ["AllowCancel"] = false };
+            var result = await Sheet.OpenAsync<MemberForm>(parameters);
+
+            // Creation failed server-side: retry instead of entering a memberless app.
+            if (result is null)
+                continue;
+
+            break;
+        }
+    }
+}

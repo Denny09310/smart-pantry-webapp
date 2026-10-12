@@ -1,3 +1,4 @@
+using Bit.Butil;
 using BlazorBlueprint.Components;
 using Client.Components;
 using Client.Services;
@@ -11,7 +12,9 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddBitButilServices();
 builder.Services.AddServerApi();
 builder.Services.AddScoped<BottomSheetService>();
+builder.Services.AddScoped<MemberService>();
 
 await builder.Build().RunAsync();

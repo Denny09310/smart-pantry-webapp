@@ -7,10 +7,13 @@
 
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Smart Pantry</h1>
-    @if (_totalItems > 0)
-    {
-        <span class="text-sm text-muted-foreground">@_totalItems items</span>
-    }
+    <div class="flex items-center gap-2">
+        @if (_totalItems > 0)
+        {
+            <span class="text-sm text-muted-foreground">@_totalItems items</span>
+        }
+        <MemberAvatarButton />
+    </div>
 </header>
 
 <div class="flex gap-2">

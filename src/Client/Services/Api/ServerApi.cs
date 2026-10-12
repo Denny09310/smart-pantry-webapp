@@ -1,42 +1,12 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Refit;
-using Shared.Models;
 
 namespace Client.Services;
 
 internal sealed class ServerApi(IServiceProvider services)
 {
     public IPantryEndpoints Pantry => services.GetRequiredService<IPantryEndpoints>();
-}
-
-[PathPrefix("/api/pantry")]
-internal interface IPantryEndpoints
-{
-    [Get("/")]
-    Task<ApiResponse<GetPantryItemsResponse>> GetAsync(
-        GetPantryItemsRequest? request = null,
-        CancellationToken ct = default);
-
-    [Get("/{id}")]
-    Task<ApiResponse<PantryItemDto>> GetByIdAsync(
-        string id,
-        CancellationToken ct = default);
-
-    [Post("/")]
-    Task<ApiResponse<PantryItemDto>> CreateAsync(
-        [Body] CreatePantryItemRequest request,
-        CancellationToken ct = default);
-
-    [Put("/{id}")]
-    Task<ApiResponse<PantryItemDto>> UpdateAsync(
-        string id,
-        [Body] UpdatePantryItemRequest request,
-        CancellationToken ct = default);
-
-    [Delete("/{id}")]
-    Task<IApiResponse> DeleteAsync(
-        string id,
-        CancellationToken ct = default);
+    public IMemberEndpoints Members => services.GetRequiredService<IMemberEndpoints>();
 }
 
 internal static class ServerApiExtensions
@@ -50,6 +20,10 @@ internal static class ServerApiExtensions
         });
 
         services.AddRefitGeneratedClient<IPantryEndpoints>(
+            settings: null,
+            httpClientName: "Server.API");
+
+        services.AddRefitGeneratedClient<IMemberEndpoints>(
             settings: null,
             httpClientName: "Server.API");
 
