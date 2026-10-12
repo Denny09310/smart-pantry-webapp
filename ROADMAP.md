@@ -65,11 +65,11 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 6 — In-app notifications and reminder worker
 
-- [ ] Add persistent in-app notifications and a UI for viewing them.
-- [ ] Implement a daily background worker that evaluates expiry dates and creates reminder notifications.
-- [ ] Include the agreed reminder window (initially, an expiry warning seven days ahead) and avoid duplicate reminders.
-- [ ] Make repeated worker runs safe and ensure a failure for one item does not stop processing all other items.
-- [ ] Log worker start/end, counts, and failures.
+- [x] Add persistent in-app notifications and a UI for viewing them.
+- [x] Implement a daily background worker that evaluates expiry dates and creates reminder notifications.
+- [x] Include the agreed reminder window (initially, an expiry warning seven days ahead) and avoid duplicate reminders.
+- [x] Make repeated worker runs safe and ensure a failure for one item does not stop processing all other items.
+- [x] Log worker start/end, counts, and failures.
 
 **Done when:** reminders are recorded once for the intended window, survive application restarts as in-app history, and worker failures are diagnosable.
 

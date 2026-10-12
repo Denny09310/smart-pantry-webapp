@@ -23,5 +23,6 @@ builder.Services.AddBitBrouterServices(o =>
 builder.Services.AddServerApi();
 builder.Services.AddBottomSheet();
 builder.Services.AddScoped<MemberService>();
+builder.Services.AddScoped<NotificationService>();
 
 await builder.Build().RunAsync();

@@ -1,0 +1,126 @@
+@namespace Client.Components
+@using BlazorBlueprint.Primitives.SwipeArea
+
+<BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY"
+             OnSwipe="HandleSwipe" OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
+    <div class="relative overflow-hidden rounded-md border">
+        <div class="absolute inset-y-0 right-0 flex items-stretch">
+            <button type="button" @onclick="ViewAsync"
+                    class="flex w-[66px] flex-col items-center justify-center gap-1 bg-secondary text-secondary-foreground">
+                <LucideIcon Name="eye" Size="18" />
+                <span class="text-xs">View</span>
+            </button>
+            @if (Item.ReadAt is null)
+            {
+                <button type="button" @onclick="MarkReadAsync"
+                        class="flex w-[66px] flex-col items-center justify-center gap-1 bg-primary text-primary-foreground">
+                    <LucideIcon Name="check" Size="18" />
+                    <span class="text-xs">Read</span>
+                </button>
+            }
+        </div>
+        <button type="button" @onclick="TapAsync"
+                class="relative flex w-full items-center gap-3 bg-background p-3 text-left"
+                style="transform: translateX(@_offsetPx); transition: @(_dragging ? "none" : "transform 150ms");">
+            @if (Item.ReadAt is null)
+            {
+                <span class="h-2 w-2 flex-none rounded-full bg-primary"></span>
+            }
+            <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm font-medium">@Item.ItemName</span>
+                <span class="block text-xs text-muted-foreground">
+                    Expires @Item.ExpirationDate.ToString("MMM d") · @Ago(Item.CreatedAt)
+                </span>
+            </span>
+        </button>
+    </div>
+</BbSwipeArea>
+
+@code {
+    private const double ActionsWidth = 132;
+
+    [Parameter, EditorRequired]
+    public NotificationDto Item { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<NotificationDto> OnView { get; set; }
+
+    [Parameter]
+    public EventCallback<NotificationDto> OnMarkRead { get; set; }
+
+    private double _offset;
+    private bool _dragging;
+    private bool _open;
+
+    private string _offsetPx => _offset.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "px";
+
+    private void HandleMove(SwipeMoveEventArgs e)
+    {
+        _dragging = true;
+        _offset = Math.Clamp(e.DeltaX, -ActionsWidth, 0);
+    }
+
+    private void HandleSwipe(SwipeEventArgs e)
+    {
+        _dragging = false;
+
+        if (e.Direction == SwipeDirection.Left)
+        {
+            _open = true;
+            _offset = -ActionsWidth;
+        }
+        else
+        {
+            _open = false;
+            _offset = 0;
+        }
+    }
+
+    private void HandleCancel()
+    {
+        _dragging = false;
+        _offset = _open ? -ActionsWidth : 0;
+    }
+
+    private async Task TapAsync()
+    {
+        if (_open)
+        {
+            _open = false;
+            _offset = 0;
+            return;
+        }
+
+        await OnView.InvokeAsync(Item);
+    }
+
+    private async Task ViewAsync()
+    {
+        _open = false;
+        _offset = 0;
+        await OnView.InvokeAsync(Item);
+    }
+
+    private async Task MarkReadAsync()
+    {
+        _open = false;
+        _offset = 0;
+        await OnMarkRead.InvokeAsync(Item);
+    }
+
+    private static string Ago(DateTimeOffset created)
+    {
+        var age = DateTimeOffset.UtcNow - created;
+
+        if (age.TotalMinutes < 1)
+            return "just now";
+        if (age.TotalHours < 1)
+            return $"{(int)age.TotalMinutes}m ago";
+        if (age.TotalDays < 1)
+            return $"{(int)age.TotalHours}h ago";
+        if (age.TotalDays < 7)
+            return $"{(int)age.TotalDays}d ago";
+
+        return created.LocalDateTime.ToString("MMM d");
+    }
+}

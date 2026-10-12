@@ -8,7 +8,10 @@
 
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">Dashboard</h1>
-    <MemberAvatarButton />
+    <div class="flex items-center gap-2">
+        <NotificationsBellButton />
+        <MemberAvatarButton />
+    </div>
 </header>
 
 @if (_loading)

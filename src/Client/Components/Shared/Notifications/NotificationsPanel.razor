@@ -1,0 +1,131 @@
+@namespace Client.Components
+@inject ServerApi Api
+@inject NotificationService Notifications
+@inject BottomSheetService Sheet
+@inject ILogger<NotificationsPanel> Logger
+@implements IDisposable
+
+<div class="space-y-3">
+    <div class="flex items-center justify-between gap-2">
+        <h2 class="text-lg font-semibold">Notifications</h2>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                  Disabled="@(Notifications.UnreadCount == 0)" @onclick="MarkAllReadAsync">
+            Mark all read
+        </BbButton>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="space-y-2" aria-hidden="true">
+            <BbSkeleton Height="64px" Class="w-full" />
+            <BbSkeleton Height="64px" Class="w-full" />
+            <BbSkeleton Height="64px" Class="w-full" />
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+            <p class="text-sm">Couldn't load notifications. Try again.</p>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
+        </div>
+    }
+    else if (_items is not null && _items.Count == 0)
+    {
+        <BbEmpty Title="All caught up" Description="New expiry reminders will appear here">
+            <Icon>
+                <LucideIcon Name="bell" Size="24" />
+            </Icon>
+        </BbEmpty>
+    }
+    else if (_items is not null)
+    {
+        <ul class="space-y-2">
+            @foreach (var notification in _items)
+            {
+                <li @key="notification.Id">
+                    <NotificationRow Item="notification" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private List<NotificationDto>? _items;
+    private bool _loading = true;
+    private string? _error;
+    private bool _loaded;
+
+    protected override void OnInitialized() => Notifications.Changed += OnChanged;
+
+    public void Dispose() => Notifications.Changed -= OnChanged;
+
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loaded)
+            return;
+
+        _loaded = true;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            using var response = await Api.Notifications.GetAsync();
+
+            if (!response.IsSuccessfulWithContent)
+            {
+                Logger.LogWarning("Notifications load failed with {StatusCode}", response.StatusCode);
+                _error = "load";
+                return;
+            }
+
+            _items = new(response.Content.Items);
+            await Notifications.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Notifications load failed");
+            _error = "load";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ViewItemAsync(NotificationDto notification)
+    {
+        await Notifications.MarkReadAsync(notification.Id);
+        await Sheet.OpenAsync<ItemDetailsBody>(new Dictionary<string, object?> { ["ItemId"] = notification.PantryItemId });
+    }
+
+    private async Task MarkReadAsync(NotificationDto notification)
+    {
+        if (await Notifications.MarkReadAsync(notification.Id))
+            await LoadAsync();
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        await Notifications.MarkAllReadAsync();
+        await LoadAsync();
+    }
+}

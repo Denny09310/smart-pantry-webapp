@@ -53,6 +53,7 @@ These instructions apply across the Smart Pantry repository.
 
 - Review schema and migration conventions before changing the database. Do not make destructive migration changes casually.
 - Do not treat calendar expiry dates as timestamps by default; preserve the app's intended date/time-zone semantics and test boundaries.
+- The reminder worker (`ReminderWorker`) runs at startup and daily at 8am server-local; reminders are idempotent per item/expiry/type, so extra runs are free. One failed item never stops the rest (per-item try/catch with tracker reset).
 - Background reminder work should be resilient and idempotent. A failed push should not block delivery attempts to other recipients.
 - Keep in-app notifications as the durable notification history and web push as best-effort.
 - Deduplicate reminders using the established recipient/item/expiry/reminder identity, and handle invalid subscriptions safely.
@@ -94,6 +95,7 @@ Do not claim deployment, external actions, or successful verification unless the
 - When adding an endpoint, add the server handler **and** the matching Refit interface method, keeping route prefixes and shapes in sync.
 - Full pantry CRUD in `src/Server/Endpoints/PantryEndpoints.cs`: `GET /api/pantry` (filters: `Location` — `"all"` means unfiltered — and `Name` via `ILike`; paging `Skip`/`Take` are nullable, defaulting to `0`/`20` in the handler, max `Take` 100), `POST /api/pantry`, `GET /api/pantry/{id}`, `PUT /api/pantry/{id}`, `DELETE /api/pantry/{id}` (204). Missing items return 404 ProblemDetails.
 - Member profiles in `src/Server/Endpoints/MemberEndpoints.cs`: `GET /api/members`, `POST /api/members` (201), `PUT /api/members/{id}` (rename/color/archive; no delete). Attribution flows via the `X-Member-Id` request header, stamped at item creation only; unknown/missing members resolve to null, never 400.
+- Notifications in `src/Server/Endpoints/NotificationEndpoints.cs`: `GET /api/notifications` (newest first + unread count), `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`.
 - Validation is framework-driven: DataAnnotations on Shared DTOs (use `[property: ...]` targets on positional records — bare attributes land on the ctor parameter and are ignored), enforced automatically via `AddValidation()` + `AddSharedValidation()` (source-gen metadata is per-assembly, so Shared registers itself and marks roots `[ValidatableType]`). Invalid requests get a 400 ProblemDetails before the handler runs — no manual validation in endpoints. Keep `[AsParameters]` query properties nullable (non-nullable value types bind as required and break optional paging).
 
 ## Database

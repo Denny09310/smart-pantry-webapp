@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Workers;
 using Shared.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,7 @@ builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 
 builder.Services.AddProblemDetails();
+builder.Services.AddHostedService<ReminderWorker>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))

@@ -57,6 +57,44 @@ namespace Server.Data.Migrations
                     b.ToTable("members", (string)null);
                 });
 
+            modelBuilder.Entity("Server.Data.Entities.Notification", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("ExpirationDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiration_date");
+
+                    b.Property<string>("PantryItemId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("pantry_item_id");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("PantryItemId", "ExpirationDate", "Type")
+                        .HasDatabaseName("ix_notifications_pantry_item_id_expiration_date_type");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
             modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
                 {
                     b.Property<string>("Id")
@@ -113,6 +151,18 @@ namespace Server.Data.Migrations
                         .HasDatabaseName("ix_items_household_member_id");
 
                     b.ToTable("items", (string)null);
+                });
+
+            modelBuilder.Entity("Server.Data.Entities.Notification", b =>
+                {
+                    b.HasOne("Server.Data.Entities.PantryItem", "PantryItem")
+                        .WithMany()
+                        .HasForeignKey("PantryItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_items_pantry_item_id");
+
+                    b.Navigation("PantryItem");
                 });
 
             modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>

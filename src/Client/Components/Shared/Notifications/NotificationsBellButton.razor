@@ -1,0 +1,43 @@
+@namespace Client.Components
+@inject NotificationService Notifications
+@inject BottomSheetService Sheet
+@implements IDisposable
+
+<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+          AriaLabel="Open notifications"
+          OnClick="OpenAsync">
+    @if (Notifications.UnreadCount > 0)
+    {
+        <BbNotificationBadge Count="@Notifications.UnreadCount">
+            <LucideIcon Name="bell" Size="18" />
+        </BbNotificationBadge>
+    }
+    else
+    {
+        <LucideIcon Name="bell" Size="18" />
+    }
+</BbButton>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Notifications.Changed += OnChanged;
+        await Notifications.RefreshAsync();
+    }
+
+    public void Dispose() => Notifications.Changed -= OnChanged;
+
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private Task OpenAsync() => Sheet.OpenAsync<NotificationsPanel>();
+}
