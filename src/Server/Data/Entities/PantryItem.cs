@@ -16,6 +16,12 @@ public class PantryItem
     public string? HouseholdMemberId { get; set; }
     public HouseholdMember? HouseholdMember { get; set; }
 
+    public string? Barcode { get; set; }
+
+    public string? NutriScore { get; set; }
+
+    public string? NutritionJson { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }
 }

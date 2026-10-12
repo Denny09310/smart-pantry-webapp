@@ -101,6 +101,10 @@ namespace Server.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
+                    b.Property<string>("Barcode")
+                        .HasColumnType("text")
+                        .HasColumnName("barcode");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -129,6 +133,14 @@ namespace Server.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("notes");
+
+                    b.Property<string>("NutriScore")
+                        .HasColumnType("text")
+                        .HasColumnName("nutri_score");
+
+                    b.Property<string>("NutritionJson")
+                        .HasColumnType("text")
+                        .HasColumnName("nutrition_json");
 
                     b.Property<double>("Quantity")
                         .HasColumnType("double precision")
