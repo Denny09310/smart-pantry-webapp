@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Push;
+using Server.Services;
 using Server.Workers;
 using Shared.Validation;
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddVapidOptions(builder.Configuration);
 builder.Services.AddSingleton<IPushSender, WebPushSender>();
 builder.Services.AddHostedService<ReminderWorker>();
+
+builder.Services.AddHttpClient<IProductLookupService, OpenFoodFactsProductLookupService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))

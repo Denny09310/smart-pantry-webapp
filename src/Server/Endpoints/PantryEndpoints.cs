@@ -76,7 +76,10 @@ internal class PantryEndpoints(ApplicationDbContext db)
                 x.Location,
                 x.Notes,
                 x.ExpirationDate,
-                x.HouseholdMemberId))
+                x.HouseholdMemberId,
+                x.Barcode,
+                x.NutriScore,
+                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null))
             .ToListAsync(ct);
 
         return TypedResults.Ok(new GetPantryItemsResponse(
@@ -98,6 +101,9 @@ internal class PantryEndpoints(ApplicationDbContext db)
             Location = request.Location,
             Notes = request.Notes,
             ExpirationDate = request.ExpirationDate,
+            Barcode = request.Barcode,
+            NutriScore = request.NutriScore,
+            NutritionJson = request.Nutrition is not null ? request.Nutrition.ToJson() : null,
             HouseholdMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
@@ -137,6 +143,9 @@ internal class PantryEndpoints(ApplicationDbContext db)
         entry.Location = request.Location;
         entry.Notes = request.Notes;
         entry.ExpirationDate = request.ExpirationDate;
+        entry.Barcode = request.Barcode;
+        entry.NutriScore = request.NutriScore;
+        entry.NutritionJson = request.Nutrition?.ToJson();
         entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
@@ -182,5 +191,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
         item.Location,
         item.Notes,
         item.ExpirationDate,
-        item.HouseholdMemberId);
+        item.HouseholdMemberId,
+        item.Barcode,
+        item.NutriScore,
+        item.NutritionJson != null ? NutritionFactsExtensions.Parse(item.NutritionJson) : null);
 }
