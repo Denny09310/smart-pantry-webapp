@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Hubs;
 using Server.Models;
 using Server.Services;
 using Shared.Validation;
@@ -13,6 +14,7 @@ builder.Services.AddValidation();
 builder.Services.AddSharedValidation();
 
 builder.Services.AddProblemDetails();
+builder.Services.AddSignalR();
 builder.Services.AddVapidOptions(builder.Configuration);
 builder.Services.AddSingleton<IPushSender, WebPushSender>();
 builder.Services.AddHostedService<ReminderWorker>();
@@ -43,6 +45,8 @@ app.UseHttpsRedirection();
 app.UseExceptionHandler();
 
 app.MapEndpointHandlers();
+
+app.MapHub<PantryHub>("/hubs/pantry");
 
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");

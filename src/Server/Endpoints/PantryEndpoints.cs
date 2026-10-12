@@ -1,16 +1,18 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Data.Entities;
+using Server.Hubs;
 using Shared.Models;
 
 namespace Server.Endpoints;
 
 [Tags("Pantry")]
 [MapGroup("/api/pantry")]
-internal class PantryEndpoints(ApplicationDbContext db)
+internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, IPantryHubClient> hub)
 {
     [MapGet("/")]
     public async Task<Results<Ok<GetPantryItemsResponse>, ValidationProblem>> GetPantryItemsAsync(
@@ -113,6 +115,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKinds.Created), ct);
 
         return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
     }
@@ -153,6 +156,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
         entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKinds.Updated), ct);
 
         return TypedResults.Ok(ToDto(entry));
     }
@@ -164,9 +168,11 @@ internal class PantryEndpoints(ApplicationDbContext db)
     {
         var deleted = await db.Items.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
 
-        return deleted == 0
-            ? ItemNotFound(id)
-            : TypedResults.NoContent();
+        if (deleted == 0)
+            return ItemNotFound(id);
+
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(id, PantryChangeKinds.Removed), ct);
+        return TypedResults.NoContent();
     }
 
     private static ProblemHttpResult ItemNotFound(string id)

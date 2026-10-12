@@ -6,6 +6,7 @@
 @inject ToastService Toasts
 @inject ILogger<Home> Logger
 @inject LocalizationService Loc
+@inject PantryRealtimeService Realtime
 @implements IDisposable
 
 <header class="flex items-center justify-between gap-2">
@@ -98,6 +99,14 @@
         _location != PantryLocations.All || _status != PantryRules.StatusAll || _sort != ItemSort.ExpiryAsc;
 
     private void OnTotalChanged(int total) => _total = total;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Realtime.Changed += OnRealtimeChanged;
+        await Realtime.StartAsync();
+    }
+
+    private Task OnRealtimeChanged(PantryChangedEvent _) => InvokeAsync(ReloadListAsync);
 
     private async Task<Page<PantryItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
     {
@@ -197,6 +206,7 @@
 
     public void Dispose()
     {
+        Realtime.Changed -= OnRealtimeChanged;
         _searchCts?.Cancel();
         _searchCts?.Dispose();
     }
