@@ -3,40 +3,39 @@
 @inject BarcodeDetector BarcodeDetector
 @implements IAsyncDisposable
 
-<div class="barcode-scanner relative" @ref="ContainerRef">
-    @if (IsScanning)
+<div class="relative" @ref="_containerRef">
+    @if (_isScanning)
     {
-        <video @ref="VideoRef" class="scanner-video w-full h-48 object-cover rounded-lg" autoplay playsinline muted></video>
-        <div class="scanner-overlay absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="scan-frame w-56 h-28 border-2 border-primary/50 rounded-lg relative">
-                <div class="scan-line absolute left-0 right-0 h-0.5 bg-primary animate-scan"></div>
+        <video @ref="_videoRef" class="w-full h-48 object-cover rounded-lg" autoplay playsinline muted></video>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-56 h-28 border-2 border-primary/50 rounded-lg relative">
+                <div class="absolute left-0 right-0 h-0.5 bg-primary animate-scan"></div>
             </div>
         </div>
-        <div class="scanner-controls absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" OnClick="StopScanningAsync" AriaLabel="Cancel scanning">
+        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" OnClick="StopScanningAsync"
+                      AriaLabel="Cancel scanning">
                 <LucideIcon Name="x" Size="16" />
             </BbButton>
         </div>
     }
     else
     {
-        <div class="scanner-placeholder w-full h-48 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/30">
-            <LucideIcon Name="scan-barcode" Size="32" Class="text-muted-foreground" />
-            <p class="text-xs text-muted-foreground mt-1">Click to start scanning</p>
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" OnClick="StartScanningAsync" class="mt-2">
-                <LucideIcon Name="scan-barcode" Size="16" />
-            </BbButton>
-        </div>
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartScanningAsync">
+            <LucideIcon Name="scan-barcode" Size="16" />
+            Scan barcode
+        </BbButton>
     }
 </div>
 
-@code {
+@code
+{
     [Parameter] public EventCallback<string> OnBarcodeScanned { get; set; }
     [Parameter] public bool AutoStart { get; set; } = false;
 
-    ElementReference ContainerRef;
-    ElementReference VideoRef;
-    private bool IsScanning = false;
+    ElementReference _containerRef;
+    ElementReference _videoRef;
+    private bool _isScanning = false;
     private MediaStreamHandle? _stream;
     private ButilSubscription? _scanSubscription;
     private CancellationTokenSource? _cts;
@@ -51,7 +50,7 @@
 
     public async Task StartScanningAsync()
     {
-        if (IsScanning) return;
+        if (_isScanning) return;
 
         try
         {
@@ -76,18 +75,18 @@
             }
 
             // Attach stream to video element
-            await _stream.AttachTo(VideoRef);
+            await _stream.AttachTo(_videoRef);
             
             // Play the video
-            await VideoRef.Play();
+            await _videoRef.Play();
 
-            IsScanning = true;
+            _isScanning = true;
             StateHasChanged();
 
             // Start barcode detection loop
             _cts = new CancellationTokenSource();
             _scanSubscription = await BarcodeDetector.StartScan(
-                VideoRef,
+                _videoRef,
                 OnBarcodesDetected,
                 formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "code_93", "codabar", "itf"],
                 intervalMs: 250);
@@ -101,9 +100,9 @@
 
     public async Task StopScanningAsync()
     {
-        if (!IsScanning) return;
+        if (!_isScanning) return;
 
-        IsScanning = false;
+        _isScanning = false;
 
         if (_scanSubscription != null)
         {
@@ -126,7 +125,7 @@
 
     private async void OnBarcodesDetected(DetectedBarcode[] barcodes)
     {
-        if (!IsScanning || barcodes.Length == 0) return;
+        if (!_isScanning || barcodes.Length == 0) return;
 
         var barcode = barcodes[0].RawValue;
         

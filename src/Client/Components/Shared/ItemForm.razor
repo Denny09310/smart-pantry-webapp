@@ -16,16 +16,16 @@
         </p>
     </div>
 
-    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col">
+    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col mt-4">
         <DataAnnotationsValidator />
         <CustomValidator @ref="_customValidator" />
 
         <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
-                @* Barcode Scanner *@
-                <div class="space-y-2">
-                    <BbLabel Class="text-sm font-medium">Scan barcode (optional)</BbLabel>
-                    <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" />
-                    <p class="text-xs text-muted-foreground">Scans EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, ITF. Auto-fills product name, brand, and nutrition info.</p>
+            @* Barcode Scanner *@
+            <div class="space-y-2">
+                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" />
+                <p class="text-xs text-muted-foreground">Scans EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, ITF.
+                    Auto-fills product name, brand, and nutrition info.</p>
                 </div>
 
                 @* Item name *@
@@ -48,16 +48,16 @@
                     <BbLabel Class="text-sm font-medium">Quantity and unit</BbLabel>
 
                     <div class="flex items-center justify-between rounded-lg bg-muted p-1">
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button" AriaLabel="Decrease quantity"
-                                  OnClick="DecrementQuantity">
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                                  AriaLabel="Decrease quantity" OnClick="DecrementQuantity">
                             <LucideIcon Name="minus" Size="16" />
                         </BbButton>
                         <div class="flex flex-col items-center leading-none">
                             <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
                             <span class="text-xs text-muted-foreground">@Input.Unit</span>
                         </div>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button" AriaLabel="Increase quantity"
-                                  OnClick="IncrementQuantity">
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                                  AriaLabel="Increase quantity" OnClick="IncrementQuantity">
                             <LucideIcon Name="plus" Size="16" />
                         </BbButton>
                     </div>
@@ -101,8 +101,8 @@
                 <BbField>
                     <BbFieldLabel Class="text-sm font-medium">Duration and expiry</BbFieldLabel>
                     <BbFieldContent>
-                        <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)" DateFormat="dd/MM/yyyy"
-                                      Placeholder="Pick a date" Class="w-full" />
+                        <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)"
+                                      DateFormat="dd/MM/yyyy" Placeholder="Pick a date" Class="w-full" />
                         <ValidationMessage For="@(() => Input.ExpirationDate)" class="text-sm text-destructive" />
                     </BbFieldContent>
                 </BbField>
@@ -110,10 +110,14 @@
                 <div class="space-y-2">
                     <span class="text-xs text-muted-foreground">Shortcuts</span>
                     <div class="flex flex-wrap gap-1.5">
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(3))">+3 days</BbButton>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(7))">+1 week</BbButton>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(30))">+1 month</BbButton>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button" OnClick="@(() => SetExpiry(182))">+6 months</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(3))">+3 days</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(7))">+1 week</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(30))">+1 month</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(182))">+6 months</BbButton>
                     </div>
                     <BbBadge Variant="@Banner.Variant">
                         <BbBadgeIcon Name="@Banner.Icon" />
@@ -127,7 +131,8 @@
                         <BbLabel For="batch-notes" Class="text-sm font-medium">Batch notes</BbLabel>
                         <span class="text-xs text-muted-foreground">Optional</span>
                     </div>
-                    <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened" rows="2" />
+                    <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened"
+                                rows="2" />
                 </div>
             </div>
 
@@ -138,12 +143,13 @@
                     </Icon>
                     <ChildContent>@(Item is null ? "Save item" : "Save changes")</ChildContent>
                 </BbButton>
-                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button" OnClick="() => Sheet.CloseAsync()">
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
+                          OnClick="() => Sheet.CloseAsync()">
                     Cancel
                 </BbButton>
             </div>
         </EditForm>
-</div>
+    </div>
 
 @code
 {
