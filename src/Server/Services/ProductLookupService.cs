@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using Shared.Models;
 
@@ -16,17 +15,17 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
     public async Task<ProductLookupDto?> LookupAsync(string barcode, CancellationToken ct)
     {
         var url = $"{BaseUrl}{barcode}.json";
-        
+
         try
         {
             var response = await http.GetFromJsonAsync<OpenFoodFactsResponse>(url, ct);
-            
+
             if (response?.Status != 1 || response.Product is null)
                 return null;
 
             var product = response.Product;
             var nutriments = product.Nutriments;
-            
+
             var nutrition = new NutritionFacts(
                 EnergyKcal: nutriments?.EnergyKcal100g,
                 Proteins: nutriments?.Proteins100g,
