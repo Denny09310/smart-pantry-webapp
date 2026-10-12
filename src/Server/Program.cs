@@ -17,7 +17,8 @@ builder.Services.AddVapidOptions(builder.Configuration);
 builder.Services.AddSingleton<IPushSender, WebPushSender>();
 builder.Services.AddHostedService<ReminderWorker>();
 
-builder.Services.AddHttpClient<IProductLookupService, OpenFoodFactsProductLookupService>();
+builder.Services.AddHttpClient<IProductLookupService, OpenFoodFactsProductLookupService>(
+    client => client.Timeout = TimeSpan.FromSeconds(15));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
