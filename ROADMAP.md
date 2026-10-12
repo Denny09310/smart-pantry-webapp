@@ -104,30 +104,6 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 **Done when:** a user can scan a product barcode and have the form pre-filled with accurate product data, with sensible fallbacks.
 
-## Phase 10 — Production security and recovery
-
-- [ ] Decide how access to the server instance will be restricted (for example, private network, VPN, firewall, or hosting-level access control) if it is not intended for public use.
-- [ ] Configure HTTPS, allowed origins/CORS, and secure production settings.
-- [ ] Keep connection strings, VAPID keys, and other secrets out of source control and client code.
-- [ ] Ensure production errors do not disclose stack traces or secrets.
-- [ ] Configure automated database backups and retention.
-- [ ] Restore a backup into a separate test environment and verify the app works.
-- [ ] Document deployment, migration, rollback, and recovery procedures.
-
-**Done when:** the exposure of the no-login app is an explicit deployment decision and a backup restore has been proven.
-
-## Phase 11 — Tests, diagnostics, and release
-
-- [ ] Add integration tests for pantry endpoints, validation, expiry-status boundaries, profile behavior, reminder deduplication, and push-subscription cleanup.
-- [ ] Add structured logs and health checks for the app and database.
-- [ ] Make worker failures and push delivery outcomes observable without logging secrets.
-- [ ] Add CI to restore, build, and run tests.
-- [ ] Test on real phones and desktops with more than one household member represented.
-- [ ] Verify PWA installation, notification permission flows, push click-through, and behavior after server restart.
-- [ ] Perform a short household trial and fix recurring issues before adding features.
-
-**Done when:** builds and tests run repeatably, recovery is documented, and the app has been exercised on real devices in ordinary household use.
-
 Keep native apps, offline synchronization, email reminders, recipes, barcode/OCR/AI, complex permissions, inventory ledgers, queues, event buses, and additional architectural layers out of scope unless requirements change.
 
 ## Recommended implementation order
@@ -141,7 +117,5 @@ Keep native apps, offline synchronization, email reminders, recipes, barcode/OCR
 7. PWA installation
 8. Push subscriptions
 9. Barcode scanning & OpenFoodFacts
-10. Production security and recovery
-11. Tests, diagnostics, and release
 
 The goal is a straightforward, reliable household app—not a multi-tenant service or an identity platform.
