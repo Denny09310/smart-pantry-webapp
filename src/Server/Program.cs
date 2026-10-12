@@ -1,11 +1,17 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Shared.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointHandlers();
+
+builder.Services.AddValidation();
+builder.Services.AddSharedValidation();
+
+builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
@@ -33,3 +39,7 @@ app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+public partial class Program
+{
+}

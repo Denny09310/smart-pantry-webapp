@@ -22,6 +22,41 @@ namespace Server.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Server.Data.Entities.HouseholdMember", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("color");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_members");
+
+                    b.ToTable("members", (string)null);
+                });
+
             modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
                 {
                     b.Property<string>("Id")
@@ -36,18 +71,25 @@ namespace Server.Data.Migrations
                         .HasColumnType("date")
                         .HasColumnName("expiration_date");
 
+                    b.Property<string>("HouseholdMemberId")
+                        .HasColumnType("text")
+                        .HasColumnName("household_member_id");
+
                     b.Property<string>("Location")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("notes");
 
                     b.Property<double>("Quantity")
@@ -56,7 +98,8 @@ namespace Server.Data.Migrations
 
                     b.Property<string>("Unit")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("unit");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -66,7 +109,21 @@ namespace Server.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_items");
 
+                    b.HasIndex("HouseholdMemberId")
+                        .HasDatabaseName("ix_items_household_member_id");
+
                     b.ToTable("items", (string)null);
+                });
+
+            modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
+                {
+                    b.HasOne("Server.Data.Entities.HouseholdMember", "HouseholdMember")
+                        .WithMany()
+                        .HasForeignKey("HouseholdMemberId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_items_members_household_member_id");
+
+                    b.Navigation("HouseholdMember");
                 });
 #pragma warning restore 612, 618
         }

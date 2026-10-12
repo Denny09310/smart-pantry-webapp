@@ -14,13 +14,13 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 ## Phase 1 — Solution foundation and data model
 
-- [ ] Confirm the three-project solution builds and project references are correct.
-- [ ] Configure EF Core, `AppDbContext`, the selected database provider, and migrations.
-- [ ] Define the core pantry item fields: name, location, quantity, unit, and expiry date.
-- [ ] Define simple household member profiles (for example, display name and active/archived state).
-- [ ] Define transport DTOs and request/response contracts in `Shared`.
-- [ ] Add input validation and consistent API error handling.
-- [ ] Keep environment-specific settings in configuration; keep secrets out of source control.
+- [x] Confirm the three-project solution builds and project references are correct.
+- [x] Configure EF Core, `AppDbContext`, the selected database provider, and migrations.
+- [x] Define the core pantry item fields: name, location, quantity, unit, and expiry date.
+- [x] Define simple household member profiles (for example, display name and active/archived state).
+- [x] Define transport DTOs and request/response contracts in `Shared`.
+- [x] Add input validation and consistent API error handling.
+- [x] Keep environment-specific settings in configuration; keep secrets out of source control.
 
 **Done when:** a clean restore/build succeeds, migrations can create the database, and the core model is documented by code and tests.
 

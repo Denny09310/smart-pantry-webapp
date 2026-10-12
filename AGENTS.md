@@ -42,15 +42,12 @@ These instructions apply across the Smart Pantry repository.
 - For low-risk ambiguity, make the smallest reasonable assumption, state it, and proceed.
 - Do not silently invent requirements or expand the task.
 
-## 6. Security and household isolation
+## 6. Security: no login by design
 
-- The server is the security boundary; client-side checks are not authorization.
-- Enforce authentication and household membership on every protected endpoint, including notifications, invitations, and push subscriptions.
-- Never trust client-supplied `HouseholdId`, `UserId`, role, or ownership claims without server-side validation against the authenticated principal and database.
-- Scope reads, updates, and deletes to the caller's authorized household.
+- Per `ROADMAP.md`, there is **no authentication**: one server instance and database per household, member profiles are display names only. Do not add login, roles, `HouseholdId` scoping, or invitation flows.
+- Restrict access at deployment (private network, VPN, firewall), not in app code.
 - Validate input at the API boundary. Do not expose stack traces, secrets, or internal details in production errors.
-- Never log passwords, access tokens, invitation tokens, private VAPID keys, or other secrets.
-- Preserve invitation protections: secure tokens, hashed storage where appropriate, expiry, and one-time use. Ensure membership removal revokes access and stops future push delivery.
+- Never log connection strings, private VAPID keys, or other secrets. Keep VAPID private keys server-side only.
 
 ## 7. Data and background work
 
@@ -84,8 +81,9 @@ Do not claim deployment, external actions, or successful verification unless the
 
 ## Stack
 
-- .NET 10 solution (`smart-pantry-webapp.slnx`): `Client` (Blazor WebAssembly) + `Server` (ASP.NET Core). No test project, no CI.
-- Build: `dotnet build smart-pantry-webapp.slnx`. Run/debug via the **Server** project (`http://localhost:5125`, `https://localhost:7139`); it serves the Client (`MapStaticAssets` + `MapFallbackToFile("index.html")` in `Server/Program.cs`).
+- .NET 10 solution (`smart-pantry-webapp.slnx`): `src/Client` (Blazor WebAssembly) + `src/Server` (ASP.NET Core) + `src/Shared` (transport contracts) + `tests/Server.Tests` (xUnit). No CI.
+- Build: `dotnet build smart-pantry-webapp.slnx`. Run/debug via the **Server** project (`http://localhost:5125`, `https://localhost:7139`); it serves the Client (`MapStaticAssets` + `MapFallbackToFile("index.html")` in `src/Server/Program.cs`). Run with `ASPNETCORE_ENVIRONMENT=Development` (or a launch profile) — `appsettings.json` has no connection string, so Production startup fails at `MigrateAsync`.
+- Tests: `dotnet test smart-pantry-webapp.slnx` (single test: `dotnet test tests/Server.Tests --filter <Name>`). `PantryApiTests` boot the real host via `WebApplicationFactory` and need local Postgres; they recreate database `smart_pantry_tests` on each run (override via `SMARTPANTRY_TEST_CONNECTION`).
 - Product plan and phase order live in `ROADMAP.md`; check it before adding features outside the current slice.
 
 ## Endpoints: update both sides
@@ -93,7 +91,8 @@ Do not claim deployment, external actions, or successful verification unless the
 - Server uses `GeneratedEndpoints` source gen: handler classes with `[MapGroup]` / `[MapGet]` / `[MapPost]`, registered via `AddEndpointHandlers()` / `MapEndpointHandlers()`.
 - Client uses Refit: hand-written `IPantryEndpoints` in `Client/Services/Api/ServerApi.cs` (`[PathPrefix]` + verb attributes), registered via `AddRefitGeneratedClient` on the `"Server.API"` `HttpClient`.
 - When adding an endpoint, add the server handler **and** the matching Refit interface method, keeping route prefixes and shapes in sync.
-- Current surface is only `GET /api/pantry` (filters: `Location` — `"all"` means unfiltered — and `Name` via `ILike`; paging `Skip`/`Take`, default `0`/`20`) and `POST /api/pantry`, in `Server/Endpoints/PantryEndpoints.cs`.
+- Current surface is only `GET /api/pantry` (filters: `Location` — `"all"` means unfiltered — and `Name` via `ILike`; paging `Skip`/`Take` are nullable, defaulting to `0`/`20` in the handler, max `Take` 100) and `POST /api/pantry`, in `src/Server/Endpoints/PantryEndpoints.cs`.
+- Validation is framework-driven: DataAnnotations on Shared DTOs (use `[property: ...]` targets on positional records — bare attributes land on the ctor parameter and are ignored), enforced automatically via `AddValidation()` + `AddSharedValidation()` (source-gen metadata is per-assembly, so Shared registers itself and marks roots `[ValidatableType]`). Invalid requests get a 400 ProblemDetails before the handler runs — no manual validation in endpoints. Keep `[AsParameters]` query properties nullable (non-nullable value types bind as required and break optional paging).
 
 ## Database
 

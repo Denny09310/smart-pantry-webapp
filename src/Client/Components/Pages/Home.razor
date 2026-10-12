@@ -68,7 +68,12 @@ else
 
     private async Task LoadAsync()
     {
-        var request = new GetPantryItemsRequest(_location, _name);
+        var request = new GetPantryItemsRequest
+        {
+            Location = _location,
+            Name = _name
+        };
+        
         using var response = await Api.Pantry.GetAsync(request);
 
         if (!response.IsSuccessfulWithContent)

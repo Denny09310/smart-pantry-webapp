@@ -16,6 +16,9 @@ internal class PantryEndpoints(ApplicationDbContext db)
         [AsParameters] GetPantryItemsRequest request,
         CancellationToken ct)
     {
+        var skip = request.Skip ?? 0;
+        var take = request.Take ?? 20;
+
         var query = db.Items.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not "all")
@@ -25,8 +28,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
             query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
 
         var items = await query
-            .Skip(request.Skip)
-            .Take(request.Take)
+            .Skip(skip)
+            .Take(take)
             .Select(x => new PantryItemDto(
                 x.Id,
                 x.Name,
@@ -34,7 +37,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
                 x.Unit,
                 x.Location,
                 x.Notes,
-                x.ExpirationDate))
+                x.ExpirationDate,
+                x.HouseholdMemberId))
             .ToListAsync(ct);
 
         var totalItems = await query.CountAsync(ct);
@@ -45,10 +49,19 @@ internal class PantryEndpoints(ApplicationDbContext db)
     }
 
     [MapPost("/")]
-    public async Task<Ok<PantryItemDto>> CreatePantryItemAsync(
+    public async Task<Results<Ok<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
         CancellationToken ct)
     {
+        if (request.HouseholdMemberId is not null &&
+            !await db.Members.AnyAsync(x => x.Id == request.HouseholdMemberId, ct))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.HouseholdMemberId)] = ["Unknown household member."]
+            });
+        }
+
         var entry = new PantryItem
         {
             Name = request.Name,
@@ -56,7 +69,8 @@ internal class PantryEndpoints(ApplicationDbContext db)
             Unit = request.Unit,
             Location = request.Location,
             Notes = request.Notes,
-            ExpirationDate = request.ExpirationDate
+            ExpirationDate = request.ExpirationDate,
+            HouseholdMemberId = request.HouseholdMemberId
         };
 
         db.Items.Add(entry);
@@ -69,6 +83,7 @@ internal class PantryEndpoints(ApplicationDbContext db)
             entry.Unit,
             entry.Location,
             entry.Notes,
-            entry.ExpirationDate));
+            entry.ExpirationDate,
+            entry.HouseholdMemberId));
     }
 }

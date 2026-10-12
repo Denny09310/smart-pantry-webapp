@@ -1,0 +1,64 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Npgsql;
+
+namespace Server.Tests;
+
+/// <summary>
+/// Boots the full Server host in-memory (including Minimal API validation)
+/// against a dedicated <c>smart_pantry_tests</c> Postgres database, which is
+/// created on demand. Override the connection with SMARTPANTRY_TEST_CONNECTION.
+/// </summary>
+public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+{
+    public const string TestDatabase = "smart_pantry_tests";
+
+    public static string ConnectionString =>
+        Environment.GetEnvironmentVariable("SMARTPANTRY_TEST_CONNECTION")
+        ?? $"Server=localhost;Database={TestDatabase};Uid=postgres;Pwd=mypassword123";
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureAppConfiguration(config =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Default"] = ConnectionString
+            });
+        });
+    }
+
+    public async Task InitializeAsync()
+    {
+        await RecreateDatabaseAsync();
+        _ = Services; // Build the host: Program.cs runs migrations on the test database.
+    }
+
+    Task IAsyncLifetime.DisposeAsync()
+    {
+        Dispose();
+        return Task.CompletedTask;
+    }
+
+    private static async Task RecreateDatabaseAsync()
+    {
+        var maintenance = new NpgsqlConnectionStringBuilder(ConnectionString)
+        {
+            Database = "postgres"
+        }.ConnectionString;
+
+        NpgsqlConnection.ClearAllPools();
+
+        await using var connection = new NpgsqlConnection(maintenance);
+        await connection.OpenAsync();
+
+        await using var drop = new NpgsqlCommand(
+            $"DROP DATABASE IF EXISTS \"{TestDatabase}\" WITH (FORCE)", connection);
+        await drop.ExecuteNonQueryAsync();
+
+        await using var create = new NpgsqlCommand(
+            $"CREATE DATABASE \"{TestDatabase}\"", connection);
+        await create.ExecuteNonQueryAsync();
+    }
+}

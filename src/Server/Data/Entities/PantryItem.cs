@@ -13,6 +13,9 @@ public class PantryItem
 
     public DateOnly ExpirationDate { get; set; }
 
+    public string? HouseholdMemberId { get; set; }
+    public HouseholdMember? HouseholdMember { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }
 }
