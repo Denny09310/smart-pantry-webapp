@@ -1,3 +1,13 @@
+## [1.1.0] - 2026-10-13
+
+### 🚀 Features
+
+- Liveness and readiness health endpoints (`/health/live`, `/health/ready` with Postgres check)
+
+### 💼 Other
+
+- Show the app version at the bottom of the splash screen
+
 ## [1.0.1] - 2026-10-13
 
 ### 🐛 Bug Fixes
