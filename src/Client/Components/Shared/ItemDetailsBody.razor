@@ -99,6 +99,14 @@
                 </div>
             }
 
+            @if (!string.IsNullOrWhiteSpace(_product?.IngredientsText))
+            {
+                <div class="space-y-2">
+                    <h3 class="text-sm font-medium">@Loc["Ingredients"]</h3>
+                    <p class="text-sm text-muted-foreground">@_product.IngredientsText</p>
+                </div>
+            }
+
             @* Barcode backfill for items added before scanning existed *@
             @if (string.IsNullOrWhiteSpace(_item.Barcode) && !_linkingBarcode)
             {
@@ -139,6 +147,7 @@
     public string ItemId { get; set; } = string.Empty;
 
     private PantryItemDto? _item;
+    private ProductLookupDto? _product;
     private string? _loadedId;
     private bool _loading = true;
     private string? _error;
@@ -159,6 +168,7 @@
         _loading = true;
         _error = null;
         _item = null;
+        _product = null;
 
         try
         {
@@ -175,6 +185,22 @@
             }
 
             _item = response.Content;
+
+            // Ingredients were never stored on the item: resolve them through
+            // the cached lookup. Quiet on failure — the snapshot data stands.
+            if (!string.IsNullOrWhiteSpace(_item?.Barcode))
+            {
+                try
+                {
+                    using var lookup = await Api.Products.LookupAsync(_item.Barcode);
+                    if (lookup.IsSuccessfulWithContent)
+                        _product = lookup.Content;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "Product details lookup failed for {Barcode}", _item.Barcode);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -222,6 +248,8 @@
             rows.Add((Loc["NutritionCarbs"], $"{carbs:0.#} g"));
         if (nutrition.Sugars is { } sugars)
             rows.Add((Loc["NutritionSugars"], $"{sugars:0.#} g"));
+        if (nutrition.Fiber is { } fiber)
+            rows.Add((Loc["Fiber"], $"{fiber:0.#} g"));
         if (nutrition.Proteins is { } protein)
             rows.Add((Loc["NutritionProtein"], $"{protein:0.#} g"));
         if (nutrition.Salt is { } salt)

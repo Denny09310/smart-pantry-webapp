@@ -14,5 +14,6 @@ public class CachedProduct
     public string? NutriScore { get; set; }
     public string? NutritionJson { get; set; }
     public string? ImageUrl { get; set; }
+    public string? IngredientsText { get; set; }
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

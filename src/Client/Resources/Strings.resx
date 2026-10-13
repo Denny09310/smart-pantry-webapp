@@ -135,6 +135,9 @@
   <data name="English" xml:space="preserve">
     <value>English</value>
   </data>
+  <data name="Ingredients" xml:space="preserve">
+    <value>Ingredients</value>
+  </data>
   <data name="Italian" xml:space="preserve">
     <value>Italian</value>
   </data>
@@ -251,6 +254,9 @@
   </data>
   <data name="NutritionSalt" xml:space="preserve">
     <value>Salt</value>
+  </data>
+  <data name="Fiber" xml:space="preserve">
+    <value>Fiber</value>
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Edit</value>

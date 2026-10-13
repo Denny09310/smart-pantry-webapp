@@ -448,6 +448,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Fiber.
+        /// </summary>
+        public static string Fiber {
+            get {
+                return ResourceManager.GetString("Fiber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Filters.
         /// </summary>
         public static string Filters {
@@ -498,6 +507,15 @@ namespace Client.Resources {
         public static string HouseholdMembers {
             get {
                 return ResourceManager.GetString("HouseholdMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Ingredients.
+        /// </summary>
+        public static string Ingredients {
+            get {
+                return ResourceManager.GetString("Ingredients", resourceCulture);
             }
         }
         

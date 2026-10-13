@@ -18,7 +18,8 @@ public record NutritionFacts(
     double? Sugars = null,
     double? Fat = null,
     double? SaturatedFat = null,
-    double? Salt = null);
+    double? Salt = null,
+    double? Fiber = null);
 
 public static class NutritionFactsExtensions
 {
@@ -37,4 +38,5 @@ public record ProductLookupDto(
     string? Unit,
     string? NutriScore,
     NutritionFacts? Nutrition,
-    string? ImageUrl);
+    string? ImageUrl,
+    string? IngredientsText = null);

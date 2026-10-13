@@ -39,6 +39,10 @@ namespace Server.Data.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("image_url");
 
+                    b.Property<string>("IngredientsText")
+                        .HasColumnType("text")
+                        .HasColumnName("ingredients_text");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
