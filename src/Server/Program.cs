@@ -15,6 +15,8 @@ builder.Services.AddSharedValidation();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddSignalR();
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddMemoryCache();
 builder.Services.AddVapidOptions(builder.Configuration);
 builder.Services.AddSingleton<IPushSender, WebPushSender>();
@@ -52,6 +54,13 @@ app.UseHttpsRedirection();
 app.MapEndpointHandlers();
 
 app.MapHub<PantryHub>("/hubs/pantry");
+
+app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new()
+{
+    Predicate = _ => true,
+    ResponseWriter = HealthResponses.WriteJsonAsync
+});
 
 app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
