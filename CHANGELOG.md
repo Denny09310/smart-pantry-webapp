@@ -1,3 +1,9 @@
+## [1.0.1] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- Ship one untrimmed bit-butil.js bundle so the service-worker manifest hash matches the served file (fixes blocked script/SRI failure in production)
+
 ## [1.0.0] - 2026-10-13
 
 ### 🚀 Features
