@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
-using Server.Health;
 using Server.Hubs;
 using Server.Models;
 using Server.Services;

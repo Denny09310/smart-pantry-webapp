@@ -4,7 +4,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using Server.Data;
 
-namespace Server.Health;
+namespace Server.Services;
 
 /// <summary>Readiness probe: Postgres reachable.</summary>
 public sealed class DatabaseHealthCheck(IServiceScopeFactory scopes) : IHealthCheck
