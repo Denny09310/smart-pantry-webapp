@@ -72,35 +72,3 @@ h1:focus {
 .loading-progress-text:after {
     content: var(--blazor-load-percentage-text, "Loading");
 }
-
-@property --rainbow-angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
-}
-
-@keyframes rainbow-spin {
-    to {
-        --rainbow-angle: 360deg;
-    }
-}
-
-/* Glowing rotating rainbow border shown while a product lookup runs. */
-.rainbow-border {
-    position: relative;
-    border-radius: 0.75rem;
-}
-
-.rainbow-border::before {
-    content: "";
-    position: absolute;
-    inset: -3px;
-    border-radius: inherit;
-    background: conic-gradient(
-        from var(--rainbow-angle),
-        #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff, #ff0000);
-    filter: blur(6px);
-    opacity: 0.85;
-    z-index: -1;
-    animation: rainbow-spin 2s linear infinite;
-}

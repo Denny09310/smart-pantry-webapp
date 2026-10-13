@@ -225,6 +225,33 @@
   <data name="Notes" xml:space="preserve">
     <value>Notes</value>
   </data>
+  <data name="NutriScore" xml:space="preserve">
+    <value>Nutri-Score</value>
+  </data>
+  <data name="NutritionPer100g" xml:space="preserve">
+    <value>Nutrition per 100 g</value>
+  </data>
+  <data name="NutritionEnergy" xml:space="preserve">
+    <value>Energy</value>
+  </data>
+  <data name="NutritionProtein" xml:space="preserve">
+    <value>Protein</value>
+  </data>
+  <data name="NutritionCarbs" xml:space="preserve">
+    <value>Carbohydrates</value>
+  </data>
+  <data name="NutritionSugars" xml:space="preserve">
+    <value>Sugars</value>
+  </data>
+  <data name="NutritionFat" xml:space="preserve">
+    <value>Fat</value>
+  </data>
+  <data name="NutritionSaturatedFat" xml:space="preserve">
+    <value>Saturated fat</value>
+  </data>
+  <data name="NutritionSalt" xml:space="preserve">
+    <value>Salt</value>
+  </data>
   <data name="Edit" xml:space="preserve">
     <value>Edit</value>
   </data>
@@ -317,6 +344,9 @@
   </data>
   <data name="LookupFailed" xml:space="preserve">
     <value>Couldn't look up product. Try again or add manually.</value>
+  </data>
+  <data name="LookingUp" xml:space="preserve">
+    <value>Looking up product…</value>
   </data>
   <data name="Notifications" xml:space="preserve">
     <value>Notifications</value>

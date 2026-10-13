@@ -6,10 +6,16 @@
 @inject LocalizationService Loc
 @implements IAsyncDisposable
 
-<div class="relative @(Searching ? "rainbow-border" : "")" @ref="_containerRef">
+<div class="relative" @ref="_containerRef">
     @* Always rendered (hidden when idle) so the element reference exists
-        before the stream attaches — AttachTo a missing element silently fails. *@
-    <video @ref="_videoRef" class="@(_isScanning ? "w-full h-48 object-cover rounded-lg" : "hidden")" autoplay playsinline muted></video>
+        before the stream attaches - AttachTo a missing element silently fails. *@
+    <div class="barcode-frame@(_isScanning && Searching ? " searching" : null)">
+        <video @ref="_videoRef" class="@(_isScanning ? "w-full h-48 object-cover rounded-lg" : "hidden")" autoplay playsinline muted></video>
+    </div>
+    @if (Searching)
+    {
+        <p class="py-2 text-center text-xs text-muted-foreground" aria-live="polite">@Loc["LookingUp"]</p>
+    }
     @if (_isScanning)
     {
         <div class="absolute right-2 top-2">

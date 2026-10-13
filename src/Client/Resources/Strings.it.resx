@@ -225,6 +225,33 @@
   <data name="Notes" xml:space="preserve">
     <value>Note</value>
   </data>
+  <data name="NutriScore" xml:space="preserve">
+    <value>Nutri-Score</value>
+  </data>
+  <data name="NutritionPer100g" xml:space="preserve">
+    <value>Valori nutrizionali per 100 g</value>
+  </data>
+  <data name="NutritionEnergy" xml:space="preserve">
+    <value>Energia</value>
+  </data>
+  <data name="NutritionProtein" xml:space="preserve">
+    <value>Proteine</value>
+  </data>
+  <data name="NutritionCarbs" xml:space="preserve">
+    <value>Carboidrati</value>
+  </data>
+  <data name="NutritionSugars" xml:space="preserve">
+    <value>Zuccheri</value>
+  </data>
+  <data name="NutritionFat" xml:space="preserve">
+    <value>Grassi</value>
+  </data>
+  <data name="NutritionSaturatedFat" xml:space="preserve">
+    <value>Grassi saturi</value>
+  </data>
+  <data name="NutritionSalt" xml:space="preserve">
+    <value>Sale</value>
+  </data>
   <data name="Edit" xml:space="preserve">
     <value>Modifica</value>
   </data>
@@ -317,6 +344,9 @@
   </data>
   <data name="LookupFailed" xml:space="preserve">
     <value>Impossibile cercare il prodotto. Riprova o aggiungi manualmente.</value>
+  </data>
+  <data name="LookingUp" xml:space="preserve">
+    <value>Ricerca prodotto…</value>
   </data>
   <data name="Notifications" xml:space="preserve">
     <value>Notifiche</value>
