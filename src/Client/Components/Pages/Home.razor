@@ -12,9 +12,9 @@
 <header class="flex items-center justify-between gap-2">
     <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
     <div class="flex items-center gap-2">
-        @if (_total > 0)
+        @if (_state.Total > 0)
         {
-            <span class="text-sm text-muted-foreground">@_total items</span>
+            <span class="text-sm text-muted-foreground">@_state.Total items</span>
         }
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]" @onclick="OpenAddAsync">
             <LucideIcon Name="plus" Size="18" />
@@ -30,7 +30,7 @@
             <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
                 <LucideIcon Name="search" Size="16" />
             </BbInputGroupAddon>
-            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="OnSearchInput"
+            <BbInputGroupInput @bind-Value="_state.Name" @bind-Value:after="OnSearchInput"
                                Placeholder="@Loc["SearchPlaceholder"]" />
         </BbInputGroup>
     </div>
@@ -44,11 +44,11 @@
     </BbButton>
 </div>
 
-<InfiniteScrollList TItem="PantryItemDto" @ref="_list" LoadPageAsync="LoadPageAsync" KeySelector="@(x => x.Id)"
+<InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync" KeySelector="@(x => x.Id)"
                     TotalChanged="OnTotalChanged">
     <ItemTemplate>
         @{
-            var status = ExpiryHelper.GetStatus(context.ExpirationDate, _today);
+            var status = ExpiryHelper.GetStatus(context.ExpirationDate, _state.Today);
         }
         <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
                 class="bg-card block w-full rounded-md border p-3 text-left">
@@ -86,19 +86,10 @@
 </InfiniteScrollList>
 
 @code {
-    private InfiniteScrollList<PantryItemDto>? _list;
-    private int _total;
-    private CancellationTokenSource? _searchCts;
-
-    private string? _location = PantryLocations.All, _name;
-    private string _status = PantryRules.StatusAll;
-    private ItemSort _sort = ItemSort.ExpiryAsc;
-    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
-
     private bool HasFilters =>
-        _location != PantryLocations.All || _status != PantryRules.StatusAll || _sort != ItemSort.ExpiryAsc;
+        _state.Location != PantryLocations.All || _state.Status != PantryRules.StatusAll || _state.Sort != ItemSort.ExpiryAsc;
 
-    private void OnTotalChanged(int total) => _total = total;
+    private void OnTotalChanged(int total) => _state.Total = total;
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,10 +103,10 @@
     {
         var request = new GetPantryItemsRequest
         {
-            Location = _location,
-            Name = _name,
-            Status = _status == PantryRules.StatusAll ? null : _status,
-            Sort = _sort switch
+            Location = _state.Location,
+            Name = _state.Name,
+            Status = _state.Status == PantryRules.StatusAll ? null : _state.Status,
+            Sort = _state.Sort switch
             {
                 ItemSort.ExpiryDesc => PantryRules.SortExpiryDesc,
                 ItemSort.Name => PantryRules.SortName,
@@ -160,9 +151,9 @@
     {
         var parameters = new Dictionary<string, object?>
         {
-            ["Location"] = _location,
-            ["Status"] = _status,
-            ["Sort"] = _sort
+            ["Location"] = _state.Location,
+            ["Status"] = _state.Status,
+            ["Sort"] = _state.Sort
         };
 
         var result = await Sheet.OpenAsync<FilterSheetBody>(parameters);
@@ -175,20 +166,20 @@
         if (data is not { } filters)
             return;
 
-        (_location, _status, _sort) = (filters.Location, filters.Status, filters.Sort);
+        (_state.Location, _state.Status, _state.Sort) = (filters.Location, filters.Status, filters.Sort);
         await ReloadListAsync();
     }
 
     private Task ReloadListAsync()
-        => _list is not null ? _list.ReloadAsync() : Task.CompletedTask;
+        => _state.List is not null ? _state.List.ReloadAsync() : Task.CompletedTask;
 
     /// <summary>Debounced search: one reload per pause in typing, not per keystroke.</summary>
     private void OnSearchInput()
     {
-        _searchCts?.Cancel();
-        _searchCts?.Dispose();
-        _searchCts = new CancellationTokenSource();
-        _ = DebouncedReloadAsync(_searchCts.Token);
+        _state.SearchCts?.Cancel();
+        _state.SearchCts?.Dispose();
+        _state.SearchCts = new CancellationTokenSource();
+        _ = DebouncedReloadAsync(_state.SearchCts.Token);
     }
 
     private async Task DebouncedReloadAsync(CancellationToken ct)
@@ -207,7 +198,7 @@
     public void Dispose()
     {
         Realtime.Changed -= OnRealtimeChanged;
-        _searchCts?.Cancel();
-        _searchCts?.Dispose();
+        _state.SearchCts?.Cancel();
+        _state.SearchCts?.Dispose();
     }
 }

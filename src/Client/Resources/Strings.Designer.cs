@@ -178,6 +178,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Barcode removed..
+        /// </summary>
+        public static string BarcodeUnlinked {
+            get {
+                return ResourceManager.GetString("BarcodeUnlinked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Batch notes.
         /// </summary>
         public static string BatchNotes {
@@ -448,6 +457,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Fiber.
+        /// </summary>
+        public static string Fiber {
+            get {
+                return ResourceManager.GetString("Fiber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Filters.
         /// </summary>
         public static string Filters {
@@ -498,6 +516,15 @@ namespace Client.Resources {
         public static string HouseholdMembers {
             get {
                 return ResourceManager.GetString("HouseholdMembers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Ingredients.
+        /// </summary>
+        public static string Ingredients {
+            get {
+                return ResourceManager.GetString("Ingredients", resourceCulture);
             }
         }
         
@@ -579,6 +606,15 @@ namespace Client.Resources {
         public static string Location {
             get {
                 return ResourceManager.GetString("Location", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Looking up product….
+        /// </summary>
+        public static string LookingUp {
+            get {
+                return ResourceManager.GetString("LookingUp", resourceCulture);
             }
         }
         
@@ -687,6 +723,87 @@ namespace Client.Resources {
         public static string NotificationsEnabled {
             get {
                 return ResourceManager.GetString("NotificationsEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Nutri-Score.
+        /// </summary>
+        public static string NutriScore {
+            get {
+                return ResourceManager.GetString("NutriScore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Carbohydrates.
+        /// </summary>
+        public static string NutritionCarbs {
+            get {
+                return ResourceManager.GetString("NutritionCarbs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Energy.
+        /// </summary>
+        public static string NutritionEnergy {
+            get {
+                return ResourceManager.GetString("NutritionEnergy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Fat.
+        /// </summary>
+        public static string NutritionFat {
+            get {
+                return ResourceManager.GetString("NutritionFat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Nutrition per 100 g.
+        /// </summary>
+        public static string NutritionPer100g {
+            get {
+                return ResourceManager.GetString("NutritionPer100g", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Protein.
+        /// </summary>
+        public static string NutritionProtein {
+            get {
+                return ResourceManager.GetString("NutritionProtein", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Salt.
+        /// </summary>
+        public static string NutritionSalt {
+            get {
+                return ResourceManager.GetString("NutritionSalt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Saturated fat.
+        /// </summary>
+        public static string NutritionSaturatedFat {
+            get {
+                return ResourceManager.GetString("NutritionSaturatedFat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Sugars.
+        /// </summary>
+        public static string NutritionSugars {
+            get {
+                return ResourceManager.GetString("NutritionSugars", resourceCulture);
             }
         }
         
@@ -1065,6 +1182,15 @@ namespace Client.Resources {
         public static string UnitsMl {
             get {
                 return ResourceManager.GetString("UnitsMl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Remove barcode.
+        /// </summary>
+        public static string UnlinkBarcode {
+            get {
+                return ResourceManager.GetString("UnlinkBarcode", resourceCulture);
             }
         }
         

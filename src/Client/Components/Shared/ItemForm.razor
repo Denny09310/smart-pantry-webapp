@@ -17,28 +17,28 @@
         </p>
     </div>
 
-    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col mt-4">
+    <EditForm Model="@_state.Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col mt-4">
         <DataAnnotationsValidator />
-        <CustomValidator @ref="_customValidator" />
+        <CustomValidator @ref="_state.CustomValidator" />
 
         <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
             @* Barcode Scanner *@
             <div class="space-y-2">
-                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" Searching="_lookingUp" />
+                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" Searching="_state.LookingUp" />
                 <p class="text-xs text-muted-foreground">@Loc["ScanBarcode"]</p>
             </div>
 
             @* Item name *@
-            <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
+            <BbField IsInvalid="@(!context.IsValid(() => _state.Input.Name))">
                 <div class="flex items-center justify-between">
                     <BbFieldLabel For="item-name" Class="text-sm font-medium">@Loc["ItemName"] <span class="text-xs text-muted-foreground">@Loc["Required"]</span></BbFieldLabel>
                 </div>
                 <BbFieldContent>
                     <BbInputGroup Class="bg-card">
-                        <BbInputGroupInput Id="item-name" @bind-Value="Input.Name"
+                        <BbInputGroupInput Id="item-name" @bind-Value="_state.Input.Name"
                                            Placeholder="e.g. Tomato passata, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
                     </BbInputGroup>
-                    <BbFieldError Errors="@context.GetValidationMessages(() => Input.Name)" />
+                    <BbFieldError Errors="@context.GetValidationMessages(() => _state.Input.Name)" />
                 </BbFieldContent>
             </BbField>
 
@@ -52,29 +52,29 @@
                         <LucideIcon Name="minus" Size="16" />
                     </BbButton>
                     <div class="flex flex-col items-center leading-none">
-                        <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
-                        <span class="text-xs text-muted-foreground">@Input.Unit</span>
+                        <span class="text-base font-semibold" aria-live="polite">@_state.Input.Quantity</span>
+                        <span class="text-xs text-muted-foreground">@_state.Input.Unit</span>
                     </div>
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
                               AriaLabel="@Loc["Quantity"]" OnClick="IncrementQuantity">
                         <LucideIcon Name="plus" Size="16" />
                     </BbButton>
                 </div>
-                <ValidationMessage For="@(() => Input.Quantity)" class="text-sm text-destructive" />
+                <ValidationMessage For="@(() => _state.Input.Quantity)" class="text-sm text-destructive" />
 
-                <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
+                <BbChipSet @bind-Value="_state.Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
                     @foreach (var unit in PantryLocations.Units)
                     {
                         <BbChip Value="@(unit)">@unit</BbChip>
                     }
                 </BbChipSet>
-                <ValidationMessage For="@(() => Input.Unit)" class="text-sm text-destructive" />
+                <ValidationMessage For="@(() => _state.Input.Unit)" class="text-sm text-destructive" />
             </div>
 
             @* Location *@
             <div class="space-y-2">
                 <BbLabel Class="text-sm font-medium">@Loc["Location"]</BbLabel>
-                <BbToggleGroup @bind-Value="Input.Location" Type="ToggleGroupType.Single" Required="true"
+                <BbToggleGroup @bind-Value="_state.Input.Location" Type="ToggleGroupType.Single" Required="true"
                                Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
                     <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
                         <LucideIcon Name="package" Size="20" />
@@ -93,16 +93,16 @@
                         <span class="text-xs font-medium">@Loc["Cabinet"]</span>
                     </BbToggleGroupItem>
                 </BbToggleGroup>
-                <ValidationMessage For="@(() => Input.Location)" class="text-sm text-destructive" />
+                <ValidationMessage For="@(() => _state.Input.Location)" class="text-sm text-destructive" />
             </div>
 
             @* Expiry *@
             <BbField>
                 <BbFieldLabel Class="text-sm font-medium">@Loc["DurationAndExpiry"]</BbFieldLabel>
                 <BbFieldContent>
-                    <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)"
+                    <BbDatePicker @bind-Value="_state.Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)"
                                   DateFormat="dd/MM/yyyy" Placeholder="@Loc["PickADate"]" Class="w-full" />
-                    <ValidationMessage For="@(() => Input.ExpirationDate)" class="text-sm text-destructive" />
+                    <ValidationMessage For="@(() => _state.Input.ExpirationDate)" class="text-sm text-destructive" />
                 </BbFieldContent>
             </BbField>
 
@@ -130,13 +130,13 @@
                     <BbLabel For="batch-notes" Class="text-sm font-medium">@Loc["BatchNotes"]</BbLabel>
                     <span class="text-xs text-muted-foreground">@Loc["Optional"]</span>
                 </div>
-                <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened"
+                <BbTextarea Id="batch-notes" @bind-Value="_state.Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened"
                             rows="2" />
             </div>
         </div>
 
         <div class="flex-none space-y-1 border-t pt-3">
-            <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving" IconPosition="IconPosition.Start">
+            <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_state.Saving" IconPosition="IconPosition.Start">
                 <Icon>
                     <LucideIcon Name="save" Size="16" />
                 </Icon>
@@ -156,25 +156,20 @@
     [Parameter]
     public PantryItemDto? Item { get; set; }
 
-    private bool _saving;
-    private InputModel Input { get; set; } = new();
-    private string? _editingId;
-    private CustomValidator? _customValidator;
-
     private ExpiryHelper.ExpiryBanner Banner => ExpiryHelper.GetBanner(
-        DateOnly.FromDateTime((Input.ExpirationDate ?? DateTime.Today.AddDays(7)).Date),
+        DateOnly.FromDateTime((_state.Input.ExpirationDate ?? DateTime.Today.AddDays(7)).Date),
         DateOnly.FromDateTime(DateTime.Today),
         Loc);
 
     protected override void OnParametersSet()
     {
-        if (Item is { } item && _editingId != item.Id)
+        if (Item is { } item && _state.EditingId != item.Id)
         {
-            _editingId = item.Id;
-            _scannedBarcode = item.Barcode;
-            _scannedNutriScore = item.NutriScore;
-            _scannedNutrition = item.Nutrition;
-            Input = new InputModel
+            _state.EditingId = item.Id;
+            _state.ScannedBarcode = item.Barcode;
+            _state.ScannedNutriScore = item.NutriScore;
+            _state.ScannedNutrition = item.Nutrition;
+            _state.Input = new InputModel
             {
                 Name = item.Name,
                 Quantity = item.Quantity,
@@ -184,13 +179,13 @@
                 ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue)
             };
         }
-        else if (Item is null && _editingId is not null)
+        else if (Item is null && _state.EditingId is not null)
         {
-            _editingId = null;
-            _scannedBarcode = null;
-            _scannedNutriScore = null;
-            _scannedNutrition = null;
-            Input = new InputModel();
+            _state.EditingId = null;
+            _state.ScannedBarcode = null;
+            _state.ScannedNutriScore = null;
+            _state.ScannedNutrition = null;
+            _state.Input = new InputModel();
         }
     }
 
@@ -199,7 +194,7 @@
         if (string.IsNullOrWhiteSpace(barcode))
             return;
 
-        _lookingUp = true;
+        _state.LookingUp = true;
         StateHasChanged();
 
         try
@@ -209,23 +204,23 @@
             {
                 // Pre-fill form with product data
                 if (!string.IsNullOrWhiteSpace(product.Name))
-                    Input.Name = product.Name;
+                    _state.Input.Name = product.Name;
 
                 if (!string.IsNullOrWhiteSpace(product.Brand))
-                    Input.Notes = string.IsNullOrWhiteSpace(Input.Notes)
+                    _state.Input.Notes = string.IsNullOrWhiteSpace(_state.Input.Notes)
                         ? product.Brand
-                        : $"{Input.Notes}, {product.Brand}";
+                        : $"{_state.Input.Notes}, {product.Brand}";
 
                 if (product.Quantity.HasValue && product.Quantity.Value > 0)
-                    Input.Quantity = product.Quantity.Value;
+                    _state.Input.Quantity = product.Quantity.Value;
 
                 if (!string.IsNullOrWhiteSpace(product.Unit))
-                    Input.Unit = product.Unit;
+                    _state.Input.Unit = product.Unit;
 
                 // Store barcode and nutrition info for saving
-                _scannedBarcode = product.Barcode;
-                _scannedNutriScore = product.NutriScore;
-                _scannedNutrition = product.Nutrition;
+                _state.ScannedBarcode = product.Barcode;
+                _state.ScannedNutriScore = product.NutriScore;
+                _state.ScannedNutrition = product.Nutrition;
 
                 StateHasChanged();
             }
@@ -241,53 +236,48 @@
         }
         finally
         {
-            _lookingUp = false;
+            _state.LookingUp = false;
             StateHasChanged();
         }
     }
 
-    private string? _scannedBarcode;
-    private string? _scannedNutriScore;
-    private NutritionFacts? _scannedNutrition;
-    private bool _lookingUp;
-
     private void IncrementQuantity()
     {
-        if (Input.Quantity < 9999)
-            Input.Quantity++;
+        if (_state.Input.Quantity < 9999)
+            _state.Input.Quantity++;
     }
 
     private void DecrementQuantity()
     {
-        if (Input.Quantity > 0)
-            Input.Quantity--;
+        if (_state.Input.Quantity > 0)
+            _state.Input.Quantity--;
     }
 
     private void SetExpiry(int daysFromToday)
     {
-        Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
+        _state.Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
     }
 
     private async Task HandleSubmitAsync()
     {
-        if (Input.ExpirationDate is null)
+        if (_state.Input.ExpirationDate is null)
             return;
 
-        _saving = true;
+        _state.Saving = true;
         try
         {
             if (Item is null)
             {
                 using var response = await Api.Pantry.CreateAsync(new CreatePantryItemRequest(
-                    Input.Name.Trim(),
-                    Input.Quantity,
-                    Input.Unit,
-                    Input.Location,
-                    string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-                    DateOnly.FromDateTime(Input.ExpirationDate.Value),
-                    _scannedBarcode,
-                    _scannedNutriScore,
-                    _scannedNutrition),
+                    _state.Input.Name.Trim(),
+                    _state.Input.Quantity,
+                    _state.Input.Unit,
+                    _state.Input.Location,
+                    string.IsNullOrWhiteSpace(_state.Input.Notes) ? null : _state.Input.Notes.Trim(),
+                    DateOnly.FromDateTime(_state.Input.ExpirationDate.Value),
+                    _state.ScannedBarcode,
+                    _state.ScannedNutriScore,
+                    _state.ScannedNutrition),
                     Members.CurrentMemberId);
 
                 if (!await HandleSavedAsync(response, Loc["ItemAdded"]))
@@ -296,15 +286,15 @@
             else
             {
                 using var response = await Api.Pantry.UpdateAsync(Item.Id, new UpdatePantryItemRequest(
-                    Input.Name.Trim(),
-                    Input.Quantity,
-                    Input.Unit,
-                    Input.Location,
-                    string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-                    DateOnly.FromDateTime(Input.ExpirationDate.Value),
-                    _scannedBarcode,
-                    _scannedNutriScore,
-                    _scannedNutrition));
+                    _state.Input.Name.Trim(),
+                    _state.Input.Quantity,
+                    _state.Input.Unit,
+                    _state.Input.Location,
+                    string.IsNullOrWhiteSpace(_state.Input.Notes) ? null : _state.Input.Notes.Trim(),
+                    DateOnly.FromDateTime(_state.Input.ExpirationDate.Value),
+                    _state.ScannedBarcode,
+                    _state.ScannedNutriScore,
+                    _state.ScannedNutrition));
 
                 if (!await HandleSavedAsync(response, Loc["ItemUpdated"]))
                     return;
@@ -314,7 +304,7 @@
         }
         finally
         {
-            _saving = false;
+            _state.Saving = false;
         }
     }
 
@@ -329,7 +319,7 @@
         var errors = await ApiErrors.ReadValidationErrorsAsync(response.Error);
         if (errors is not null)
         {
-            _customValidator?.DisplayErrors(errors);
+            _state.CustomValidator?.DisplayErrors(errors);
             return false;
         }
 

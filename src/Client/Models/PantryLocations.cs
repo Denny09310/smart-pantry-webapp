@@ -14,5 +14,5 @@ public static class PantryLocations
         ("cabinet", "Cabinet", "archive")
     ];
 
-    public static readonly string[] Units = ["pcs", "jar", "can", "box", "kg", "g", "litre"];
+    public static readonly string[] Units = ["pcs", "jar", "can", "box", "kg", "g", "ml", "litre"];
 }

@@ -15,7 +15,7 @@
     </div>
 
     <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
-        @if (_loading)
+        @if (_state.Loading)
         {
             <div class="space-y-2" aria-hidden="true">
                 <BbSkeleton Height="28px" Class="w-2/3" />
@@ -23,14 +23,14 @@
                 <BbSkeleton Height="16px" Class="w-4/5" />
             </div>
         }
-        else if (_error is not null)
+        else if (_state.Error is not null)
         {
             <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
                 <p class="text-sm">Couldn't load the item. Try again.</p>
                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
             </div>
         }
-        else if (_item is null)
+        else if (_state.Item is null)
         {
             <BbEmpty Title="Item not found" Description="It may have been deleted">
                 <Icon>
@@ -40,55 +40,95 @@
         }
         else
         {
-            var status = ExpiryHelper.GetStatus(_item.ExpirationDate, _today);
+            var status = ExpiryHelper.GetStatus(_state.Item.ExpirationDate, _state.Today);
             <header class="space-y-2">
-                <h3 class="text-xl font-semibold">@_item.Name</h3>
+                <h3 class="text-xl font-semibold">@_state.Item.Name</h3>
                 <div class="flex flex-wrap gap-2">
                     <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
-                    <BbBadge Variant="BadgeVariant.Outline">@_item.Location</BbBadge>
+                    <BbBadge Variant="BadgeVariant.Outline">@_state.Item.Location</BbBadge>
                 </div>
             </header>
 
             <dl class="space-y-2 rounded-md border p-4 text-sm">
                 <div class="flex justify-between gap-2">
                     <dt class="text-muted-foreground">Quantity</dt>
-                    <dd>@_item.Quantity @_item.Unit</dd>
+                    <dd>@_state.Item.Quantity @_state.Item.Unit</dd>
                 </div>
                 <div class="flex justify-between gap-2">
                     <dt class="text-muted-foreground">Expires on</dt>
-                    <dd>@_item.ExpirationDate.ToString("MMM d, yyyy")</dd>
+                    <dd>@_state.Item.ExpirationDate.ToString("MMM d, yyyy")</dd>
                 </div>
-                @if (!string.IsNullOrWhiteSpace(_item.Notes))
+                @if (!string.IsNullOrWhiteSpace(_state.Item.Notes))
                 {
                     <div class="space-y-1">
                         <dt class="text-muted-foreground">Notes</dt>
-                        <dd>@_item.Notes</dd>
+                        <dd>@_state.Item.Notes</dd>
                     </div>
                 }
-                @if (!string.IsNullOrWhiteSpace(_item.Barcode))
+                @if (!string.IsNullOrWhiteSpace(_state.Item.Barcode))
                 {
-                    <div class="flex justify-between gap-2">
+                    <div class="flex items-center justify-between gap-2">
                         <dt class="text-muted-foreground">@Loc["Barcode"]</dt>
-                        <dd class="font-mono">@_item.Barcode</dd>
+                        <dd class="flex items-center gap-1">
+                            <span class="font-mono">@_state.Item.Barcode</span>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                      AriaLabel="@Loc["UnlinkBarcode"]" Loading="@_state.Unlinking"
+                                      OnClick="OnUnlinkBarcodeAsync">
+                                <LucideIcon Name="unlink" Size="14" />
+                            </BbButton>
+                        </dd>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(_state.Item.NutriScore))
+                {
+                    <div class="flex items-center justify-between gap-2">
+                        <dt class="text-muted-foreground">@Loc["NutriScore"]</dt>
+                        <dd>
+                            <BbBadge Variant="@NutriScoreVariant(_state.Item.NutriScore)">@_state.Item.NutriScore.ToUpperInvariant()</BbBadge>
+                        </dd>
                     </div>
                 }
             </dl>
 
+            @if (NutritionRows(_state.Item.Nutrition) is { Count: > 0 } rows)
+            {
+                <div class="space-y-2">
+                    <h3 class="text-sm font-medium">@Loc["NutritionPer100g"]</h3>
+                    <dl class="space-y-2 rounded-md border p-4 text-sm">
+                        @foreach (var row in rows)
+                        {
+                            <div class="flex justify-between gap-2">
+                                <dt class="text-muted-foreground">@row.Label</dt>
+                                <dd class="font-medium">@row.Value</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_state.Product?.IngredientsText))
+            {
+                <div class="space-y-2">
+                    <h3 class="text-sm font-medium">@Loc["Ingredients"]</h3>
+                    <p class="text-sm text-muted-foreground">@_state.Product.IngredientsText</p>
+                </div>
+            }
+
             @* Barcode backfill for items added before scanning existed *@
-            @if (string.IsNullOrWhiteSpace(_item.Barcode) && !_linkingBarcode)
+            @if (string.IsNullOrWhiteSpace(_state.Item.Barcode) && !_state.LinkingBarcode)
             {
                 <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button"
-                          OnClick="() => _linkingBarcode = true">
+                          OnClick="() => _state.LinkingBarcode = true">
                     <LucideIcon Name="scan-barcode" Size="16" />
                     @Loc["LinkBarcode"]
                 </BbButton>
             }
-            @if (_linkingBarcode)
+            @if (_state.LinkingBarcode)
             {
                 <div class="space-y-2 rounded-md border p-3">
                     <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="true" />
                     <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
-                              OnClick="() => _linkingBarcode = false">
+                              OnClick="() => _state.LinkingBarcode = false">
                         @Loc["Cancel"]
                     </BbButton>
                 </div>
@@ -96,7 +136,7 @@
         }
     </div>
 
-    @if (_item is not null && _error is null)
+    @if (_state.Item is not null && _state.Error is null)
     {
         <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
             <BbButton Variant="ButtonVariant.Outline" @onclick="OpenEditAsync">
@@ -113,27 +153,21 @@
     [Parameter, EditorRequired]
     public string ItemId { get; set; } = string.Empty;
 
-    private PantryItemDto? _item;
-    private string? _loadedId;
-    private bool _loading = true;
-    private string? _error;
-    private bool _linkingBarcode;
-    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
-
     protected override async Task OnParametersSetAsync()
     {
-        if (ItemId == _loadedId)
+        if (ItemId == _state.LoadedId)
             return;
 
-        _loadedId = ItemId;
+        _state.LoadedId = ItemId;
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
-        _loading = true;
-        _error = null;
-        _item = null;
+        _state.Loading = true;
+        _state.Error = null;
+        _state.Item = null;
+        _state.Product = null;
 
         try
         {
@@ -145,30 +179,82 @@
             if (!response.IsSuccessfulWithContent)
             {
                 Logger.LogWarning("Item {ItemId} load failed with {StatusCode}", ItemId, response.StatusCode);
-                _error = "load";
+                _state.Error = "load";
                 return;
             }
 
-            _item = response.Content;
+            _state.Item = response.Content;
+
+            // Ingredients were never stored on the item: resolve them through
+            // the cached lookup. Quiet on failure — the snapshot data stands.
+            if (!string.IsNullOrWhiteSpace(_state.Item?.Barcode))
+            {
+                try
+                {
+                    using var lookup = await Api.Products.LookupAsync(_state.Item.Barcode);
+                    if (lookup.IsSuccessfulWithContent)
+                        _state.Product = lookup.Content;
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "Product details lookup failed for {Barcode}", _state.Item.Barcode);
+                }
+            }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Item {ItemId} load failed", ItemId);
-            _error = "load";
+            _state.Error = "load";
         }
         finally
         {
-            _loading = false;
+            _state.Loading = false;
         }
     }
 
     private async Task OpenEditAsync()
     {
-        if (_item is null)
+        if (_state.Item is null)
             return;
 
         // Replaces this body; saving closes the sheet and the list behind refreshes.
-        await Sheet.OpenAsync<ItemForm>(new Dictionary<string, object?> { ["Item"] = _item });
+        await Sheet.OpenAsync<ItemForm>(new Dictionary<string, object?> { ["Item"] = _state.Item });
+    }
+
+    private static BadgeVariant NutriScoreVariant(string? grade) => grade?.Trim().ToUpperInvariant() switch
+    {
+        "A" => BadgeVariant.SoftSuccess,
+        "B" => BadgeVariant.SoftInfo,
+        "C" => BadgeVariant.SoftWarning,
+        "D" or "E" => BadgeVariant.SoftDestructive,
+        _ => BadgeVariant.Outline,
+    };
+
+    private IReadOnlyList<(string Label, string Value)> NutritionRows(NutritionFacts? nutrition)
+    {
+        List<(string Label, string Value)> rows = [];
+
+        if (nutrition is null)
+            return rows;
+
+        if (nutrition.EnergyKcal is { } energy)
+            rows.Add((Loc["NutritionEnergy"], $"{energy:0} kcal"));
+        if (nutrition.Fat is { } fat)
+            rows.Add((Loc["NutritionFat"], $"{fat:0.#} g"));
+        if (nutrition.SaturatedFat is { } satFat)
+            rows.Add((Loc["NutritionSaturatedFat"], $"{satFat:0.#} g"));
+        if (nutrition.Carbohydrates is { } carbs)
+            rows.Add((Loc["NutritionCarbs"], $"{carbs:0.#} g"));
+        if (nutrition.Sugars is { } sugars)
+            rows.Add((Loc["NutritionSugars"], $"{sugars:0.#} g"));
+        if (nutrition.Fiber is { } fiber)
+            rows.Add((Loc["Fiber"], $"{fiber:0.#} g"));
+        if (nutrition.Proteins is { } protein)
+            rows.Add((Loc["NutritionProtein"], $"{protein:0.#} g"));
+        if (nutrition.Salt is { } salt)
+            rows.Add((Loc["NutritionSalt"], $"{salt:0.##} g"));
+
+        return rows;
     }
 
     /// <summary>
@@ -177,7 +263,7 @@
     /// </summary>
     private async Task OnBarcodeScannedAsync(string barcode)
     {
-        if (_item is null || string.IsNullOrWhiteSpace(barcode))
+        if (_state.Item is null || string.IsNullOrWhiteSpace(barcode))
             return;
 
         try
@@ -189,7 +275,7 @@
                 return;
             }
 
-            var item = _item;
+            var item = _state.Item;
             using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(
                 item.Name,
                 item.Quantity,
@@ -209,7 +295,7 @@
             }
 
             Toasts.Success(Loc["BarcodeLinked"]);
-            _linkingBarcode = false;
+            _state.LinkingBarcode = false;
             await LoadAsync();
         }
         catch (Exception ex)
@@ -221,11 +307,57 @@
 
     private async Task DeleteAsync()
     {
-        if (_item is null)
+        if (_state.Item is null)
             return;
 
         // The confirm dialog renders beneath the sheet, so close first and
         // let the opener confirm and delete (see ItemDeletion).
-        await Sheet.CloseAsync(_item);
+        await Sheet.CloseAsync(_state.Item);
+    }
+
+    /// <summary>
+    /// Removes the barcode link (plus its snapshot) so a different barcode
+    /// can be attached. Inline and confirm-free: re-linking restores everything.
+    /// </summary>
+    private async Task OnUnlinkBarcodeAsync()
+    {
+        if (_state.Item is null || _state.Unlinking)
+            return;
+
+        _state.Unlinking = true;
+
+        try
+        {
+            var item = _state.Item;
+            using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(
+                item.Name,
+                item.Quantity,
+                item.Unit,
+                item.Location,
+                item.Notes,
+                item.ExpirationDate,
+                null,
+                null,
+                null));
+
+            if (!update.IsSuccessStatusCode)
+            {
+                Logger.LogWarning("Barcode unlink failed with {StatusCode}", update.StatusCode);
+                Toasts.Error(Loc["CouldNotSave"]);
+                return;
+            }
+
+            Toasts.Success(Loc["BarcodeUnlinked"]);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Barcode unlink failed for item {ItemId}", _state.Item.Id);
+            Toasts.Error(Loc["CouldNotSave"]);
+        }
+        finally
+        {
+            _state.Unlinking = false;
+        }
     }
 }

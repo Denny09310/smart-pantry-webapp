@@ -73,6 +73,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
             existing.NutriScore = product.NutriScore;
             existing.NutritionJson = product.Nutrition?.ToJson();
             existing.ImageUrl = product.ImageUrl;
+            existing.IngredientsText = product.IngredientsText;
             existing.UpdatedAt = DateTimeOffset.UtcNow;
         }
 
@@ -97,7 +98,8 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         cached.Unit,
         cached.NutriScore,
         cached.NutritionJson != null ? NutritionFactsExtensions.Parse(cached.NutritionJson) : null,
-        cached.ImageUrl);
+        cached.ImageUrl,
+        cached.IngredientsText);
 
     private static CachedProduct FromDto(ProductLookupDto product) => new()
     {
@@ -109,6 +111,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         NutriScore = product.NutriScore,
         NutritionJson = product.Nutrition?.ToJson(),
         ImageUrl = product.ImageUrl,
+        IngredientsText = product.IngredientsText,
         UpdatedAt = DateTimeOffset.UtcNow
     };
 }

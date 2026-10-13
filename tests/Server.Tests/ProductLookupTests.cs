@@ -26,6 +26,7 @@ public class ProductLookupTests
                 "quantity": "500 g",
                 "nutriscore_grade": "b",
                 "image_url": "https://example/img.jpg",
+                "ingredients_text": "Wheat flour, sugar, cocoa butter.",
                 "nutriments": {
                   "energy-kcal_100g": 450,
                   "proteins_100g": 7.5,
@@ -33,7 +34,8 @@ public class ProductLookupTests
                   "sugars_100g": 20,
                   "fat_100g": 18,
                   "saturated-fat_100g": 9,
-                  "salt_100g": 0.5
+                  "salt_100g": 0.5,
+                  "fiber_100g": 4
                 }
               }
             }
@@ -48,10 +50,56 @@ public class ProductLookupTests
         Assert.Equal("g", result.Unit);
         Assert.Equal("B", result.NutriScore);
         Assert.Equal("https://example/img.jpg", result.ImageUrl);
+        Assert.Equal("Wheat flour, sugar, cocoa butter.", result.IngredientsText);
         Assert.NotNull(result.Nutrition);
         Assert.Equal(450, result.Nutrition.EnergyKcal);
         Assert.Equal(7.5, result.Nutrition.Proteins);
         Assert.Equal(0.5, result.Nutrition.Salt);
+        Assert.Equal(4, result.Nutrition.Fiber);
+    }
+
+    [Fact]
+    public async Task Lookup_Converts_Kj_To_Kcal()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Bar",
+                "nutriments": {
+                  "energy_100g": 418.4,
+                  "energy_unit": "kJ"
+                }
+              }
+            }
+            """);
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.Nutrition);
+        Assert.Equal(100, result.Nutrition.EnergyKcal!.Value, precision: 6);
+    }
+
+    [Fact]
+    public async Task Lookup_Unknown_Energy_Unit_Returns_Null_Energy()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Bar",
+                "nutriments": {
+                  "energy_100g": 418.4
+                }
+              }
+            }
+            """);
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Null(result.Nutrition?.EnergyKcal);
     }
 
     [Fact]
