@@ -155,12 +155,41 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
         {
             var worker = GetWorker();
 
-            var first = await worker.CheckAsync(CancellationToken.None);
-            Assert.Equal(3, first.Created);
-            Assert.Equal(0, first.Failed);
+            // The hosted worker also runs CheckAsync in the background and may
+            // claim some of these rows first, so drive to quiescence instead of
+            // asserting exact per-run counts.
+            for (var i = 0; i < 10; i++)
+            {
+                var run = await worker.CheckAsync(CancellationToken.None);
+                Assert.Equal(0, run.Failed);
+                if (run.Created == 0)
+                    break;
+            }
 
-            var second = await worker.CheckAsync(CancellationToken.None);
-            Assert.Equal(0, second.Created);
+            // Exactly the in-window items were reminded, nothing else.
+            using (var scope = factory.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var remindedIds = await db.Notifications.AsNoTracking()
+                    .Where(x => x.Type == ReminderWorker.ExpiryWarningType
+                        && (x.PantryItemId == soon.Id
+                            || x.PantryItemId == todayItem.Id
+                            || x.PantryItemId == edge.Id
+                            || x.PantryItemId == expired.Id
+                            || x.PantryItemId == future.Id))
+                    .Select(x => x.PantryItemId)
+                    .ToListAsync();
+
+                Assert.Equal(3, remindedIds.Count);
+                Assert.Contains(soon.Id, remindedIds);
+                Assert.Contains(todayItem.Id, remindedIds);
+                Assert.Contains(edge.Id, remindedIds);
+            }
+
+            // A further run creates nothing: reminders are deduplicated.
+            var steady = await worker.CheckAsync(CancellationToken.None);
+            Assert.Equal(0, steady.Created);
+            Assert.Equal(0, steady.Failed);
         }
         finally
         {

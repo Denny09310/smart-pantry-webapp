@@ -15,16 +15,18 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
     public async Task Create_Broadcasts_PantryChanged()
     {
         var name = $"test-hub-{Guid.CreateVersion7()}";
+        PantryItem? created = null;
         var change = await ActAndCaptureAsync(async () =>
         {
             using var create = await factory.CreateClient().PostAsJsonAsync("/api/pantry",
                 new CreatePantryItemRequest(
                     name, 1, "pcs", "pantry", null, DateOnly.FromDateTime(DateTime.Today.AddDays(3))));
             create.EnsureSuccessStatusCode();
+            // Capture here: the helper's cleanup deletes the row before returning.
+            created = await FindByNameAsync(name);
         }, name);
 
-        Assert.Equal(PantryChangeKinds.Created, change.ChangeKind);
-        var created = await FindByNameAsync(name);
+        Assert.Equal(PantryChangeKind.Created, change.ChangeKind);
         Assert.NotNull(created);
         Assert.Equal(created.Id, change.ItemId);
     }
@@ -56,7 +58,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
             del.EnsureSuccessStatusCode();
         }, name);
 
-        Assert.Equal(PantryChangeKinds.Removed, change.ChangeKind);
+        Assert.Equal(PantryChangeKind.Removed, change.ChangeKind);
         Assert.Equal(id, change.ItemId);
     }
 
