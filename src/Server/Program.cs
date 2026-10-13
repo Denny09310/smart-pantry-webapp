@@ -15,11 +15,18 @@ builder.Services.AddSharedValidation();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddSignalR();
+builder.Services.AddMemoryCache();
 builder.Services.AddVapidOptions(builder.Configuration);
 builder.Services.AddSingleton<IPushSender, WebPushSender>();
 builder.Services.AddHostedService<ReminderWorker>();
 
 builder.Services.AddHttpClient<IProductLookupService, OpenFoodFactsProductLookupService>(
+    client => client.Timeout = TimeSpan.FromSeconds(15));
+
+builder.Services.AddHttpClient<IRecipeService, ThemealDbRecipeService>(
+    client => client.Timeout = TimeSpan.FromSeconds(15));
+
+builder.Services.AddHttpClient<ITranslationService, MyMemoryTranslationService>(
     client => client.Timeout = TimeSpan.FromSeconds(15));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

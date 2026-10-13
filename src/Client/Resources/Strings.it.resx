@@ -447,4 +447,25 @@
   <data name="NoUserSelected" xml:space="preserve">
     <value>Nessun utente selezionato</value>
   </data>
+  <data name="Recipes" xml:space="preserve">
+    <value>Ricette</value>
+  </data>
+  <data name="RecipeSearchPlaceholder" xml:space="preserve">
+    <value>Aggiungi ingredienti...</value>
+  </data>
+  <data name="NoRecipesFound" xml:space="preserve">
+    <value>Nessuna ricetta trovata</value>
+  </data>
+  <data name="NoRecipesDescription" xml:space="preserve">
+    <value>Prova con ingredienti diversi.</value>
+  </data>
+  <data name="SearchRecipesFailed" xml:space="preserve">
+    <value>Ricerca ricette non riuscita. Riprova.</value>
+  </data>
+  <data name="RecipeIngredients" xml:space="preserve">
+    <value>Ingredienti</value>
+  </data>
+  <data name="RecipeInstructions" xml:space="preserve">
+    <value>Preparazione</value>
+  </data>
 </root>

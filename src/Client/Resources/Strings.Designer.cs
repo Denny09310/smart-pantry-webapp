@@ -610,6 +610,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Try different ingredients.
+        /// </summary>
+        public static string NoRecipesDescription {
+            get {
+                return ResourceManager.GetString("NoRecipesDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a No recipes found.
+        /// </summary>
+        public static string NoRecipesFound {
+            get {
+                return ResourceManager.GetString("NoRecipesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Notes.
         /// </summary>
         public static string Notes {
@@ -718,6 +736,42 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Ingredients.
+        /// </summary>
+        public static string RecipeIngredients {
+            get {
+                return ResourceManager.GetString("RecipeIngredients", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Instructions.
+        /// </summary>
+        public static string RecipeInstructions {
+            get {
+                return ResourceManager.GetString("RecipeInstructions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Add ingredients....
+        /// </summary>
+        public static string RecipeSearchPlaceholder {
+            get {
+                return ResourceManager.GetString("RecipeSearchPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Recipes.
+        /// </summary>
+        public static string Recipes {
+            get {
+                return ResourceManager.GetString("Recipes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Reload.
         /// </summary>
         public static string Reload {
@@ -813,6 +867,15 @@ namespace Client.Resources {
         public static string SearchPlaceholder {
             get {
                 return ResourceManager.GetString("SearchPlaceholder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Couldn&apos;t search recipes. Try again..
+        /// </summary>
+        public static string SearchRecipesFailed {
+            get {
+                return ResourceManager.GetString("SearchRecipesFailed", resourceCulture);
             }
         }
         

@@ -1,0 +1,101 @@
+@namespace Client.Components
+@using Client.Resources
+@inject ServerApi Api
+@inject ToastService Toasts
+@inject LocalizationService Loc
+
+<div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+    @if (_loading)
+    {
+        <div class="space-y-2" aria-hidden="true">
+            <BbSkeleton Height="200px" Class="w-full" />
+            <BbSkeleton Height="24px" Class="w-2/3" />
+            <BbSkeleton Height="64px" Class="w-full" />
+        </div>
+    }
+    else if (_meal is { } meal)
+    {
+        @if (!string.IsNullOrWhiteSpace(meal.Thumbnail))
+        {
+            <img src="@meal.Thumbnail" alt="" class="w-full rounded-md object-cover" />
+        }
+        <div>
+            <h2 class="text-lg font-semibold">@DisplayName(meal)</h2>
+            <div class="mt-1 flex flex-wrap gap-1">
+                @if (!string.IsNullOrWhiteSpace(meal.Area))
+                {
+                    <BbBadge Variant="BadgeVariant.Outline">@meal.Area</BbBadge>
+                }
+                @if (!string.IsNullOrWhiteSpace(meal.Category))
+                {
+                    <BbBadge Variant="BadgeVariant.Outline">@meal.Category</BbBadge>
+                }
+            </div>
+        </div>
+        @if (meal.Ingredients.Count > 0)
+        {
+            <section class="space-y-2">
+                <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    @Loc["RecipeIngredients"]
+                </h3>
+                <ul class="space-y-1 text-sm">
+                    @foreach (var ingredient in meal.Ingredients)
+                    {
+                        <li class="flex justify-between gap-2">
+                            <span>@ingredient.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(ingredient.Measure))
+                            {
+                                <span class="text-muted-foreground">@ingredient.Measure</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        @if (!string.IsNullOrWhiteSpace(meal.Instructions))
+        {
+            <section class="space-y-2">
+                <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    @Loc["RecipeInstructions"]
+                </h3>
+                <p class="text-sm whitespace-pre-line">@meal.Instructions</p>
+            </section>
+        }
+    }
+    else
+    {
+        <p class="text-sm text-muted-foreground">@Loc["SearchRecipesFailed"]</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string MealId { get; set; } = "";
+
+    private RecipeDetailDto? _meal;
+    private bool _loading = true;
+
+    private string Lang => Loc.CurrentCulture.TwoLetterISOLanguageName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Api.Recipes.GetAsync(MealId, Lang);
+            if (response.IsSuccessfulWithContent && response.Content is { } content)
+                _meal = content;
+            else
+                Toasts.Error(Loc["SearchRecipesFailed"]);
+        }
+        catch
+        {
+            Toasts.Error(Loc["SearchRecipesFailed"]);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string DisplayName(RecipeDetailDto meal) => meal.TranslatedName ?? meal.Name;
+}

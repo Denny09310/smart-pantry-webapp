@@ -104,7 +104,16 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 **Done when:** a user can scan a product barcode and have the form pre-filled with accurate product data, with sensible fallbacks.
 
-Keep native apps, offline synchronization, email reminders, recipes, barcode/OCR/AI, complex permissions, inventory ledgers, queues, event buses, and additional architectural layers out of scope unless requirements change.
+## Phase 10 — Recipe suggestions (TheMealDB + translation)
+
+- [x] Search recipes by ingredient tags via TheMealDB (`filter.php?i=` fan-out, intersected server-side for multi-tag queries).
+- [x] Translate tags and meal names via MyMemory (server-side, cached in memory to protect the free quota); TheMealDB data stays English-only otherwise.
+- [x] Ingredient autocomplete for the tag input from TheMealDB's ingredient list (query translated first so Italian input matches).
+- [x] Recipes page with `BbTagInput`, results grid, and meal detail bottom sheet; no OFF categories stored (product-type labels, wrong granularity for ingredient search).
+
+**Done when:** a user can tag ingredients in their own language and get matching recipes with translated names.
+
+Keep native apps, offline synchronization, email reminders, barcode/OCR/AI, complex permissions, inventory ledgers, queues, event buses, and additional architectural layers out of scope unless requirements change.
 
 ## Recommended implementation order
 
@@ -117,5 +126,6 @@ Keep native apps, offline synchronization, email reminders, recipes, barcode/OCR
 7. PWA installation
 8. Push subscriptions
 9. Barcode scanning & OpenFoodFacts
+10. Recipe suggestions
 
 The goal is a straightforward, reliable household app—not a multi-tenant service or an identity platform.
