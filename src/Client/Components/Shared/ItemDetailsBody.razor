@@ -67,9 +67,16 @@
                 }
                 @if (!string.IsNullOrWhiteSpace(_item.Barcode))
                 {
-                    <div class="flex justify-between gap-2">
+                    <div class="flex items-center justify-between gap-2">
                         <dt class="text-muted-foreground">@Loc["Barcode"]</dt>
-                        <dd class="font-mono">@_item.Barcode</dd>
+                        <dd class="flex items-center gap-1">
+                            <span class="font-mono">@_item.Barcode</span>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                      AriaLabel="@Loc["UnlinkBarcode"]" Loading="@_unlinking"
+                                      OnClick="OnUnlinkBarcodeAsync">
+                                <LucideIcon Name="unlink" Size="14" />
+                            </BbButton>
+                        </dd>
                     </div>
                 }
                 @if (!string.IsNullOrWhiteSpace(_item.NutriScore))
@@ -149,6 +156,7 @@
     private PantryItemDto? _item;
     private ProductLookupDto? _product;
     private string? _loadedId;
+    private bool _unlinking;
     private bool _loading = true;
     private string? _error;
     private bool _linkingBarcode;
@@ -314,5 +322,51 @@
         // The confirm dialog renders beneath the sheet, so close first and
         // let the opener confirm and delete (see ItemDeletion).
         await Sheet.CloseAsync(_item);
+    }
+
+    /// <summary>
+    /// Removes the barcode link (plus its snapshot) so a different barcode
+    /// can be attached. Inline and confirm-free: re-linking restores everything.
+    /// </summary>
+    private async Task OnUnlinkBarcodeAsync()
+    {
+        if (_item is null || _unlinking)
+            return;
+
+        _unlinking = true;
+
+        try
+        {
+            var item = _item;
+            using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(
+                item.Name,
+                item.Quantity,
+                item.Unit,
+                item.Location,
+                item.Notes,
+                item.ExpirationDate,
+                null,
+                null,
+                null));
+
+            if (!update.IsSuccessStatusCode)
+            {
+                Logger.LogWarning("Barcode unlink failed with {StatusCode}", update.StatusCode);
+                Toasts.Error(Loc["CouldNotSave"]);
+                return;
+            }
+
+            Toasts.Success(Loc["BarcodeUnlinked"]);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Barcode unlink failed for item {ItemId}", _item.Id);
+            Toasts.Error(Loc["CouldNotSave"]);
+        }
+        finally
+        {
+            _unlinking = false;
+        }
     }
 }

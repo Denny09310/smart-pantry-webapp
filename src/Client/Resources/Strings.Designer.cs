@@ -178,6 +178,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Barcode removed..
+        /// </summary>
+        public static string BarcodeUnlinked {
+            get {
+                return ResourceManager.GetString("BarcodeUnlinked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Batch notes.
         /// </summary>
         public static string BatchNotes {
@@ -1173,6 +1182,15 @@ namespace Client.Resources {
         public static string UnitsMl {
             get {
                 return ResourceManager.GetString("UnitsMl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Remove barcode.
+        /// </summary>
+        public static string UnlinkBarcode {
+            get {
+                return ResourceManager.GetString("UnlinkBarcode", resourceCulture);
             }
         }
         

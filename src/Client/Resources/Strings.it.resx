@@ -471,6 +471,9 @@
   <data name="Required" xml:space="preserve">
     <value>Obbligatorio</value>
   </data>
+  <data name="UnlinkBarcode" xml:space="preserve">
+    <value>Rimuovi codice a barre</value>
+  </data>
   <data name="UpdateAvailable" xml:space="preserve">
     <value>Aggiornamento disponibile</value>
   </data>
@@ -509,6 +512,9 @@
   </data>
   <data name="BarcodeLinked" xml:space="preserve">
     <value>Codice a barre collegato.</value>
+  </data>
+  <data name="BarcodeUnlinked" xml:space="preserve">
+    <value>Codice a barre rimosso.</value>
   </data>
   <data name="LinkBarcode" xml:space="preserve">
     <value>Collega codice a barre</value>

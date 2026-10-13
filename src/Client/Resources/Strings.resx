@@ -471,6 +471,9 @@
   <data name="Required" xml:space="preserve">
     <value>Required</value>
   </data>
+  <data name="UnlinkBarcode" xml:space="preserve">
+    <value>Remove barcode</value>
+  </data>
   <data name="UpdateAvailable" xml:space="preserve">
     <value>Update available</value>
   </data>
@@ -509,6 +512,9 @@
   </data>
   <data name="BarcodeLinked" xml:space="preserve">
     <value>Barcode linked.</value>
+  </data>
+  <data name="BarcodeUnlinked" xml:space="preserve">
+    <value>Barcode removed.</value>
   </data>
   <data name="LinkBarcode" xml:space="preserve">
     <value>Link barcode</value>
