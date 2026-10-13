@@ -1,191 +1,206 @@
-@namespace Client.Components.Shared
+@namespace Client.Components
+@typeparam TItem
 @using Bit.Butil
-@typeparam T
 @inject IJSRuntime JS
-@inject IStringLocalizer<UIStrings> L
 @implements IAsyncDisposable
 
-@foreach (var item in _visible)
+@if (_error is not null)
 {
-    @ItemTemplate(item)
-}
-
-@if (_hasMore)
-{
-    <div @ref="_sentinel" class="flex flex-col items-center gap-2 py-4">
-        @if (_observerFailed)
-        {
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="LoadNextAsync">
-                @(TriggerButtonText ?? L["Is_ShowMore"])
-            </BbButton>
-        }
-        else
-        {
-            <BbSpinner Size="SpinnerSize.Default" />
-        }
+    <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+        <p class="text-sm">Couldn't load more items. Try again.</p>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadNextAsync">Retry</BbButton>
     </div>
 }
 
+@foreach (var item in _items)
+{
+    <div @key="@(KeySelector?.Invoke(item) ?? item)">
+        @ItemTemplate(item)
+    </div>
+}
+
+@if (_loading)
+{
+    @if (LoadingTemplate is not null)
+    {
+        @LoadingTemplate
+    }
+    else
+    {
+        <p class="py-2 text-center text-sm text-muted-foreground">Loading…</p>
+    }
+}
+else if (_error is null && _items.Count == 0)
+{
+    @EmptyTemplate
+}
+
+<div @ref="_sentinel" class="h-px" aria-hidden="true"></div>
+
 @code
 {
-    public readonly record struct PageResult(IReadOnlyList<T> Items, int Total);
+    /// <summary>Loads one page: (skip, take, cancellation) to items + total.</summary>
+    [Parameter, EditorRequired]
+    public Func<int, int, CancellationToken, Task<Page<TItem>>> LoadPageAsync { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public RenderFragment EmptyTemplate { get; set; } = default!;
 
     [Parameter]
-    public IReadOnlyList<T> Items { get; set; } = [];
+    public RenderFragment? LoadingTemplate { get; set; }
 
     [Parameter]
-    public Func<int, int, CancellationToken, Task<PageResult>>? ItemsProvider { get; set; }
-
-    [Parameter]
-    public string? ResetKey { get; set; }
+    public Func<TItem, object?>? KeySelector { get; set; }
 
     [Parameter]
     public EventCallback<int> TotalChanged { get; set; }
 
-    [Parameter, EditorRequired]
-    public RenderFragment<T> ItemTemplate { get; set; } = default!;
-
     [Parameter]
     public int PageSize { get; set; } = 20;
 
-    [Parameter]
-    public string? TriggerButtonText { get; set; }
-
-    private List<T> _visible = [];
-    private int _total;
-    private bool _hasMore;
+    private readonly List<TItem> _items = new();
+    private int _total = int.MaxValue;
     private bool _loading;
-    private bool _initializing = true;
-    private string? _renderedResetKey;
-    private IReadOnlyList<T>? _renderedItems;
+    private Task? _loadTask;
+    private string? _error;
+    private int _generation;
+    private bool _disposed;
+
     private ElementReference _sentinel;
-    private ButilSubscription? _observation;
-    private bool _observerFailed;
-    private CancellationTokenSource? _loadCts;
+    private ButilSubscription? _subscription;
+    private CancellationTokenSource? _cts;
 
-    protected override async Task OnParametersSetAsync()
+    private bool HasMore => _items.Count < _total;
+
+    protected override async Task OnInitializedAsync()
     {
-        if (ItemsProvider is not null)
-        {
-            if (_renderedResetKey == ResetKey && !_initializing)
-                return;
-
-            _renderedResetKey = ResetKey;
-            _initializing = false;
-            await ResetAndLoadFirstPageAsync();
-            return;
-        }
-
-        if (_renderedItems is not null && Items.SequenceEqual(_renderedItems))
-            return;
-
-        _renderedItems = Items;
-        _total = Items.Count;
-        _visible = Items.Take(PageSize).ToList();
-        _hasMore = _visible.Count < _total;
-        await TotalChanged.InvokeAsync(_total);
+        _cts = new CancellationTokenSource();
+        await LoadNextAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_hasMore && _observation is null && !_observerFailed)
-            await StartObservingAsync();
-        else if (!_hasMore && _observation is not null)
-            await StopObservingAsync();
+        if (!firstRender)
+            return;
+
+        _subscription = await _sentinel.ObserveIntersection(JS, OnIntersection, new IntersectionObserverOptions
+        {
+            RootMargin = "0px 0px 200px 0px",
+            MinInterval = TimeSpan.FromMilliseconds(150)
+        });
     }
 
-    private async Task ResetAndLoadFirstPageAsync()
+    /// <summary>Clears the list and loads the first page (call after filter changes).</summary>
+    public async Task ReloadAsync()
     {
-        await StopObservingAsync();
-        _loadCts?.Cancel();
-        _loadCts?.Dispose();
-        _loadCts = new CancellationTokenSource();
-
-        _visible = [];
-        _total = 0;
-        _hasMore = true;
-        _observerFailed = false;
+        _generation++;
+        _items.Clear();
+        _total = int.MaxValue;
+        _error = null;
         StateHasChanged();
 
-        await LoadNextAsync();
+        // A load already running would discard its result on the generation
+        // check and leave the list empty: let it finish, then load fresh.
+        if (_loadTask is { IsCompleted: false } running)
+        {
+            try
+            {
+                await running;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        if (!_disposed)
+            await LoadNextAsync();
     }
 
-    public Task RefreshAsync() => ResetAndLoadFirstPageAsync();
-
-    private async Task StartObservingAsync()
+    private Task LoadNextAsync()
     {
-        try
-        {
-            _observation = await _sentinel.ObserveIntersection(
-                JS,
-                entries =>
-                {
-                    if (entries.Any(e => e.IsIntersecting))
-                        _ = InvokeAsync(LoadNextAsync);
-                },
-                new IntersectionObserverOptions { RootMargin = "0px 0px 400px 0px" });
-        }
-        catch
-        {
-            _observerFailed = true;
-            StateHasChanged();
-        }
+        if (_loading || !HasMore || _disposed)
+            return Task.CompletedTask;
+
+        _loadTask = LoadNextCoreAsync();
+        return _loadTask;
     }
 
-    private async Task LoadNextAsync()
+    private async Task LoadNextCoreAsync()
     {
-        if (_loading)
-            return;
-
-        if (ItemsProvider is null)
-        {
-            if (_visible.Count >= _total)
-                return;
-
-            _visible = (_renderedItems?.Take(_visible.Count + PageSize) ?? _visible).ToList();
-            _hasMore = _visible.Count < _total;
-            StateHasChanged();
-            return;
-        }
-
-        if (!_hasMore && _visible.Count > 0)
+        if (_loading || !HasMore || _disposed)
             return;
 
         _loading = true;
+        _error = null;
         StateHasChanged();
+
+        var generation = _generation;
 
         try
         {
-            var result = await ItemsProvider(_visible.Count, PageSize, _loadCts?.Token ?? CancellationToken.None);
-            _visible.AddRange(result.Items);
-            _total = result.Total;
-            _hasMore = _visible.Count < _total;
+            var page = await LoadPageAsync(_items.Count, PageSize, _cts?.Token ?? CancellationToken.None);
+
+            if (generation != _generation || _disposed)
+                return;
+
+            _items.AddRange(page.Items);
+            _total = page.Total;
             await TotalChanged.InvokeAsync(_total);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_cts?.IsCancellationRequested == true)
         {
-            // Superseded by a filter reset; the new load owns the list now.
+            // Self-cancellation on dispose; nothing to show.
+        }
+        catch (Exception)
+        {
+            _error = "load";
         }
         finally
         {
             _loading = false;
-            StateHasChanged();
+            if (!_disposed)
+                StateHasChanged();
         }
     }
 
-    private async Task StopObservingAsync()
+    private async void OnIntersection(IntersectionObserverEntry[] entries)
     {
-        if (_observation is not null)
+        try
         {
-            await _observation.DisposeAsync();
-            _observation = null;
+            if (entries.Length == 0 || !entries[^1].IsIntersecting)
+                return;
+
+            await InvokeAsync(LoadNextAsync);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
         }
     }
 
-    public async ValueTask DisposeAsync()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
-        _loadCts?.Cancel();
-        _loadCts?.Dispose();
-        await StopObservingAsync();
+        _disposed = true;
+
+        if (_cts is not null)
+        {
+            await _cts.CancelAsync();
+            _cts.Dispose();
+        }
+
+        if (_subscription is not null)
+        {
+            try
+            {
+                await _subscription.DisposeAsync();
+            }
+            catch (JSDisconnectedException) { }
+        }
     }
 }

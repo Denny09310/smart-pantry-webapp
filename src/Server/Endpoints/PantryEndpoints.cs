@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-
 using Server.Data;
 using Server.Data.Entities;
 using Server.Hubs;
-
 using Shared.Models;
 
 namespace Server.Endpoints;
@@ -17,89 +15,82 @@ namespace Server.Endpoints;
 internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, IPantryHubClient> hub)
 {
     [MapGet("/")]
-    public async Task<Ok<GetPantryItemsResponse>> GetPantryItemsAsync(
+    public async Task<Results<Ok<GetPantryItemsResponse>, ValidationProblem>> GetPantryItemsAsync(
         [AsParameters] GetPantryItemsRequest request,
         CancellationToken ct)
     {
+        // "all" is documented as unfiltered: normalize before validating.
+        var status = request.Status is PantryRules.StatusAll ? null : request.Status;
+
+        if (status is not null && !PantryRules.Statuses.Contains(status))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Status)] = [$"Unknown status. Use one of: {string.Join(", ", PantryRules.Statuses)}."]
+            });
+        }
+
+        if (request.Sort is not null && !PantryRules.Sorts.Contains(request.Sort))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Sort)] = [$"Unknown sort. Use one of: {string.Join(", ", PantryRules.Sorts)}."]
+            });
+        }
+
+        var skip = request.Skip ?? 0;
+        var take = request.Take ?? PantryRules.DefaultPageSize;
+
+        // Server-local day, same rule as the reminder worker and the client helper.
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var horizon = today.AddDays(PantryRules.ExpirySoonDays);
+
         var query = db.Items.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(request.Location)
-            && !request.Location.Trim().Equals("all", StringComparison.OrdinalIgnoreCase))
-            query = query.Where(x => EF.Functions.ILike(x.Location, $"%{request.Location.Trim()}%"));
+        // Closed location set: exact match, case-insensitive like Name.
+        if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not PantryRules.LocationAll)
+            query = query.Where(x => EF.Functions.ILike(x.Location, request.Location));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
-            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name.Trim()}%"));
+            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
 
-        if (request.Status is { } status)
+        query = status switch
         {
-            // UTC day everywhere: server local midnight must not shift boundaries.
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var horizon = today.AddDays(7);
-            query = status switch
-            {
-                ExpiryStatus.Expired => query.Where(x => x.ExpirationDate < today),
-                ExpiryStatus.Today => query.Where(x => x.ExpirationDate == today),
-                ExpiryStatus.Soon => query.Where(x => x.ExpirationDate > today && x.ExpirationDate <= horizon),
-                ExpiryStatus.Fresh => query.Where(x => x.ExpirationDate > horizon),
-                _ => query,
-            };
-        }
-        else if (request.ExcludeFresh)
+            PantryRules.StatusExpired => query.Where(x => x.ExpirationDate < today),
+            PantryRules.StatusSoon => query.Where(x => x.ExpirationDate >= today && x.ExpirationDate <= horizon),
+            PantryRules.StatusFresh => query.Where(x => x.ExpirationDate > horizon),
+            _ => query
+        };
+
+        query = request.Sort switch
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var horizon = today.AddDays(7);
-            query = query.Where(x => x.ExpirationDate <= horizon);
-        }
+            PantryRules.SortExpiryDesc => query.OrderByDescending(x => x.ExpirationDate).ThenBy(x => x.Id),
+            PantryRules.SortName => query.OrderBy(x => x.Name).ThenBy(x => x.Id),
+            _ => query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Id)
+        };
 
         var totalItems = await query.CountAsync(ct);
 
-        var skip = Math.Max(0, request.Skip);
-        var take = Math.Clamp(request.Take, 1, 100);
-
-        // Status is calculated in memory: the shared rule is not translatable to SQL.
-        var ordered = request.SortDescending
-            ? query.OrderByDescending(x => x.ExpirationDate).ThenByDescending(x => x.Id)
-            : query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Id);
-
-        var entries = await ordered
+        var items = await query
             .Skip(skip)
             .Take(take)
+            .Select(x => new PantryItemDto(
+                x.Id,
+                x.Name,
+                x.Quantity,
+                x.Unit,
+                x.Location,
+                x.Notes,
+                x.ExpirationDate,
+                x.HouseholdMemberId,
+                x.Barcode,
+                x.NutriScore,
+                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null))
             .ToListAsync(ct);
-
-        var memberIds = entries
-            .Select(x => x.CreatedByMemberId)
-            .Where(id => id != null)
-            .Distinct()
-            .ToList();
-
-        var memberNames = memberIds.Count == 0
-            ? new Dictionary<string, string>()
-            : await db.Members.AsNoTracking()
-                .Where(m => memberIds.Contains(m.Id))
-                .ToDictionaryAsync(m => m.Id, m => m.Name, ct);
-
-        var items = entries
-            .Select(e => ToDto(e, e.CreatedByMemberId is not null && memberNames.TryGetValue(e.CreatedByMemberId, out var name) ? name : null))
-            .ToList();
 
         return TypedResults.Ok(new GetPantryItemsResponse(
             items,
             totalItems));
-    }
-
-    [MapGet("/{id}")]
-    public async Task<Results<Ok<PantryItemDto>, NotFound>> GetPantryItemAsync(
-        string id,
-        CancellationToken ct)
-    {
-        var entry = await db.Items
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id, ct);
-
-        if (entry is null)
-            return TypedResults.NotFound();
-
-        return TypedResults.Ok(ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
     }
 
     [MapPost("/")]
@@ -110,93 +101,84 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
     {
         var entry = new PantryItem
         {
-            Name = request.Name.Trim(),
+            Name = request.Name,
             Quantity = request.Quantity,
-            Unit = request.Unit.Trim(),
-            Location = request.Location.Trim(),
-            Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim(),
+            Unit = request.Unit,
+            Location = request.Location,
+            Notes = request.Notes,
             ExpirationDate = request.ExpirationDate,
-            Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim(),
-            CreatedByMemberId = await ResolveMemberIdAsync(memberId, ct)
+            Barcode = request.Barcode,
+            NutriScore = request.NutriScore,
+            NutritionJson = request.Nutrition is not null ? request.Nutrition.ToJson() : null,
+            HouseholdMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(PantryChangedEvent.Created, entry.Id));
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Created), ct);
 
-        return TypedResults.Created(
-            $"/api/pantry/{entry.Id}",
-            ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
+        return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
+    }
+
+    [MapGet("/{id}")]
+    public async Task<Results<Ok<PantryItemDto>, ProblemHttpResult>> GetPantryItemAsync(
+        string id,
+        CancellationToken ct)
+    {
+        var item = await db.Items.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+        return item is null
+            ? ItemNotFound(id)
+            : TypedResults.Ok(ToDto(item));
     }
 
     [MapPut("/{id}")]
-    public async Task<Results<Ok<PantryItemDto>, NotFound, ValidationProblem>> UpdatePantryItemAsync(
+    public async Task<Results<Ok<PantryItemDto>, ProblemHttpResult, ValidationProblem>> UpdatePantryItemAsync(
         string id,
         UpdatePantryItemRequest request,
         CancellationToken ct)
     {
-        // Attribution intentionally untouched: it records who added the item.
-        var entry = await db.Items.FindAsync([id], ct);
-
+        var entry = await db.Items.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entry is null)
-            return TypedResults.NotFound();
+            return ItemNotFound(id);
 
-        entry.Name = request.Name.Trim();
+        // Attribution records who added the item and never changes afterwards.
+        entry.Name = request.Name;
         entry.Quantity = request.Quantity;
-        entry.Unit = request.Unit.Trim();
-        entry.Location = request.Location.Trim();
-        entry.Notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+        entry.Unit = request.Unit;
+        entry.Location = request.Location;
+        entry.Notes = request.Notes;
         entry.ExpirationDate = request.ExpirationDate;
-        entry.Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim();
-        entry.UpdatedAt = DateTimeOffset.UtcNow;
+        entry.Barcode = request.Barcode;
+        entry.NutriScore = request.NutriScore;
+        entry.NutritionJson = request.Nutrition?.ToJson();
+        entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(PantryChangedEvent.Updated, entry.Id));
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Updated), ct);
 
-        return TypedResults.Ok(ToDto(entry, await MemberNameAsync(entry.CreatedByMemberId, ct)));
+        return TypedResults.Ok(ToDto(entry));
     }
 
     [MapDelete("/{id}")]
-    public async Task<Results<NoContent, NotFound>> DeletePantryItemAsync(
+    public async Task<Results<NoContent, ProblemHttpResult>> DeletePantryItemAsync(
         string id,
         CancellationToken ct)
     {
-        var entry = await db.Items.FindAsync([id], ct);
+        var deleted = await db.Items.Where(x => x.Id == id).ExecuteDeleteAsync(ct);
 
-        if (entry is null)
-            return TypedResults.NotFound();
+        if (deleted == 0)
+            return ItemNotFound(id);
 
-        db.Items.Remove(entry);
-        await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(PantryChangedEvent.Removed, entry.Id));
-
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(id, PantryChangeKind.Removed), ct);
         return TypedResults.NoContent();
     }
 
-
-
-    private static PantryItemDto ToDto(PantryItem entry, string? memberName = null)
-        => new(
-            entry.Id,
-            entry.Name,
-            entry.Quantity,
-            entry.Unit,
-            entry.Location,
-            entry.Notes,
-            entry.ExpirationDate,
-            ExpiryStatusCalculator.GetStatus(entry.ExpirationDate, DateOnly.FromDateTime(DateTime.UtcNow)),
-            entry.CreatedByMemberId,
-            memberName,
-            entry.Barcode);
-
-    private async Task<string?> MemberNameAsync(string? memberId, CancellationToken ct)
-        => memberId is null
-            ? null
-            : await db.Members
-                .AsNoTracking()
-                .Where(m => m.Id == memberId)
-                .Select(m => m.Name)
-                .FirstOrDefaultAsync(ct);
+    private static ProblemHttpResult ItemNotFound(string id)
+        => TypedResults.Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            detail: $"Pantry item '{id}' was not found.");
 
     /// <summary>
     /// Attribution is a label, never access control: unknown or missing
@@ -207,7 +189,20 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
             ? null
             : await db.Members
                 .AsNoTracking()
-                .Where(m => m.Id == memberId)
-                .Select(m => m.Id)
+                .Where(x => x.Id == memberId)
+                .Select(x => x.Id)
                 .FirstOrDefaultAsync(ct);
+
+    private static PantryItemDto ToDto(PantryItem item) => new(
+        item.Id,
+        item.Name,
+        item.Quantity,
+        item.Unit,
+        item.Location,
+        item.Notes,
+        item.ExpirationDate,
+        item.HouseholdMemberId,
+        item.Barcode,
+        item.NutriScore,
+        item.NutritionJson != null ? NutritionFactsExtensions.Parse(item.NutritionJson) : null);
 }

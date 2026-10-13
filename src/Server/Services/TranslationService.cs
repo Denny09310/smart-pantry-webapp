@@ -1,94 +1,78 @@
+using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Server.Services;
 
-/// <summary>
-/// English lookup candidates for pantry names via MyMemory (free, keyless).
-/// Results are cached for weeks to stay far under the anonymous quota;
-/// failures fall back to the original name so suggestions simply narrow
-/// instead of breaking.
-/// </summary>
-internal sealed class TranslationService(
-    IHttpClientFactory http,
-    IMemoryCache cache,
-    ILogger<TranslationService> log)
+public interface ITranslationService
 {
-    private static readonly TimeSpan TranslationCacheLifetime = TimeSpan.FromDays(30);
-    private static readonly TimeSpan MissCacheLifetime = TimeSpan.FromHours(1);
+    /// <summary>Translates short text via MyMemory; returns the input on failure.</summary>
+    Task<string> TranslateAsync(string text, string from, string to, CancellationToken ct);
+}
 
-    public async Task<IReadOnlyList<string>> CandidatesAsync(
-        string name,
-        CancellationToken ct = default)
+/// <summary>MyMemory: free, keyless translation with a shared quota.
+/// Every result is cached in memory — ingredient vocabulary repeats heavily,
+/// so steady-state traffic barely touches the quota.</summary>
+public sealed class MyMemoryTranslationService(HttpClient http, IMemoryCache cache) : ITranslationService
+{
+    private const string BaseUrl = "https://api.mymemory.translated.net/get";
+
+    public async Task<string> TranslateAsync(string text, string from, string to, CancellationToken ct)
     {
-        var trimmed = name.Trim();
+        if (string.IsNullOrWhiteSpace(text) || from == to)
+            return text;
 
-        if (trimmed.Length == 0)
-            return [];
-
-        var remote = await TranslateAsync(trimmed, ct);
-
-        return remote is null || string.Equals(remote, trimmed, StringComparison.OrdinalIgnoreCase)
-            ? [trimmed]
-            : [remote, trimmed];
-    }
-
-    private async Task<string?> TranslateAsync(string text, CancellationToken ct)
-    {
-        var cacheKey = $"translate:it:{text.ToLowerInvariant()}";
-
-        if (cache.TryGetValue(cacheKey, out string? cached))
+        var key = $"mymemory:{from}:{to}:{text.Trim().ToLowerInvariant()}";
+        if (cache.TryGetValue(key, out string? cached) && cached is not null)
             return cached;
 
-        string? translated = null;
+        // Only successful translations are cached: a transient failure must
+        // fall back to the input every time, never stick for 30 days.
+        var translated = await FetchAsync(text, from, to, ct);
+        if (translated is null)
+            return text;
 
-        try
-        {
-            translated = await FetchTranslationAsync(text, ct);
-        }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
-        {
-            log.LogWarning(ex, "Translation of {Text} failed.", text);
-        }
-
-        cache.Set(cacheKey, translated, translated is null ? MissCacheLifetime : TranslationCacheLifetime);
-
+        cache.Set(key, translated, TimeSpan.FromDays(30));
         return translated;
     }
 
-    private async Task<string?> FetchTranslationAsync(string text, CancellationToken ct)
+    private async Task<string?> FetchAsync(string text, string from, string to, CancellationToken ct)
     {
-        var client = http.CreateClient("MyMemory");
-
-        using var response = await client.GetAsync(
-            $"get?q={Uri.EscapeDataString(text)}&langpair=it|en", ct);
-
-        if (!response.IsSuccessStatusCode)
+        try
+        {
+            var url = $"{BaseUrl}?q={Uri.EscapeDataString(text)}&langpair={from}|{to}";
+            var response = await http.GetFromJsonAsync<MyMemoryResponse>(url, ct);
+            if (response?.ResponseStatus != 200)
+                return null;
+            var translated = response?.ResponseData?.TranslatedText;
+            return string.IsNullOrWhiteSpace(translated) ? null : translated.Trim();
+        }
+        catch (HttpRequestException)
+        {
             return null;
-
-        var payload = await response.Content.ReadFromJsonAsync<MyMemoryResponse>(ct);
-
-        var best = payload?.Matches?.FirstOrDefault(m => !string.IsNullOrWhiteSpace(m.Translation))?.Translation
-            ?? payload?.Data?.TranslatedText;
-
-        return string.IsNullOrWhiteSpace(best) || IsQuotaRefusal(best) ? null : best.Trim();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
     }
 
-    private static bool IsQuotaRefusal(string text)
-        => text.Contains("MYMEMORY WARNING", StringComparison.OrdinalIgnoreCase)
-            || text.Contains("QUERY LENGTH LIMIT", StringComparison.OrdinalIgnoreCase)
-            || text.Contains("INVALID EMAIL", StringComparison.OrdinalIgnoreCase)
-            || text.Contains("INVALID TARGET LANGUAGE", StringComparison.OrdinalIgnoreCase);
+    private sealed class MyMemoryResponse
+    {
+        [JsonPropertyName("responseStatus")]
+        public int ResponseStatus { get; set; }
 
-    private sealed record MyMemoryResponse(
-        [property: JsonPropertyName("responseData")] MyMemoryData? Data,
-        [property: JsonPropertyName("responseStatus")] int Status,
-        [property: JsonPropertyName("matches")] List<MyMemoryMatch>? Matches);
+        [JsonPropertyName("responseData")]
+        public ResponseData? ResponseData { get; set; }
+    }
 
-    private sealed record MyMemoryData(
-        [property: JsonPropertyName("translatedText")] string? TranslatedText);
-
-    private sealed record MyMemoryMatch(
-        [property: JsonPropertyName("translation")] string? Translation);
+    private sealed class ResponseData
+    {
+        [JsonPropertyName("translatedText")]
+        public string? TranslatedText { get; set; }
+    }
 }

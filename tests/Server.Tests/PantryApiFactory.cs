@@ -1,61 +1,85 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-using Server.Data;
+using Npgsql;
 
 namespace Server.Tests;
 
 /// <summary>
-/// Boots the real API (entry assembly located via <see cref="ApplicationDbContext"/>)
-/// against an isolated Postgres database (<c>smart_pantry_tests</c>). The app's startup migration creates it on
-/// first boot. All test classes share one collection (and factory), so they
-/// run sequentially against the same database.
-/// Upstream Open Food Facts calls are stubbed: resolve <see cref="StubOffHandler"/>
-/// from <see cref="WebApplicationFactory{TEntryPoint}.Services"/> to program responses.
+/// Boots the full Server host in-memory (including Minimal API validation)
+/// against a dedicated <c>smart_pantry_tests</c> Postgres database, which is
+/// created on demand. Override the connection with SMARTPANTRY_TEST_CONNECTION.
 /// </summary>
-public sealed class PantryApiFactory : WebApplicationFactory<ApplicationDbContext>
+public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private const string TestConnectionString =
-        "Server=localhost;Database=smart_pantry_tests;Uid=postgres;Pwd=mypassword123";
+    public string TestDatabase { get; } = $"smart_pantry_tests_{Guid.CreateVersion7():N}";
 
-    public PantryApiFactory()
-    {
-        // Program.Main reads the connection string eagerly, before the test
-        // host applies its own configuration, so it must already be visible
-        // through the environment when the host builds.
-        Environment.SetEnvironmentVariable("ConnectionStrings__Default", TestConnectionString);
-    }
+    public string ConnectionString =>
+        Environment.GetEnvironmentVariable("SMARTPANTRY_TEST_CONNECTION") is { } configured
+            ? new NpgsqlConnectionStringBuilder(configured) { Database = TestDatabase }.ConnectionString
+            : $"Server=localhost;Database={TestDatabase};Uid=postgres;Pwd=mypassword123";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Testing");
-        var contentRoot = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "Server"));
-        builder.UseContentRoot(contentRoot);
-        builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(
-            new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Default"] = TestConnectionString,
-                ["Vapid:PublicKey"] = TestVapidKeys.PublicKey,
-                ["Vapid:PrivateKey"] = TestVapidKeys.PrivateKey,
-            }));
-        builder.ConfigureTestServices(services =>
+        builder.ConfigureAppConfiguration(config =>
         {
-            var stub = new StubOffHandler();
-            services.AddSingleton(stub);
-            services.AddSingleton<IHttpClientFactory>(_ => new StubHttpClientFactory(stub));
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Default"] = ConnectionString
+            });
         });
     }
 
-    protected override void Dispose(bool disposing)
+    public async Task InitializeAsync()
     {
-        Environment.SetEnvironmentVariable("ConnectionStrings__Default", null);
-        base.Dispose(disposing);
+        await RecreateDatabaseAsync();
+        _ = Services; // Build the host: Program.cs runs migrations on the test database.
+    }
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        try
+        {
+            var maintenance = new NpgsqlConnectionStringBuilder(ConnectionString)
+            {
+                Database = "postgres"
+            }.ConnectionString;
+
+            NpgsqlConnection.ClearAllPools();
+
+            await using var connection = new NpgsqlConnection(maintenance);
+            await connection.OpenAsync();
+
+            await using var drop = new NpgsqlCommand(
+                $"DROP DATABASE IF EXISTS \"{TestDatabase}\" WITH (FORCE)", connection);
+            await drop.ExecuteNonQueryAsync();
+        }
+        catch
+        {
+            // Best effort: leftover test databases are harmless.
+        }
+
+        Dispose();
+    }
+
+    private async Task RecreateDatabaseAsync()
+    {
+        var maintenance = new NpgsqlConnectionStringBuilder(ConnectionString)
+        {
+            Database = "postgres"
+        }.ConnectionString;
+
+        NpgsqlConnection.ClearAllPools();
+
+        await using var connection = new NpgsqlConnection(maintenance);
+        await connection.OpenAsync();
+
+        await using var drop = new NpgsqlCommand(
+            $"DROP DATABASE IF EXISTS \"{TestDatabase}\" WITH (FORCE)", connection);
+        await drop.ExecuteNonQueryAsync();
+
+        await using var create = new NpgsqlCommand(
+            $"CREATE DATABASE \"{TestDatabase}\"", connection);
+        await create.ExecuteNonQueryAsync();
     }
 }
-
-[CollectionDefinition("api")]
-public sealed class ApiCollection : ICollectionFixture<PantryApiFactory>;

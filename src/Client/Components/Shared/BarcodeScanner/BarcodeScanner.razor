@@ -1,0 +1,159 @@
+@namespace Client.Components
+@using Bit.Butil
+@inject MediaDevices MediaDevices
+@inject BarcodeDetector BarcodeDetector
+@inject ToastService Toasts
+@inject LocalizationService Loc
+@implements IAsyncDisposable
+
+<div class="relative" @ref="_containerRef">
+    @* Always rendered (hidden when idle) so the element reference exists
+        before the stream attaches — AttachTo a missing element silently fails. *@
+    <video @ref="_videoRef" class="@(_isScanning ? "w-full h-48 object-cover rounded-lg" : "hidden")" autoplay playsinline muted></video>
+    @if (_isScanning)
+    {
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-56 h-28 border-2 border-primary/50 rounded-lg relative">
+                <div class="absolute left-0 right-0 h-0.5 bg-primary animate-scan"></div>
+            </div>
+        </div>
+        <div class="absolute right-2 top-2">
+            <button type="button" @onclick="StopScanningAsync" aria-label="@Loc["Cancel"]"
+                    class="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur transition-colors hover:bg-black/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                <LucideIcon Name="x" Size="16" />
+            </button>
+        </div>
+    }
+    else
+    {
+        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="StartScanningAsync">
+            <LucideIcon Name="scan-barcode" Size="16" />
+            Scan barcode
+        </BbButton>
+    }
+</div>
+
+@code
+{
+    [Parameter] public EventCallback<string> OnBarcodeScanned { get; set; }
+    [Parameter] public bool AutoStart { get; set; } = false;
+
+    ElementReference _containerRef;
+    ElementReference _videoRef;
+    private bool _isScanning = false;
+    private bool _disposed;
+    private MediaStreamHandle? _stream;
+    private ButilSubscription? _scanSubscription;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && AutoStart)
+        {
+            await StartScanningAsync();
+        }
+    }
+
+    public async Task StartScanningAsync()
+    {
+        if (_isScanning || _disposed) return;
+
+        try
+        {
+            // Check camera support first
+            var supported = await MediaDevices.IsSupported();
+            if (!supported)
+            {
+                Toasts.Error(Loc["ScannerUnsupported"]);
+                return;
+            }
+
+            // Request camera access - rear camera preferred
+            _stream = await MediaDevices.GetUserMedia(
+                audio: false,
+                video: true,
+                videoConstraints: new { facingMode = "environment" });
+
+            if (_stream == null)
+            {
+                // User denied permission
+                Toasts.Error(Loc["ScannerDenied"]);
+                return;
+            }
+
+            // Attach stream to video element
+            await _stream.AttachTo(_videoRef);
+
+            // Play the video
+            await _videoRef.Play();
+
+            _isScanning = true;
+            StateHasChanged();
+
+            // Formats match the server rule: 8, 12, or 13 digits only.
+            _scanSubscription = await BarcodeDetector.StartScan(
+                _videoRef,
+                OnBarcodesDetected,
+                formats: ["ean_13", "ean_8", "upc_a", "upc_e"],
+                intervalMs: 250);
+        }
+        catch (Exception)
+        {
+            await ReleaseAsync();
+        }
+    }
+
+    public async Task StopScanningAsync()
+    {
+        if (!_isScanning && _stream is null && _scanSubscription is null)
+            return;
+
+        _isScanning = false;
+        await ReleaseAsync();
+
+        if (!_disposed)
+            StateHasChanged();
+    }
+
+    private async Task ReleaseAsync()
+    {
+        if (_scanSubscription != null)
+        {
+            await _scanSubscription.DisposeAsync();
+            _scanSubscription = null;
+        }
+
+        if (_stream != null)
+        {
+            await _stream.DisposeAsync();
+            _stream = null;
+        }
+    }
+
+    private void OnBarcodesDetected(DetectedBarcode[] barcodes)
+        => _ = InvokeAsync(async () =>
+        {
+            if (_disposed || !_isScanning || barcodes.Length == 0) return;
+
+            var barcode = barcodes[0].RawValue;
+
+            // Validate barcode format
+            if (IsValidBarcode(barcode))
+            {
+                await OnBarcodeScanned.InvokeAsync(barcode);
+                await StopScanningAsync();
+            }
+        });
+
+    private static bool IsValidBarcode(string barcode)
+    {
+        // EAN-13, EAN-8, UPC-A, UPC-E
+        return System.Text.RegularExpressions.Regex.IsMatch(barcode, @"^\d{8}$|^\d{12}$|^\d{13}$");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        _isScanning = false;
+        await ReleaseAsync();
+    }
+}

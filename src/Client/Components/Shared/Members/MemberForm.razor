@@ -1,0 +1,136 @@
+@namespace Client.Components
+@using System.ComponentModel.DataAnnotations
+@using Client.Models
+@inject MemberService Members
+@inject BottomSheetService Sheet
+@inject ToastService Toasts
+@inject ILogger<MemberForm> Logger
+
+<div class="flex h-full flex-col">
+    <div class="flex-none">
+        <h2 class="text-lg font-semibold">@(EditMember is null ? "Add member" : "Edit member")</h2>
+        <p class="text-sm text-muted-foreground">
+            @(EditMember is null ? "Someone new in the household." : "Update the profile.")
+        </p>
+    </div>
+
+    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col">
+        <DataAnnotationsValidator />
+
+        <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+            <BbField IsInvalid="@(!context.IsValid(() => Input.DisplayName))">
+                <BbFieldLabel For="member-name" Class="text-sm font-medium">Display name *</BbFieldLabel>
+                <BbFieldContent>
+                    <BbInputGroup Class="bg-card">
+                        <BbInputGroupInput Id="member-name" @bind-Value="Input.DisplayName" Placeholder="e.g. Alex"
+                                           UpdateTiming="UpdateTiming.Immediate" />
+                    </BbInputGroup>
+                    <BbFieldError Errors="@context.GetValidationMessages(() => Input.DisplayName)" />
+                </BbFieldContent>
+            </BbField>
+
+            <div class="space-y-2">
+                <BbLabel Class="text-sm font-medium">Color</BbLabel>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var color in Palette)
+                    {
+                        <button type="button" aria-label="@($"Use color {color}")" @onclick="@(() => Input.Color = color)"
+                                class="@ColorClass(color)" style="background-color: @color">
+                            @if (Input.Color == color)
+                            {
+                                <LucideIcon Name="check" Size="14" class="text-white" />
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-none space-y-1 border-t pt-3">
+            <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving">
+                <ChildContent>@(EditMember is null ? "Save member" : "Save changes")</ChildContent>
+            </BbButton>
+            @if (AllowCancel)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
+                          OnClick="() => Sheet.CloseAsync()">
+                    Cancel
+                </BbButton>
+            }
+        </div>
+    </EditForm>
+</div>
+
+@code
+{
+    /// <summary>When set, the form edits this member instead of creating one.</summary>
+    [Parameter]
+    public HouseholdMemberDto? EditMember { get; set; }
+
+    [Parameter]
+    public bool AllowCancel { get; set; } = true;
+
+    private bool _saving;
+    private InputModel Input { get; set; } = new();
+    private string? _editingId = "__none__";
+
+    private static readonly string[] Palette =
+    [
+        "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7"
+    ];
+
+    protected override void OnParametersSet()
+    {
+        var id = EditMember?.Id;
+        if (id == _editingId)
+            return;
+
+        _editingId = id;
+        Input = EditMember is { } member
+            ? new InputModel { DisplayName = member.DisplayName, Color = member.Color }
+            : new InputModel();
+    }
+
+    private string ColorClass(string color)
+        => Input.Color == color
+            ? "flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-offset-2 ring-ring"
+            : "flex h-8 w-8 items-center justify-center rounded-full";
+
+    private async Task HandleSubmitAsync()
+    {
+        if (_saving)
+            return;
+
+        _saving = true;
+        try
+        {
+            var name = Input.DisplayName.Trim();
+            var color = string.IsNullOrWhiteSpace(Input.Color) ? null : Input.Color;
+
+            HouseholdMemberDto? saved = EditMember is null
+                ? await Members.CreateMemberAsync(name, color)
+                : await Members.UpdateMemberAsync(EditMember.Id, name, color, EditMember.IsArchived);
+
+            if (saved is null)
+            {
+                Toasts.Error("Couldn't save the member. Try again.");
+                return;
+            }
+
+            await Sheet.CloseAsync(saved);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string DisplayName { get; set; } = string.Empty;
+
+        public string? Color { get; set; }
+    }
+}

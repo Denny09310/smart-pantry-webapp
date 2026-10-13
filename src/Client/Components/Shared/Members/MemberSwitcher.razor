@@ -1,57 +1,81 @@
-@namespace Client.Components.Shared.Members
+@namespace Client.Components
+@using Client.Models
 @inject MemberService Members
-@inject ToastService Toast
-@inject DialogService Dialog
-@inject BottomSheetService BottomSheet
-@inject IStringLocalizer<UIStrings> L
+@inject BottomSheetService Sheet
 @implements IDisposable
 
-<div class="space-y-1">
-    @foreach (var member in Members.Members)
-    {
-        <div class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
-            <BbAvatar>
-                <BbAvatarFallback style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
-                    @MemberDisplay.Initials(member.Name)
-                </BbAvatarFallback>
-            </BbAvatar>
-            <button type="button" class="min-w-0 flex-1 text-left" @onclick="@(() => SelectAsync(member.Id))">
-                <p class="truncate text-sm font-medium">@member.Name</p>
-                <p class="text-xs text-muted-foreground">
-                    @(member.Id == Members.CurrentMemberId ? L["Ms_Current"] : L["Ms_TapToSwitch"])
-                </p>
-            </button>
-            @if (Members.Members.Count > 1)
+<div class="flex h-full flex-col">
+    <div class="flex-none">
+        <h2 class="text-lg font-semibold">Household members</h2>
+        <p class="text-sm text-muted-foreground">Who is using this device? New items are attributed to the current
+            member.</p>
+        </div>
+
+        <div class="min-h-0 flex-1 touch-pan-y space-y-1 overflow-y-auto overscroll-contain py-1 pr-1">
+            @foreach (var member in Members.ActiveMembers)
             {
-                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                          AriaLabel="@L["Ms_RemoveAria", member.Name]"
-                          OnClick="@(() => RemoveAsync(member.Id, member.Name))">
-                    <LucideIcon Name="trash-2" Size="16" />
-                </BbButton>
+                <div @key="member.Id"
+                     class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
+                    <BbAvatar>
+                        <BbAvatarFallback
+                            style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
+                            @MemberDisplay.Initials(member.DisplayName)
+                        </BbAvatarFallback>
+                    </BbAvatar>
+                    <button type="button" class="min-w-0 flex-1 text-left" @onclick="@(() => SelectAsync(member.Id))">
+                        <p class="truncate text-sm font-medium">@member.DisplayName</p>
+                        <p class="text-xs text-muted-foreground">
+                            @(member.Id == Members.CurrentMemberId ? "Current" : "Tap to switch")
+                        </p>
+                    </button>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                              AriaLabel="@($"Rename {member.DisplayName}")" OnClick="@(() => RenameAsync(member))">
+                        <LucideIcon Name="pencil" Size="16" />
+                    </BbButton>
+                    @if (Members.ActiveMembers.Count() > 1)
+                    {
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                  AriaLabel="@($"Archive {member.DisplayName}")" OnClick="@(() => ArchiveAsync(member))">
+                            <LucideIcon Name="archive" Size="16" />
+                        </BbButton>
+                    }
+                </div>
+            }
+
+            @if (Members.Members.Any(m => m.IsArchived))
+            {
+                <div class="space-y-1 pt-2">
+                    <p class="text-xs font-medium uppercase text-muted-foreground">Archived</p>
+                    @foreach (var member in Members.Members.Where(m => m.IsArchived))
+                    {
+                        <div @key="member.Id" class="flex items-center gap-3 rounded-lg p-2 opacity-60">
+                            <BbAvatar>
+                                <BbAvatarFallback
+                                    style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
+                                    @MemberDisplay.Initials(member.DisplayName)
+                                </BbAvatarFallback>
+                            </BbAvatar>
+                            <p class="min-w-0 flex-1 truncate text-sm font-medium">@member.DisplayName</p>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                      AriaLabel="@($"Unarchive {member.DisplayName}")" OnClick="@(() => UnarchiveAsync(member))">
+                                <LucideIcon Name="archive-restore" Size="16" />
+                            </BbButton>
+                        </div>
+                    }
+                </div>
             }
         </div>
-    }
 
-    <div class="border-t pt-3">
-        <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="CreateAsync">
-            <LucideIcon Name="plus" Size="16" />
-            @L["Ms_AddButton"]
-        </BbButton>
+        <div class="flex-none border-t pt-3">
+            <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button" OnClick="CreateAsync">
+                <LucideIcon Name="plus" Size="16" />
+                Add member
+            </BbButton>
+        </div>
     </div>
-</div>
 
 @code
 {
-    [CascadingParameter]
-    public IDialogReference Reference { get; set; } = default!;
-
-    private DialogOpenOptions CreateOptions() => new()
-    {
-        Title = L["Ms_NewTitle"],
-        Description = L["Ms_NewDescription"],
-        Size = DialogSize.Small,
-    };
-
     protected override void OnInitialized() => Members.Changed += OnChanged;
 
     public void Dispose() => Members.Changed -= OnChanged;
@@ -62,30 +86,39 @@
         {
             await InvokeAsync(StateHasChanged);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Member switched during navigation/dispose; nothing to render.
+            await DispatchExceptionAsync(ex);
         }
     }
 
     private async Task SelectAsync(string id)
     {
         await Members.SelectMemberAsync(id);
-        await Reference.CloseAsync(DialogResult.Ok(id));
+        await Sheet.CloseAsync(id);
     }
 
-    private Task CreateAsync() => BottomSheet.OpenAsync<CreateMemberDialog>(CreateOptions());
-
-    private async Task RemoveAsync(string id, string name)
+    private async Task CreateAsync()
     {
-        var confirm = await Dialog.ConfirmAsync(
-            L["Ms_RemoveTitle", name],
-            L["Ms_RemoveDescription"],
-            new ConfirmDialogOptions { ConfirmText = L["Ms_RemoveButton"], CancelText = L["Common_Cancel"], Destructive = true });
+        await Sheet.OpenAsync<MemberForm>();
+        await Sheet.OpenAsync<MemberSwitcher>();
+    }
 
-        if (!confirm.Confirmed)
-            return;
+    private async Task RenameAsync(HouseholdMemberDto member)
+    {
+        await Sheet.OpenAsync<MemberForm>(new Dictionary<string, object?> { ["EditMember"] = member });
+        await Sheet.OpenAsync<MemberSwitcher>();
+    }
 
-        await Members.DeleteMemberAsync(id);
+    private async Task ArchiveAsync(HouseholdMemberDto member)
+    {
+        // Same rule as item deletion: the confirm renders beneath the
+        // sheet, so close first and let the opener confirm and archive.
+        await Sheet.CloseAsync(member);
+    }
+
+    private async Task UnarchiveAsync(HouseholdMemberDto member)
+    {
+        await Members.UpdateMemberAsync(member.Id, member.DisplayName, member.Color, false);
     }
 }

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -32,23 +31,22 @@
 
 <body>
     <div id="app">
-        <div class="splash flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
-            <img src="icon-192.png" alt="" class="h-16 w-16 rounded-2xl" />
-            <p class="text-sm font-medium">Smart Pantry</p>
-            <p class="boot-text text-xs text-muted-foreground"></p>
-            <p class="version">v0.9.1</p>
+        <div class="min-h-dvh flex flex-col items-center justify-center">
+            <div class="flex flex-col items-center justify-center h-full w-full">
+                <img src="icon-192.png" alt="Smart Pantry" class="w-20 h-20 rounded-xl mb-4" />
+                <div class="loading-progress-text text-center text-muted-foreground text-sm"></div>
+            </div>
         </div>
     </div>
 
     <div id="blazor-error-ui">
         An unhandled error has occurred.
         <a href="." class="reload">Reload</a>
-        <button type="button" class="dismiss" aria-label="Dismiss error">🗙</button>
+        <span class="dismiss">🗙</span>
     </div>
-
     <script src="_content/Bit.Butil/bit-butil.js"></script>
-    <script src="_framework/blazor.webassembly.js"></script>
-    <script src="service-worker.registration.js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
 </body>
 
 </html>

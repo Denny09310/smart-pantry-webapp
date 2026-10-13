@@ -22,97 +22,85 @@ namespace Server.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Server.Data.Entities.BarcodeProduct", b =>
+            modelBuilder.Entity("Server.Data.Entities.CachedProduct", b =>
                 {
                     b.Property<string>("Barcode")
-                        .HasColumnType("text")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("barcode");
 
                     b.Property<string>("Brand")
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("brand");
 
-                    b.Property<double?>("Carbohydrates100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("carbohydrates100g");
-
-                    b.Property<double?>("EnergyKcal100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("energy_kcal100g");
-
-                    b.Property<double?>("Fat100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("fat100g");
-
-                    b.Property<double?>("Fiber100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("fiber100g");
-
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("image_url");
-
-                    b.Property<string>("IngredientsText")
-                        .HasColumnType("text")
-                        .HasColumnName("ingredients_text");
-
-                    b.Property<DateTimeOffset>("LookedUpAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("looked_up_at");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<string>("NutriScoreGrade")
-                        .HasColumnType("text")
-                        .HasColumnName("nutri_score_grade");
+                    b.Property<string>("NutriScore")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("nutri_score");
 
-                    b.Property<double?>("Proteins100g")
+                    b.Property<string>("NutritionJson")
+                        .HasColumnType("text")
+                        .HasColumnName("nutrition_json");
+
+                    b.Property<double?>("Quantity")
                         .HasColumnType("double precision")
-                        .HasColumnName("proteins100g");
-
-                    b.Property<string>("Quantity")
-                        .HasColumnType("text")
                         .HasColumnName("quantity");
 
-                    b.Property<double?>("Salt100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("salt100g");
+                    b.Property<string>("Unit")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("unit");
 
-                    b.Property<double?>("SaturatedFat100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("saturated_fat100g");
-
-                    b.Property<double?>("Sugars100g")
-                        .HasColumnType("double precision")
-                        .HasColumnName("sugars100g");
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Barcode")
-                        .HasName("pk_barcode_products");
+                        .HasName("pk_cached_products");
 
-                    b.ToTable("barcode_products", (string)null);
+                    b.ToTable("cached_products", (string)null);
                 });
 
-            modelBuilder.Entity("Server.Data.Entities.Member", b =>
+            modelBuilder.Entity("Server.Data.Entities.HouseholdMember", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
 
                     b.Property<string>("Color")
-                        .HasColumnType("text")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
                         .HasColumnName("color");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("DisplayName")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("pk_members");
@@ -130,6 +118,10 @@ namespace Server.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateOnly>("ExpirationDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiration_date");
+
                     b.Property<string>("PantryItemId")
                         .IsRequired()
                         .HasColumnType("text")
@@ -139,14 +131,18 @@ namespace Server.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("read_at");
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("type");
+
                     b.HasKey("Id")
                         .HasName("pk_notifications");
 
-                    b.HasIndex("PantryItemId")
-                        .HasDatabaseName("ix_notifications_pantry_item_id");
-
-                    b.HasIndex("ReadAt")
-                        .HasDatabaseName("ix_notifications_read_at");
+                    b.HasIndex("PantryItemId", "ExpirationDate", "Type")
+                        .IsUnique()
+                        .HasDatabaseName("ix_notifications_pantry_item_id_expiration_date_type");
 
                     b.ToTable("notifications", (string)null);
                 });
@@ -158,34 +154,47 @@ namespace Server.Data.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("Barcode")
-                        .HasColumnType("text")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("barcode");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedByMemberId")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by_member_id");
-
                     b.Property<DateOnly>("ExpirationDate")
                         .HasColumnType("date")
                         .HasColumnName("expiration_date");
 
+                    b.Property<string>("HouseholdMemberId")
+                        .HasColumnType("text")
+                        .HasColumnName("household_member_id");
+
                     b.Property<string>("Location")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("notes");
+
+                    b.Property<string>("NutriScore")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("nutri_score");
+
+                    b.Property<string>("NutritionJson")
+                        .HasColumnType("text")
+                        .HasColumnName("nutrition_json");
 
                     b.Property<double>("Quantity")
                         .HasColumnType("double precision")
@@ -193,7 +202,8 @@ namespace Server.Data.Migrations
 
                     b.Property<string>("Unit")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
                         .HasColumnName("unit");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -203,11 +213,11 @@ namespace Server.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_items");
 
-                    b.HasIndex("CreatedByMemberId")
-                        .HasDatabaseName("ix_items_created_by_member_id");
-
                     b.HasIndex("ExpirationDate")
                         .HasDatabaseName("ix_items_expiration_date");
+
+                    b.HasIndex("HouseholdMemberId")
+                        .HasDatabaseName("ix_items_household_member_id");
 
                     b.ToTable("items", (string)null);
                 });
@@ -220,7 +230,8 @@ namespace Server.Data.Migrations
 
                     b.Property<string>("Auth")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("auth");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -229,18 +240,19 @@ namespace Server.Data.Migrations
 
                     b.Property<string>("Endpoint")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
                         .HasColumnName("endpoint");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("language");
 
                     b.Property<string>("P256dh")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("p256dh");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("pk_push_subscriptions");
@@ -254,21 +266,25 @@ namespace Server.Data.Migrations
 
             modelBuilder.Entity("Server.Data.Entities.Notification", b =>
                 {
-                    b.HasOne("Server.Data.Entities.PantryItem", null)
+                    b.HasOne("Server.Data.Entities.PantryItem", "PantryItem")
                         .WithMany()
                         .HasForeignKey("PantryItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_notifications_items_pantry_item_id");
+
+                    b.Navigation("PantryItem");
                 });
 
             modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
                 {
-                    b.HasOne("Server.Data.Entities.Member", null)
+                    b.HasOne("Server.Data.Entities.HouseholdMember", "HouseholdMember")
                         .WithMany()
-                        .HasForeignKey("CreatedByMemberId")
+                        .HasForeignKey("HouseholdMemberId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_items_members_created_by_member_id");
+                        .HasConstraintName("fk_items_members_household_member_id");
+
+                    b.Navigation("HouseholdMember");
                 });
 #pragma warning restore 612, 618
         }

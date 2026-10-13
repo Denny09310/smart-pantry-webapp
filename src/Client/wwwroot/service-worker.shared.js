@@ -1,50 +1,47 @@
-// Shared service worker logic, imported by both service-worker.js (development)
-// and service-worker.published.js (published) via importScripts().
-// Keeps push handling in one place so the two workers can't drift apart.
-
-// Butil ServiceWorker.SkipWaiting posts { __butil: 'skipWaiting' }; only the
-// worker can skip waiting on itself, so it has to act on that message here.
-self.addEventListener('message', event => {
-    if (event.data?.__butil === 'skipWaiting')
+// Shared service worker behavior, imported by both service-worker.js and
+// service-worker.published.js so the two never drift apart.
+self.addEventListener('message', (event) => {
+    if (event.data?.__butil === 'skipWaiting') {
         self.skipWaiting();
+    }
 });
 
-// Web Push: the page cannot receive pushes, so the worker shows the notification.
-// Chromium requires userVisibleOnly subscriptions to always show one.
-self.addEventListener('push', event => {
-    const body = event.data ? event.data.text() : 'Pantry update';
-    event.waitUntil(self.registration.showNotification('Smart Pantry', {
-        body,
+self.addEventListener('push', (event) => {
+    let data = {};
+    try {
+        data = event.data ? event.data.json() : {};
+    } catch {
+        data = {};
+    }
+
+    const options = {
+        body: data.body || '',
         icon: 'icon-192.png',
-        badge: 'icon-192.png'
-    }));
+        badge: 'icon-192.png',
+        data: { url: (data && data.url) || '/' }
+    };
+
+    event.waitUntil(self.registration.showNotification(data.title || 'Smart Pantry', options));
 });
 
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    event.waitUntil(clients.openWindow('./'));
-});
 
-// The push service can rotate the endpoint; re-subscribe and tell the server,
-// or pushes keep going to the old endpoint.
-self.addEventListener('pushsubscriptionchange', event => {
-    // oldSubscription can be null per spec; fall back to a fresh subscribe.
-    const options = event.oldSubscription
-        ? event.oldSubscription.options
-        : { userVisibleOnly: true };
+    const url = (event.notification.data && event.notification.data.url) || '/';
+
     event.waitUntil(
-        self.registration.pushManager.subscribe(options)
-            .then(subscription => {
-                const json = subscription.toJSON();
-                return fetch('api/push/subscriptions', {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/json' },
-                    body: JSON.stringify({
-                        endpoint: subscription.endpoint,
-                        p256dh: json.keys.p256dh,
-                        auth: json.keys.auth
-                    })
-                }).catch(err => console.warn('pushsubscriptionchange sync failed:', err));
-            })
+        self.clients.matchAll({ type: 'window' }).then((clients) => {
+            for (const client of clients) {
+                if ('focus' in client) {
+                    return client.focus();
+                }
+            }
+
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(url);
+            }
+
+            return undefined;
+        })
     );
 });

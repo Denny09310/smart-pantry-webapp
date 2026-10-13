@@ -1,16 +1,159 @@
-@namespace Client.Components.Shared
+@namespace Client.Components
+@inject BottomSheetService Sheet
+@inject IJSRuntime JS
+@inject ILogger<BottomSheetProvider> Logger
 @implements IAsyncDisposable
-@inject BottomSheetService Service
 
-@if (Service.Current is { } entry)
+@if (_body is not null)
 {
-    <BottomSheet @ref="_sheet" IsOpen="true" Title="@entry.Options.Title" Description="@entry.Options.Description" MaxWidth="@entry.Options.MaxWidth" SnapPoints="@entry.Options.SnapPoints"
-                 InitialSnapIndex="@entry.Options.InitialSnapIndex" ShowHandle="@entry.Options.ShowHandle"
-                 ShowCloseButton="@entry.Options.ShowCloseButton" Dismissible="@entry.Options.Dismissible"
-                 DismissOnOverlayClick="@entry.Options.DismissOnOverlayClick" DismissOnEscape="@entry.Options.DismissOnEscape"
-                 OnDismissed="OnSheetDismissed">
-        <CascadingValue Value="_dialogRef">
-            <DynamicComponent Type="@entry.ComponentType" Parameters="@entry.Parameters" />
-        </CascadingValue>
-    </BottomSheet>
+    <div class="sheet-scrim" @onclick="OnScrimClick"></div>
+    <section class="sheet-panel" role="dialog" aria-modal="true" aria-label="Bottom sheet">
+        <div class="sheet-inner sheet-pre bg-background border-t" @ref="_innerRef">
+            <div class="sheet-handle" @ref="_handleRef">
+                <span class="sheet-grip bg-gray-400 dark:bg-gray-600"></span>
+            </div>
+            <div class="sheet-body px-4 pb-4">
+                <DynamicComponent Type="_body.Type" Parameters="_body.Parameters" />
+            </div>
+        </div>
+    </section>
+}
+
+@code
+{
+    private sealed record VisibleBody(Type Type, Dictionary<string, object?> Parameters);
+
+    private VisibleBody? _body;
+    private SheetOptions _options = SheetOptions.Default;
+    private ElementReference _innerRef;
+    private ElementReference _handleRef;
+
+    private BottomSheetInterop? _interop;
+    private DotNetObjectReference<BottomSheetProvider>? _dotNetRef;
+    private bool _pendingShow;
+    private bool _closing;
+    private bool _gestureClosed;
+
+    protected override void OnInitialized()
+    {
+        Sheet.Changed += OnSheetChanged;
+    }
+
+    private async void OnSheetChanged()
+    {
+        try
+        {
+            if (Sheet.Current is { } entry)
+            {
+                _body = new VisibleBody(entry.ComponentType, new Dictionary<string, object?>(entry.Parameters));
+                _options = entry.Options;
+                _closing = false;
+                _pendingShow = true;
+            }
+            else
+            {
+                _pendingShow = false;
+                _closing = true;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingShow && _body is not null)
+        {
+            _pendingShow = false;
+            await ShowAsync();
+            StateHasChanged();
+            return;
+        }
+
+        if (_closing)
+        {
+            _closing = false;
+
+            if (_gestureClosed)
+            {
+                _gestureClosed = false;
+                await TeardownAsync();
+                _body = null;
+            }
+            else
+            {
+                await (_interop?.CloseAsync() ?? ValueTask.CompletedTask);
+                await TeardownAsync();
+
+                if (Sheet.Current is { } reopened)
+                {
+                    // Reopened while the close animation played.
+                    _body = new VisibleBody(reopened.ComponentType, new Dictionary<string, object?>(reopened.Parameters));
+                    _options = reopened.Options;
+                    _pendingShow = true;
+                }
+                else
+                {
+                    _body = null;
+                }
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task ShowAsync()
+    {
+        try
+        {
+            _interop ??= new BottomSheetInterop(JS);
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            await _interop.ShowAsync(_innerRef, _handleRef, _dotNetRef, _options.SnapPoints, _options.InitialSnapIndex);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Bottom sheet failed to open");
+            _pendingShow = false;
+            _body = null;
+        }
+    }
+
+    private async Task TeardownAsync()
+    {
+        if (_interop is not null)
+        {
+            await _interop.DisposeAsync();
+            _interop = null;
+        }
+
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
+    }
+
+    private Task OnScrimClick()
+        => _options.Dismissible && _options.CloseOnScrimClick ? Sheet.CloseAsync() : Task.CompletedTask;
+
+    [JSInvokable]
+    public Task NotifyClosed()
+    {
+        if (!_options.Dismissible)
+            return Task.CompletedTask;
+
+        _gestureClosed = true;
+        return Sheet.CloseAsync();
+    }
+
+    [JSInvokable]
+    public Task NotifyEscape()
+        => _options.Dismissible ? Sheet.CloseAsync() : Task.CompletedTask;
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        Sheet.Changed -= OnSheetChanged;
+        await TeardownAsync();
+    }
 }

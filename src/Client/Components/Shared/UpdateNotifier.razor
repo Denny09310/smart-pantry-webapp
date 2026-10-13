@@ -1,21 +1,20 @@
+@namespace Client.Components
 @inject Bit.Butil.ServiceWorker Worker
+@inject Bit.Butil.Document Document
 @inject NavigationManager Nav
-@inject ToastService Toast
-@inject IStringLocalizer<UIStrings> L
-@inject ILogger<UpdateNotifier> Log
+@inject ToastService Toasts
+@inject ILogger<UpdateNotifier> Logger
 @implements IAsyncDisposable
 
 @code
 {
-    // How often to look for a newly arrived worker while the page stays open.
-    // (Full page loads already trigger the browser's own update check.)
-    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
-
-    private Bit.Butil.ButilSubscription? _controllerChange;
-    private CancellationTokenSource? _pollCts;
-    private bool _toastShown;
+    private Bit.Butil.ButilSubscription? _subscription;
+    private Bit.Butil.ButilSubscription? _visibility;
+    private bool _shown;
     private bool _started;
     private bool _reloading;
+    private bool _checking;
+    private bool _disposed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -29,40 +28,44 @@
             if (!await Worker.IsSupported())
                 return;
 
-            _controllerChange = await Worker.SubscribeControllerChange(OnControllerChange);
+            _subscription = await Worker.SubscribeControllerChange(OnControllerChange);
 
+            // Full page loads already trigger the browser's own update check.
             await CheckForUpdateAsync();
 
-            _pollCts = new CancellationTokenSource();
-            _ = PollForUpdatesAsync(_pollCts.Token);
+            // While the app stays open nothing navigates, so no further
+            // check would ever run: re-check each time the tab becomes
+            // visible again instead of polling on a timer.
+            _visibility = await Document.SubscribeVisibilityChange(OnVisibilityChanged);
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Update check setup failed.");
+            Logger.LogWarning(ex, "Update check setup failed.");
         }
     }
 
-    private async Task PollForUpdatesAsync(CancellationToken token)
+    private async void OnVisibilityChanged(Bit.Butil.VisibilityState state)
     {
         try
         {
-            using var timer = new PeriodicTimer(PollInterval);
+            if (state != Bit.Butil.VisibilityState.Visible)
+                return;
 
-            while (await timer.WaitForNextTickAsync(token))
-                await CheckForUpdateAsync();
-        }
-        catch (OperationCanceledException)
-        {
-            // Component torn down; polling stops.
+            await InvokeAsync(CheckForUpdateAsync);
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Update polling failed.");
+            await DispatchExceptionAsync(ex);
         }
     }
 
     private async Task CheckForUpdateAsync()
     {
+        if (_checking)
+            return;
+
+        _checking = true;
+
         try
         {
             // The worker is registered by index.html at page load; here we only
@@ -77,7 +80,11 @@
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Update check failed.");
+            Logger.LogWarning(ex, "Update check failed.");
+        }
+        finally
+        {
+            _checking = false;
         }
     }
 
@@ -106,18 +113,18 @@
 
     private async Task ShowUpdateToastAsync()
     {
-        if (_toastShown)
+        if (_shown)
             return;
 
-        _toastShown = true;
+        _shown = true;
 
-        await InvokeAsync(() => Toast.Show(new ToastData
+        await InvokeAsync(() => Toasts.Show(new ToastData
         {
-            Title = L["Un_UpdateTitle"],
-            Description = L["Un_UpdateDescription"],
+            Title = "Update available",
+            Description = "A new version was downloaded. Reload to use it.",
             Variant = ToastVariant.Info,
             Duration = 0,
-            ActionText = L["Un_ReloadButton"],
+            ActionText = "Reload",
             OnAction = () => _ = ActivateAsync(),
         }));
     }
@@ -130,48 +137,50 @@
         }
         catch (Exception ex)
         {
-            Log.LogWarning(ex, "Update activation failed; reloading.");
+            Logger.LogWarning(ex, "Update activation failed; reloading.");
         }
 
         // The click must never die silently: if no controller change arrives
         // (no waiting worker, stuck activation), reload anyway.
-        // Abort the wait when the component is torn down.
-        try
-        {
-            await Task.Delay(4000, _pollCts?.Token ?? CancellationToken.None);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
+        await Task.Delay(4000);
 
-        await ReloadAsync();
+        if (!_disposed)
+            await ReloadAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        // The injected worker service is shared: only the subscription and the
-        // polling loop are ours.
-        if (_pollCts is not null)
-        {
-            await _pollCts.CancelAsync();
-            _pollCts.Dispose();
-            _pollCts = null;
-        }
+        _disposed = true;
 
-        if (_controllerChange is not null)
+        if (_visibility is not null)
         {
             try
             {
-                await _controllerChange.DisposeAsync();
+                await _visibility.DisposeAsync();
             }
             catch (Exception ex)
             {
-                Log.LogWarning(ex, "Update subscription disposal failed.");
+                Logger.LogWarning(ex, "Visibility subscription disposal failed.");
             }
             finally
             {
-                _controllerChange = null;
+                _visibility = null;
+            }
+        }
+
+        if (_subscription is not null)
+        {
+            try
+            {
+                await _subscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Update subscription disposal failed.");
+            }
+            finally
+            {
+                _subscription = null;
             }
         }
     }

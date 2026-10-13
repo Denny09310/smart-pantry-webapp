@@ -1,70 +1,62 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-
+using Microsoft.Extensions.Logging;
 using Shared.Models;
 
 namespace Client.Services;
 
 /// <summary>
-/// Live pantry refresh over the typed <c>/hubs/pantry</c> hub: subscribes
-/// to <see cref="IPantryHubClient.PantryChanged"/> (via <c>nameof</c>, so a
-/// contract rename breaks the build instead of silently dropping events)
-/// and notifies pages, which re-query. Progressive enhancement only —
-/// every page keeps its manual reload as the fallback, and a failed
-/// connection never surfaces to the user.
+/// Realtime pantry broadcasts over the typed SignalR hub.
+/// Broadcasts are hints, never required: receivers re-query the endpoints,
+/// and a dead connection leaves manual reload fully working.
 /// </summary>
-internal sealed class PantryRealtimeService(NavigationManager nav, ILogger<PantryRealtimeService> log) : IAsyncDisposable
+public sealed class PantryRealtimeService(NavigationManager nav, ILogger<PantryRealtimeService> log) : IAsyncDisposable
 {
-    private HubConnection? _connection;
-    private bool _started;
+    public event Func<PantryChangedEvent, Task>? Changed;
 
-    public event Func<Task>? Changed;
+    private HubConnection? _connection;
+    private bool _disposed;
 
     public async Task StartAsync()
     {
-        if (_started)
+        if (_connection is not null || _disposed)
             return;
 
-        _started = true;
+        var connection = new HubConnectionBuilder()
+            .WithUrl(nav.ToAbsoluteUri("/hubs/pantry"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        connection.On<PantryChangedEvent>(
+            nameof(IPantryHubClient.PantryChanged),
+            async change =>
+            {
+                var handlers = Changed?.GetInvocationList();
+                if (handlers is null)
+                    return;
+
+                foreach (Func<PantryChangedEvent, Task> handler in handlers)
+                    await handler(change);
+            });
 
         try
         {
-            _connection = new HubConnectionBuilder()
-                .WithUrl(nav.ToAbsoluteUri("/hubs/pantry"))
-                .WithAutomaticReconnect()
-                .Build();
-
-            _connection.On<PantryChangedEvent>(
-                nameof(IPantryHubClient.PantryChanged),
-                _ => NotifyAsync());
-
-            _connection.Closed += OnClosed;
-            await _connection.StartAsync();
+            await connection.StartAsync();
         }
         catch (Exception ex)
         {
-            // Broadcasts are optional: manual reload covers everything.
-            log.LogWarning(ex, "Realtime connection failed; falling back to manual reload.");
+            log.LogWarning(ex, "Realtime hub unreachable; falling back to manual reload.");
+            await connection.DisposeAsync();
+            return;
         }
-    }
 
-    private Task NotifyAsync()
-    {
-        var handlers = Changed;
-        return handlers is null ? Task.CompletedTask : handlers();
-    }
-
-    private Task OnClosed(Exception? ex)
-    {
-        // Automatic reconnect handles drops; only unexpected closes are logged.
-        if (ex is not null)
-            log.LogWarning(ex, "Realtime connection closed.");
-
-        return Task.CompletedTask;
+        _connection = connection;
     }
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+
         if (_connection is not null)
         {
             await _connection.DisposeAsync();

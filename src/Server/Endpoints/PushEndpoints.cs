@@ -2,92 +2,71 @@ using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-
 using Server.Data;
 using Server.Data.Entities;
-using Server.Services;
-
+using Server.Models;
 using Shared.Models;
-using Shared.Resources;
 
 namespace Server.Endpoints;
 
 [Tags("Push")]
 [MapGroup("/api/push")]
-internal class PushEndpoints(ApplicationDbContext db, IOptions<PushOptions> options)
+internal static class PushEndpoints
 {
-    [MapGet("/vapid-public-key")]
-    public Results<Ok<PushPublicKeyResponse>, NotFound> GetPublicKey()
-        => string.IsNullOrWhiteSpace(options.Value.PublicKey)
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(new PushPublicKeyResponse(options.Value.PublicKey));
+    [MapGet("/public-key")]
+    public static Results<Ok<GetPushNotificationKey>, ProblemHttpResult> GetPushNotificationKeyAsync(
+        IOptions<VapidOptions> options)
+    {
+        var key = options.Value.PublicKey;
+
+        return string.IsNullOrWhiteSpace(key)
+            ? TypedResults.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: "Push notifications are not configured.")
+            : TypedResults.Ok(new GetPushNotificationKey(key));
+    }
 
     [MapPost("/subscriptions")]
-    public async Task<Results<Ok<PushSubscriptionDto>, Created<PushSubscriptionDto>, ValidationProblem>> SubscribeAsync(
+    public static async Task<Results<Ok<PushSubscriptionDto>, ValidationProblem>> SubscribeAsync(
         PushSubscriptionRequest request,
+        ApplicationDbContext db,
         CancellationToken ct)
     {
-        var existing = await db.PushSubscriptions
-            .FirstOrDefaultAsync(s => s.Endpoint == request.Endpoint, ct);
+        var entry = await db.PushSubscriptions
+            .FirstOrDefaultAsync(x => x.Endpoint == request.Endpoint, ct);
 
-        if (existing is not null)
+        if (entry is null)
         {
-            existing.P256dh = request.P256dh;
-            existing.Auth = request.Auth;
-            existing.Language = UIStrings.Normalize(request.Language);
-            await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(ToDto(existing));
+            entry = new PushSubscription
+            {
+                Endpoint = request.Endpoint,
+                P256dh = request.P256dh,
+                Auth = request.Auth
+            };
+            db.PushSubscriptions.Add(entry);
+        }
+        else
+        {
+            entry.P256dh = request.P256dh;
+            entry.Auth = request.Auth;
+            entry.UpdatedAt = DateTime.UtcNow;
         }
 
-        var entry = new PushSubscription
-        {
-            Endpoint = request.Endpoint,
-            P256dh = request.P256dh,
-            Auth = request.Auth,
-            Language = UIStrings.Normalize(request.Language),
-        };
+        await db.SaveChangesAsync(ct);
 
-        db.PushSubscriptions.Add(entry);
-
-        try
-        {
-            await db.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException)
-        {
-            // Lost a concurrent subscribe race on the unique endpoint:
-            // the winner's row is canonical, refresh keys on it.
-            db.ChangeTracker.Clear();
-
-            var winner = await db.PushSubscriptions
-                .FirstOrDefaultAsync(s => s.Endpoint == request.Endpoint, ct);
-
-            if (winner is null)
-                throw;
-
-            winner.P256dh = request.P256dh;
-            winner.Auth = request.Auth;
-            winner.Language = UIStrings.Normalize(request.Language);
-            await db.SaveChangesAsync(ct);
-
-            return TypedResults.Ok(ToDto(winner));
-        }
-
-        return TypedResults.Created($"/api/push/subscriptions?endpoint={Uri.EscapeDataString(entry.Endpoint)}", ToDto(entry));
+        return TypedResults.Ok(new PushSubscriptionDto(entry.Id, entry.Endpoint, entry.CreatedAt));
     }
 
     [MapDelete("/subscriptions")]
-    public async Task<Results<NoContent, ValidationProblem>> UnsubscribeAsync(
-        [AsParameters] UnsubscribePushRequest request,
+    public static async Task<NoContent> UnsubscribeAsync(
+        string endpoint,
+        ApplicationDbContext db,
         CancellationToken ct)
     {
         await db.PushSubscriptions
-            .Where(s => s.Endpoint == request.Endpoint)
+            .Where(x => x.Endpoint == endpoint)
             .ExecuteDeleteAsync(ct);
 
         return TypedResults.NoContent();
     }
-
-    private static PushSubscriptionDto ToDto(PushSubscription entry)
-        => new(entry.Id, entry.Endpoint, entry.CreatedAt);
 }

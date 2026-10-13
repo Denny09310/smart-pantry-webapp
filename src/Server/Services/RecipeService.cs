@@ -1,264 +1,212 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Server.Services;
 
-/// <summary>
-/// TheMealDB recipe suggestions for expiring stock: filter per ingredient,
-/// look up the top candidates, rank by expiring-ingredient coverage.
-/// Shared recipe data is cached in memory for 24h; failures yield an empty
-/// list so the UI section simply hides.
-/// </summary>
-internal sealed class RecipeService(
-    IHttpClientFactory http,
-    TranslationService translations,
-    IMemoryCache cache,
-    ILogger<RecipeService> log)
+public interface IRecipeService
 {
-    private const int MaxIngredients = 6;
-    private const int MaxQueries = 8;
-    private const int MaxCandidates = 8;
-    private const int MaxResults = 5;
+    /// <summary>Meals containing every given ingredient (English names).</summary>
+    Task<IReadOnlyList<ThemealDbMeal>> SearchByIngredientsAsync(
+        IReadOnlyList<string> ingredients, CancellationToken ct);
 
-    private static readonly TimeSpan CacheLifetime = TimeSpan.FromHours(24);
-    private static readonly TimeSpan EmptyCacheLifetime = TimeSpan.FromMinutes(15);
+    Task<ThemealDbMealDetail?> GetMealAsync(string id, CancellationToken ct);
 
-    public async Task<IReadOnlyList<RecipeSuggestion>> GetSuggestionsAsync(
-        IReadOnlyList<string> expiring,
-        CancellationToken ct = default)
+    /// <summary>All known ingredient names, cached in memory.</summary>
+    Task<IReadOnlyList<string>> GetIngredientNamesAsync(CancellationToken ct);
+}
+
+public sealed record ThemealDbMeal(string Id, string Name, string? Thumbnail, string? Area);
+
+public sealed record ThemealDbIngredient(string Name, string? Measure);
+
+public sealed record ThemealDbMealDetail(
+    string Id,
+    string Name,
+    string? Area,
+    string? Category,
+    string? Instructions,
+    string? Thumbnail,
+    IReadOnlyList<ThemealDbIngredient> Ingredients);
+
+/// <summary>TheMealDB: free, keyless recipe search (English-only data).</summary>
+public sealed class ThemealDbRecipeService(HttpClient http, IMemoryCache cache) : IRecipeService
+{
+    private const string BaseUrl = "https://www.themealdb.com/api/json/v1/1/";
+    private const string IngredientListKey = "themealdb:ingredients";
+
+    public async Task<IReadOnlyList<ThemealDbMeal>> SearchByIngredientsAsync(
+        IReadOnlyList<string> ingredients, CancellationToken ct)
     {
-        var names = expiring
-             .Select(n => n.Trim())
-             .Where(n => n.Length > 0)
-             .Distinct(StringComparer.OrdinalIgnoreCase)
-             .Take(MaxIngredients)
-             .ToList();
-
-        if (names.Count == 0)
-            return [];
-
-        var candidateLists = await Task.WhenAll(
-            names.Select(n => translations.CandidatesAsync(n, ct)));
-
-        var terms = names
-            .Zip(candidateLists, (name, candidates) => (
-                Display: name,
-                Queries: candidates
-                    .Select(NormalizeQuery)
-                    .Where(q => q.Length > 0)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToList()))
-            .Where(x => x.Queries.Count > 0)
+        var distinct = ingredients
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        if (terms.Count == 0)
+        if (distinct.Count == 0)
             return [];
 
-        var queries = terms
-            .SelectMany(x => x.Queries)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(q => q, StringComparer.Ordinal)
-            .Take(MaxQueries)
+        // One-ingredient filters only: fan out in parallel, intersect by meal.
+        var perIngredient = await Task.WhenAll(
+            distinct.Select(name => FilterByIngredientAsync(name, ct)));
+
+        var intersection = perIngredient[0].ToDictionary(x => x.Id);
+        foreach (var list in perIngredient.Skip(1))
+            intersection = list.Where(x => intersection.ContainsKey(x.Id))
+                .ToDictionary(x => x.Id);
+
+        return intersection.Values
+            .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
 
-        var cacheKey = $"recipes:{string.Join('|', queries)}";
+    public async Task<ThemealDbMealDetail?> GetMealAsync(string id, CancellationToken ct)
+    {
+        var response = await GetAsync<MealLookupResponse>($"lookup.php?i={Uri.EscapeDataString(id)}", ct);
+        var meal = response?.Meals?.FirstOrDefault();
+        if (meal is null)
+            return null;
 
-        if (cache.TryGetValue(cacheKey, out IReadOnlyList<RecipeSuggestion>? cached) && cached is not null)
+        var ingredients = new List<ThemealDbIngredient>();
+        for (var i = 1; i <= 20; i++)
+        {
+            var name = meal.GetIngredient(i);
+            if (string.IsNullOrWhiteSpace(name))
+                continue;
+            ingredients.Add(new ThemealDbIngredient(name.Trim(), meal.GetMeasure(i)?.Trim()));
+        }
+
+        return new ThemealDbMealDetail(
+            meal.IdMeal ?? id,
+            meal.Name ?? "Unknown meal",
+            meal.Area,
+            meal.Category,
+            meal.Instructions,
+            meal.Thumbnail,
+            ingredients);
+    }
+
+    public async Task<IReadOnlyList<string>> GetIngredientNamesAsync(CancellationToken ct)
+    {
+        if (cache.TryGetValue(IngredientListKey, out IReadOnlyList<string>? cached) && cached is not null)
             return cached;
 
-        IReadOnlyList<RecipeSuggestion> result = [];
+        var response = await GetAsync<IngredientListResponse>("list.php?i=list", ct);
+        IReadOnlyList<string> names = response?.Meals?
+            .Select(x => x.Name)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!.Trim())
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? [];
 
-        var failed = false;
-
-        try
-        {
-            result = await FetchSuggestionsAsync(queries, terms, ct);
-        }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
-        {
-            failed = true;
-            log.LogWarning(ex, "Recipe suggestions failed.");
-        }
-
-        // A failure or empty lookup must not poison the cache for a full
-        // day: retry soon, keep good results for 24h.
-        cache.Set(cacheKey, result, result.Count > 0 && !failed ? CacheLifetime : EmptyCacheLifetime);
-
-        return result;
+        cache.Set(IngredientListKey, names, TimeSpan.FromHours(24));
+        return names;
     }
 
-    private async Task<IReadOnlyList<RecipeSuggestion>> FetchSuggestionsAsync(
-        List<string> queries,
-        List<(string Display, List<string> Queries)> terms,
-        CancellationToken ct)
+    private async Task<IReadOnlyList<ThemealDbMeal>> FilterByIngredientAsync(string ingredient, CancellationToken ct)
     {
-        var client = http.CreateClient("TheMealDb");
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        var candidates = new List<(string Id, string Query)>();
+        var response = await GetAsync<MealFilterResponse>(
+            $"filter.php?i={Uri.EscapeDataString(ingredient)}", ct);
 
-        // Share the candidate budget across queries so the first
-        // ingredient can't fill every slot: breadth first, then depth.
-        var perQuery = Math.Max(1, (MaxCandidates + queries.Count - 1) / queries.Count);
-
-        foreach (var query in queries)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            List<MealSummary> meals;
-
-            try
-            {
-                meals = await FilterByIngredientAsync(client, query, ct);
-            }
-            catch (Exception ex) when (!ct.IsCancellationRequested)
-            {
-                log.LogWarning(ex, "Recipe filter for {Ingredient} failed.", query);
-                continue;
-            }
-
-            foreach (var meal in meals.Take(perQuery))
-            {
-                if (candidates.Count >= MaxCandidates)
-                    break;
-
-                if (seen.Add(meal.IdMeal))
-                    candidates.Add((meal.IdMeal, query));
-            }
-
-            if (candidates.Count >= MaxCandidates)
-                break;
-        }
-
-        var lookups = await Task.WhenAll(candidates.Select(c =>
-            LookupDetailsAsync(client, c.Id, ct)));
-
-        return lookups
-            .Where(m => m is not null)
-            .Select(m =>
-            {
-                var matched = terms
-                    .Where(t => t.Queries.Any(q => m!.Ingredients.Any(i => Covers(NormalizeQuery(i), q))))
-                    .Select(t => t.Display)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                return (Meal: m!, Matched: matched);
-            })
-            .Where(x => x.Matched.Count > 0)
-            .OrderByDescending(x => x.Matched.Count)
-            .ThenBy(x => x.Meal.Name, StringComparer.OrdinalIgnoreCase)
-            .Take(MaxResults)
-            .Select(x => new RecipeSuggestion(
-                x.Meal.IdMeal,
-                x.Meal.Name,
-                $"{x.Meal.Thumbnail}/small",
-                x.Meal.Area,
-                $"https://www.themealdb.com/meal/{x.Meal.IdMeal}",
-                x.Matched))
-            .ToList();
-    }
-
-    private static bool Covers(string mealIngredient, string expiring)
-        => mealIngredient.Contains(expiring, StringComparison.OrdinalIgnoreCase)
-            || expiring.Contains(mealIngredient, StringComparison.OrdinalIgnoreCase);
-
-    private static string NormalizeQuery(string name)
-        => name.Trim().ToLowerInvariant().Replace(' ', '_');
-
-    private static async Task<List<MealSummary>> FilterByIngredientAsync(
-        HttpClient client,
-        string query,
-        CancellationToken ct)
-    {
-        using var response = await client.GetAsync(
-            $"filter.php?i={Uri.EscapeDataString(query)}", ct);
-
-        if (!response.IsSuccessStatusCode)
-            return [];
-
-        var payload = await response.Content.ReadFromJsonAsync<MealFilterResponse>(ct);
-
-        return payload?.Meals?
-            .Where(m => m.IdMeal.Length > 0 && m.Name.Length > 0)
-            .Select(m => new MealSummary(m.IdMeal, m.Name))
+        return response?.Meals?
+            .Where(x => x.IdMeal is not null && x.Name is not null)
+            .Select(x => new ThemealDbMeal(x.IdMeal!, x.Name!, x.Thumbnail, x.Area))
             .ToList() ?? [];
     }
 
-    private async Task<MealDetails?> LookupDetailsAsync(HttpClient client, string id, CancellationToken ct)
+    private async Task<T?> GetAsync<T>(string relativeUrl, CancellationToken ct)
     {
         try
         {
-            using var response = await client.GetAsync($"lookup.php?i={Uri.EscapeDataString(id)}", ct);
-
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            var payload = await response.Content.ReadFromJsonAsync<MealLookupResponse>(ct);
-            var meal = payload?.Meals?.FirstOrDefault();
-
-            if (meal is null || meal.Name.Length == 0)
-                return null;
-
-            return new MealDetails(meal.IdMeal, meal.Name, meal.Thumbnail, meal.Area, meal.Ingredients());
+            return await http.GetFromJsonAsync<T>(
+                new Uri(new Uri(BaseUrl), relativeUrl), ct);
         }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
+        catch (HttpRequestException)
         {
-            log.LogWarning(ex, "Recipe lookup for {MealId} failed.", id);
-            return null;
+            return default;
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+        catch (OperationCanceledException)
+        {
+            return default;
         }
     }
 
-    private sealed record MealSummary(string IdMeal, string Name);
-
-    private sealed record MealFilterResponse(
-        [property: JsonPropertyName("meals")] List<MealFilterMeal>? Meals);
-
-    private sealed record MealFilterMeal(
-        [property: JsonPropertyName("idMeal")] string IdMeal,
-        [property: JsonPropertyName("strMeal")] string Name);
-
-    private sealed record MealLookupResponse(
-        [property: JsonPropertyName("meals")] List<MealLookupMeal>? Meals);
-
-    private sealed record MealLookupMeal(
-        [property: JsonPropertyName("idMeal")] string IdMeal,
-        [property: JsonPropertyName("strMeal")] string Name,
-        [property: JsonPropertyName("strMealThumb")] string Thumbnail,
-        [property: JsonPropertyName("strArea")] string? Area)
+    private sealed class MealFilterResponse
     {
-        // strIngredient1..20 arrive as flat keys; collect the filled slots.
+        [JsonPropertyName("meals")]
+        public List<MealSummary>? Meals { get; set; }
+    }
+
+    private sealed class MealSummary
+    {
+        [JsonPropertyName("idMeal")]
+        public string? IdMeal { get; set; }
+
+        [JsonPropertyName("strMeal")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("strMealThumb")]
+        public string? Thumbnail { get; set; }
+
+        [JsonPropertyName("strArea")]
+        public string? Area { get; set; }
+    }
+
+    private sealed class MealLookupResponse
+    {
+        [JsonPropertyName("meals")]
+        public List<MealDetail>? Meals { get; set; }
+    }
+
+    private sealed class MealDetail
+    {
+        [JsonPropertyName("idMeal")]
+        public string? IdMeal { get; set; }
+
+        [JsonPropertyName("strMeal")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("strArea")]
+        public string? Area { get; set; }
+
+        [JsonPropertyName("strCategory")]
+        public string? Category { get; set; }
+
+        [JsonPropertyName("strInstructions")]
+        public string? Instructions { get; set; }
+
+        [JsonPropertyName("strMealThumb")]
+        public string? Thumbnail { get; set; }
+
         [JsonExtensionData]
-        public Dictionary<string, JsonElement>? Extra { get; init; }
+        public Dictionary<string, JsonElement>? Extra { get; set; }
 
-        public IReadOnlyList<string> Ingredients()
+        public string? GetIngredient(int index) => GetExtra($"strIngredient{index}");
+        public string? GetMeasure(int index) => GetExtra($"strMeasure{index}");
+
+        private string? GetExtra(string key)
         {
-            if (Extra is null)
-                return [];
-
-            return Extra
-                .Where(kv => kv.Key.StartsWith("strIngredient", StringComparison.Ordinal)
-                    && kv.Value.ValueKind == JsonValueKind.String)
-                .Select(kv => kv.Value.GetString()!.Trim())
-                .Where(s => s.Length > 0)
-                .ToList();
+            if (Extra is null || !Extra.TryGetValue(key, out var element))
+                return null;
+            return element.ValueKind == JsonValueKind.String ? element.GetString() : null;
         }
     }
 
-    private sealed record MealDetails(
-        string IdMeal,
-        string Name,
-        string Thumbnail,
-        string? Area,
-        IReadOnlyList<string> Ingredients);
-}
+    private sealed class IngredientListResponse
+    {
+        [JsonPropertyName("meals")]
+        public List<IngredientEntry>? Meals { get; set; }
+    }
 
-/// <summary>Ranked recipe ready for the response DTO.</summary>
-internal sealed record RecipeSuggestion(
-    string IdMeal,
-    string Name,
-    string ThumbnailUrl,
-    string? Area,
-    string SourceUrl,
-    IReadOnlyList<string> MatchedIngredients);
+    private sealed class IngredientEntry
+    {
+        [JsonPropertyName("strIngredient")]
+        public string? Name { get; set; }
+    }
+}

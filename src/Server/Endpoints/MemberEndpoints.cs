@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-
 using Server.Data;
 using Server.Data.Entities;
-
 using Shared.Models;
 
 namespace Server.Endpoints;
@@ -14,31 +12,40 @@ namespace Server.Endpoints;
 internal class MemberEndpoints(ApplicationDbContext db)
 {
     [MapGet("/")]
-    public async Task<Ok<List<MemberDto>>> GetMembersAsync(CancellationToken ct)
+    public async Task<Ok<List<HouseholdMemberDto>>> GetMembersAsync(CancellationToken ct)
     {
         var members = await db.Members
             .AsNoTracking()
-            .OrderBy(m => m.CreatedAt)
-            .ThenBy(m => m.Id)
-            .Select(m => new MemberDto(
-                m.Id,
-                m.Name,
-                m.Color,
-                m.CreatedAt))
+            .OrderBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .Select(x => new HouseholdMemberDto(
+                x.Id,
+                x.DisplayName,
+                x.Color,
+                x.IsArchived))
             .ToListAsync(ct);
 
         return TypedResults.Ok(members);
     }
 
     [MapPost("/")]
-    public async Task<Results<Created<MemberDto>, ValidationProblem>> CreateMemberAsync(
-        CreateMemberRequest request,
+    public async Task<Results<Created<HouseholdMemberDto>, ValidationProblem>> CreateMemberAsync(
+        CreateHouseholdMemberRequest request,
         CancellationToken ct)
     {
-        var entry = new Member
+        // [Required] passes whitespace: reject it before Trim stores "".
+        if (string.IsNullOrWhiteSpace(request.DisplayName))
         {
-            Name = request.Name.Trim(),
-            Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim(),
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.DisplayName)] = ["Display name must not be blank."]
+            });
+        }
+
+        var entry = new HouseholdMember
+        {
+            DisplayName = request.DisplayName.Trim(),
+            Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim()
         };
 
         db.Members.Add(entry);
@@ -47,26 +54,42 @@ internal class MemberEndpoints(ApplicationDbContext db)
         return TypedResults.Created($"/api/members/{entry.Id}", ToDto(entry));
     }
 
-    [MapDelete("/{id}")]
-    public async Task<Results<NoContent, NotFound>> DeleteMemberAsync(
+    [MapPut("/{id}")]
+    public async Task<Results<Ok<HouseholdMemberDto>, ProblemHttpResult, ValidationProblem>> UpdateMemberAsync(
         string id,
+        UpdateHouseholdMemberRequest request,
         CancellationToken ct)
     {
-        var entry = await db.Members.FindAsync([id], ct);
-
+        var entry = await db.Members.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entry is null)
-            return TypedResults.NotFound();
+            return MemberNotFound(id);
 
-        db.Members.Remove(entry);
+        if (string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.DisplayName)] = ["Display name must not be blank."]
+            });
+        }
+
+        entry.DisplayName = request.DisplayName.Trim();
+        entry.Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim();
+        entry.IsArchived = request.IsArchived;
+        entry.UpdatedAt = DateTime.UtcNow;
+
         await db.SaveChangesAsync(ct);
 
-        return TypedResults.NoContent();
+        return TypedResults.Ok(ToDto(entry));
     }
 
-    private static MemberDto ToDto(Member entry)
-        => new(
-            entry.Id,
-            entry.Name,
-            entry.Color,
-            entry.CreatedAt);
+    private static ProblemHttpResult MemberNotFound(string id)
+        => TypedResults.Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            detail: $"Household member '{id}' was not found.");
+
+    private static HouseholdMemberDto ToDto(HouseholdMember member) => new(
+        member.Id,
+        member.DisplayName,
+        member.Color,
+        member.IsArchived);
 }

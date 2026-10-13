@@ -1,0 +1,354 @@
+@namespace Client.Components
+@using System.ComponentModel.DataAnnotations
+@using Client.Models
+@using Client.Resources
+@inject BottomSheetService Sheet
+@inject MemberService Members
+@inject ServerApi Api
+@inject ToastService Toasts
+@inject ILogger<ItemForm> Logger
+@inject LocalizationService Loc
+
+<div class="flex h-full flex-col">
+    <div class="flex-none">
+        <h2 class="text-lg font-semibold">@(Item is null ? Loc["AddItemTitle"] : Loc["EditItemTitle"])</h2>
+        <p class="text-sm text-muted-foreground">
+            @(Item is null ? "Register a new batch with its expiry date." : "Update the batch details.")
+        </p>
+    </div>
+
+    <EditForm Model="@Input" OnValidSubmit="HandleSubmitAsync" class="flex min-h-0 flex-1 flex-col mt-4">
+        <DataAnnotationsValidator />
+        <CustomValidator @ref="_customValidator" />
+
+        <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+            @* Barcode Scanner *@
+            <div class="space-y-2">
+                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" />
+                <p class="text-xs text-muted-foreground">@Loc["ScanBarcode"]</p>
+            </div>
+
+            @* Item name *@
+            <BbField IsInvalid="@(!context.IsValid(() => Input.Name))">
+                <div class="flex items-center justify-between">
+                    <BbFieldLabel For="item-name" Class="text-sm font-medium">@Loc["ItemName"] <span class="text-xs text-muted-foreground">@Loc["Required"]</span></BbFieldLabel>
+                </div>
+                <BbFieldContent>
+                    <BbInputGroup Class="bg-card">
+                        <BbInputGroupInput Id="item-name" @bind-Value="Input.Name"
+                                           Placeholder="e.g. Tomato passata, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
+                    </BbInputGroup>
+                    <BbFieldError Errors="@context.GetValidationMessages(() => Input.Name)" />
+                </BbFieldContent>
+            </BbField>
+
+            @* Quantity & unit *@
+            <div class="space-y-2">
+                <BbLabel Class="text-sm font-medium">@Loc["QuantityAndUnit"]</BbLabel>
+
+                <div class="flex items-center justify-between rounded-lg bg-muted p-1">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                              AriaLabel="@Loc["Quantity"]" OnClick="DecrementQuantity">
+                        <LucideIcon Name="minus" Size="16" />
+                    </BbButton>
+                    <div class="flex flex-col items-center leading-none">
+                        <span class="text-base font-semibold" aria-live="polite">@Input.Quantity</span>
+                        <span class="text-xs text-muted-foreground">@Input.Unit</span>
+                    </div>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                              AriaLabel="@Loc["Quantity"]" OnClick="IncrementQuantity">
+                        <LucideIcon Name="plus" Size="16" />
+                    </BbButton>
+                </div>
+                <ValidationMessage For="@(() => Input.Quantity)" class="text-sm text-destructive" />
+
+                <BbChipSet @bind-Value="Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
+                    @foreach (var unit in PantryLocations.Units)
+                    {
+                        <BbChip Value="@(unit)">@unit</BbChip>
+                    }
+                </BbChipSet>
+                <ValidationMessage For="@(() => Input.Unit)" class="text-sm text-destructive" />
+            </div>
+
+            @* Location *@
+            <div class="space-y-2">
+                <BbLabel Class="text-sm font-medium">@Loc["Location"]</BbLabel>
+                <BbToggleGroup @bind-Value="Input.Location" Type="ToggleGroupType.Single" Required="true"
+                               Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
+                    <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
+                        <LucideIcon Name="package" Size="20" />
+                        <span class="text-xs font-medium">@Loc["Pantry"]</span>
+                    </BbToggleGroupItem>
+                    <BbToggleGroupItem Value="@("fridge")" Class="h-auto flex-col gap-1 py-2">
+                        <LucideIcon Name="refrigerator" Size="20" />
+                        <span class="text-xs font-medium">@Loc["Fridge"]</span>
+                    </BbToggleGroupItem>
+                    <BbToggleGroupItem Value="@("freezer")" Class="h-auto flex-col gap-1 py-2">
+                        <LucideIcon Name="snowflake" Size="20" />
+                        <span class="text-xs font-medium">@Loc["Freezer"]</span>
+                    </BbToggleGroupItem>
+                    <BbToggleGroupItem Value="@("cabinet")" Class="h-auto flex-col gap-1 py-2">
+                        <LucideIcon Name="archive" Size="20" />
+                        <span class="text-xs font-medium">@Loc["Cabinet"]</span>
+                    </BbToggleGroupItem>
+                </BbToggleGroup>
+                <ValidationMessage For="@(() => Input.Location)" class="text-sm text-destructive" />
+            </div>
+
+            @* Expiry *@
+            <BbField>
+                <BbFieldLabel Class="text-sm font-medium">@Loc["DurationAndExpiry"]</BbFieldLabel>
+                <BbFieldContent>
+                    <BbDatePicker @bind-Value="Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)"
+                                  DateFormat="dd/MM/yyyy" Placeholder="@Loc["PickADate"]" Class="w-full" />
+                    <ValidationMessage For="@(() => Input.ExpirationDate)" class="text-sm text-destructive" />
+                </BbFieldContent>
+            </BbField>
+
+            <div class="space-y-2">
+                <span class="text-xs text-muted-foreground">@Loc["Shortcuts"]</span>
+                <div class="flex flex-wrap gap-1.5">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                              OnClick="@(() => SetExpiry(3))">@Loc["Shortcut3Days"]</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                              OnClick="@(() => SetExpiry(7))">@Loc["Shortcut1Week"]</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                              OnClick="@(() => SetExpiry(30))">@Loc["Shortcut1Month"]</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                              OnClick="@(() => SetExpiry(182))">@Loc["Shortcut6Months"]</BbButton>
+                </div>
+                <BbBadge Variant="@Banner.Variant">
+                    <BbBadgeIcon Name="@Banner.Icon" />
+                    @Banner.Text
+                </BbBadge>
+            </div>
+
+            @* Notes *@
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <BbLabel For="batch-notes" Class="text-sm font-medium">@Loc["BatchNotes"]</BbLabel>
+                    <span class="text-xs text-muted-foreground">@Loc["Optional"]</span>
+                </div>
+                <BbTextarea Id="batch-notes" @bind-Value="Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened"
+                            rows="2" />
+            </div>
+        </div>
+
+        <div class="flex-none space-y-1 border-t pt-3">
+            <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving" IconPosition="IconPosition.Start">
+                <Icon>
+                    <LucideIcon Name="save" Size="16" />
+                </Icon>
+                <ChildContent>@(Item is null ? Loc["SaveItem"] : Loc["SaveChanges"])</ChildContent>
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
+                      OnClick="() => Sheet.CloseAsync()">
+                @Loc["Cancel"]
+            </BbButton>
+        </div>
+    </EditForm>
+</div>
+
+@code
+{
+    /// <summary>When set, the form edits this item instead of creating a new one.</summary>
+    [Parameter]
+    public PantryItemDto? Item { get; set; }
+
+    private bool _saving;
+    private InputModel Input { get; set; } = new();
+    private string? _editingId;
+    private CustomValidator? _customValidator;
+
+    private ExpiryHelper.ExpiryBanner Banner => ExpiryHelper.GetBanner(
+        DateOnly.FromDateTime((Input.ExpirationDate ?? DateTime.Today.AddDays(7)).Date),
+        DateOnly.FromDateTime(DateTime.Today),
+        Loc);
+
+    protected override void OnParametersSet()
+    {
+        if (Item is { } item && _editingId != item.Id)
+        {
+            _editingId = item.Id;
+            _scannedBarcode = item.Barcode;
+            _scannedNutriScore = item.NutriScore;
+            _scannedNutrition = item.Nutrition;
+            Input = new InputModel
+            {
+                Name = item.Name,
+                Quantity = item.Quantity,
+                Unit = item.Unit,
+                Location = item.Location,
+                Notes = item.Notes,
+                ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue)
+            };
+        }
+        else if (Item is null && _editingId is not null)
+        {
+            _editingId = null;
+            _scannedBarcode = null;
+            _scannedNutriScore = null;
+            _scannedNutrition = null;
+            Input = new InputModel();
+        }
+    }
+
+    private async Task OnBarcodeScannedAsync(string barcode)
+    {
+        if (string.IsNullOrWhiteSpace(barcode))
+            return;
+
+        try
+        {
+            using var response = await Api.Products.LookupAsync(barcode);
+            if (response.IsSuccessfulWithContent && response.Content is ProductLookupDto product)
+            {
+                // Pre-fill form with product data
+                if (!string.IsNullOrWhiteSpace(product.Name))
+                    Input.Name = product.Name;
+
+                if (!string.IsNullOrWhiteSpace(product.Brand))
+                    Input.Notes = string.IsNullOrWhiteSpace(Input.Notes)
+                        ? product.Brand
+                        : $"{Input.Notes}, {product.Brand}";
+
+                if (product.Quantity.HasValue && product.Quantity.Value > 0)
+                    Input.Quantity = product.Quantity.Value;
+
+                if (!string.IsNullOrWhiteSpace(product.Unit))
+                    Input.Unit = product.Unit;
+
+                // Store barcode and nutrition info for saving
+                _scannedBarcode = product.Barcode;
+                _scannedNutriScore = product.NutriScore;
+                _scannedNutrition = product.Nutrition;
+
+                Toasts.Success(Loc["ProductFound"]);
+                StateHasChanged();
+            }
+            else
+            {
+                Toasts.Info(Loc["ProductNotInDatabase"]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Barcode lookup failed for {Barcode}", barcode);
+            Toasts.Error(Loc["LookupFailed"]);
+        }
+    }
+
+    private string? _scannedBarcode;
+    private string? _scannedNutriScore;
+    private NutritionFacts? _scannedNutrition;
+
+    private void IncrementQuantity()
+    {
+        if (Input.Quantity < 9999)
+            Input.Quantity++;
+    }
+
+    private void DecrementQuantity()
+    {
+        if (Input.Quantity > 0)
+            Input.Quantity--;
+    }
+
+    private void SetExpiry(int daysFromToday)
+    {
+        Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        if (Input.ExpirationDate is null)
+            return;
+
+        _saving = true;
+        try
+        {
+            if (Item is null)
+            {
+                using var response = await Api.Pantry.CreateAsync(new CreatePantryItemRequest(
+                    Input.Name.Trim(),
+                    Input.Quantity,
+                    Input.Unit,
+                    Input.Location,
+                    string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
+                    DateOnly.FromDateTime(Input.ExpirationDate.Value),
+                    _scannedBarcode,
+                    _scannedNutriScore,
+                    _scannedNutrition),
+                    Members.CurrentMemberId);
+
+                if (!await HandleSavedAsync(response, Loc["ItemAdded"]))
+                    return;
+            }
+            else
+            {
+                using var response = await Api.Pantry.UpdateAsync(Item.Id, new UpdatePantryItemRequest(
+                    Input.Name.Trim(),
+                    Input.Quantity,
+                    Input.Unit,
+                    Input.Location,
+                    string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
+                    DateOnly.FromDateTime(Input.ExpirationDate.Value),
+                    _scannedBarcode,
+                    _scannedNutriScore,
+                    _scannedNutrition));
+
+                if (!await HandleSavedAsync(response, Loc["ItemUpdated"]))
+                    return;
+            }
+
+            await Sheet.CloseAsync("saved");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task<bool> HandleSavedAsync<T>(ApiResponse<T> response, string successMessage)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            Toasts.Success(successMessage);
+            return true;
+        }
+
+        var errors = await ApiErrors.ReadValidationErrorsAsync(response.Error);
+        if (errors is not null)
+        {
+            _customValidator?.DisplayErrors(errors);
+            return false;
+        }
+
+        Logger.LogWarning("Save failed with {StatusCode}", response.StatusCode);
+        Toasts.Error(Loc["CouldNotSave"]);
+        return false;
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Range(0, 9999)]
+        public double Quantity { get; set; } = 1;
+
+        [Required]
+        public string Unit { get; set; } = "pcs";
+
+        [Required]
+        public string Location { get; set; } = "pantry";
+
+        [Required]
+        public DateTime? ExpirationDate { get; set; } = DateTime.Today.AddDays(7);
+
+        [StringLength(2000)]
+        public string? Notes { get; set; }
+    }
+}
