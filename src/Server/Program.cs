@@ -42,8 +42,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseExceptionHandler();
-
 app.MapEndpointHandlers();
 
 app.MapHub<PantryHub>("/hubs/pantry");
