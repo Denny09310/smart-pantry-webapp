@@ -40,11 +40,11 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
 
             return new ProductLookupDto(
                 Barcode: barcode,
-                Name: product.ProductName ?? product.ProductNameEn ?? "Unknown Product",
+                Name: Truncate(product.ProductName ?? product.ProductNameEn ?? "Unknown Product", 200),
                 Brand: product.Brands,
                 Quantity: ParseQuantity(product.Quantity),
                 Unit: ParseUnit(product.Quantity),
-                NutriScore: product.NutriscoreGrade?.ToUpperInvariant(),
+                NutriScore: NormalizeNutriScore(product.NutriscoreGrade),
                 Nutrition: nutrition,
                 ImageUrl: product.ImageUrl ?? product.ImageFrontUrl);
         }
@@ -74,6 +74,21 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
 
         return null;
     }
+
+    /// <summary>
+    /// OFF grades are single a–e letters; anything else ("unknown",
+    /// "not-applicable") becomes null so the save never trips validation.
+    /// </summary>
+    private static string? NormalizeNutriScore(string? grade)
+    {
+        var letter = grade?.Trim().ToUpperInvariant();
+        return letter is { Length: 1 } value && value[0] is >= 'A' and <= 'E'
+            ? value
+            : null;
+    }
+
+    private static string Truncate(string value, int maxLength)
+        => value.Length <= maxLength ? value : value[..maxLength];
 
     private static string? ParseUnit(string? quantityStr)
     {

@@ -88,6 +88,43 @@ public class ProductLookupTests
     }
 
     [Fact]
+    public async Task Lookup_NonGrade_NutriScore_Returns_Null()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Item",
+                "nutriscore_grade": "unknown"
+              }
+            }
+            """);
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Null(result.NutriScore);
+    }
+
+    [Fact]
+    public async Task Lookup_Overlong_Name_Is_Truncated()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "»»»LONG«««"
+              }
+            }
+            """.Replace("»»»LONG«««", new string('x', 250)));
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(200, result.Name.Length);
+    }
+
+    [Fact]
     public async Task Lookup_Http_Failure_Returns_Null()
     {
         var service = LookupWithJson("{}", HttpStatusCode.InternalServerError);

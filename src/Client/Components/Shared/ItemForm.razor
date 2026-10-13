@@ -24,7 +24,7 @@
         <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
             @* Barcode Scanner *@
             <div class="space-y-2">
-                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" />
+                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" Searching="_lookingUp" />
                 <p class="text-xs text-muted-foreground">@Loc["ScanBarcode"]</p>
             </div>
 
@@ -199,6 +199,9 @@
         if (string.IsNullOrWhiteSpace(barcode))
             return;
 
+        _lookingUp = true;
+        StateHasChanged();
+
         try
         {
             using var response = await Api.Products.LookupAsync(barcode);
@@ -224,7 +227,6 @@
                 _scannedNutriScore = product.NutriScore;
                 _scannedNutrition = product.Nutrition;
 
-                Toasts.Success(Loc["ProductFound"]);
                 StateHasChanged();
             }
             else
@@ -237,11 +239,17 @@
             Logger.LogWarning(ex, "Barcode lookup failed for {Barcode}", barcode);
             Toasts.Error(Loc["LookupFailed"]);
         }
+        finally
+        {
+            _lookingUp = false;
+            StateHasChanged();
+        }
     }
 
     private string? _scannedBarcode;
     private string? _scannedNutriScore;
     private NutritionFacts? _scannedNutrition;
+    private bool _lookingUp;
 
     private void IncrementQuantity()
     {
