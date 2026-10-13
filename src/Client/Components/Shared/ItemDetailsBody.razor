@@ -72,7 +72,32 @@
                         <dd class="font-mono">@_item.Barcode</dd>
                     </div>
                 }
+                @if (!string.IsNullOrWhiteSpace(_item.NutriScore))
+                {
+                    <div class="flex items-center justify-between gap-2">
+                        <dt class="text-muted-foreground">@Loc["NutriScore"]</dt>
+                        <dd>
+                            <BbBadge Variant="@NutriScoreVariant(_item.NutriScore)">@_item.NutriScore.ToUpperInvariant()</BbBadge>
+                        </dd>
+                    </div>
+                }
             </dl>
+
+            @if (NutritionRows(_item.Nutrition) is { Count: > 0 } rows)
+            {
+                <div class="space-y-2">
+                    <h3 class="text-sm font-medium">@Loc["NutritionPer100g"]</h3>
+                    <dl class="space-y-2 rounded-md border p-4 text-sm">
+                        @foreach (var row in rows)
+                        {
+                            <div class="flex justify-between gap-2">
+                                <dt class="text-muted-foreground">@row.Label</dt>
+                                <dd class="font-medium">@row.Value</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+            }
 
             @* Barcode backfill for items added before scanning existed *@
             @if (string.IsNullOrWhiteSpace(_item.Barcode) && !_linkingBarcode)
@@ -169,6 +194,40 @@
 
         // Replaces this body; saving closes the sheet and the list behind refreshes.
         await Sheet.OpenAsync<ItemForm>(new Dictionary<string, object?> { ["Item"] = _item });
+    }
+
+    private static BadgeVariant NutriScoreVariant(string? grade) => grade?.Trim().ToUpperInvariant() switch
+    {
+        "A" => BadgeVariant.SoftSuccess,
+        "B" => BadgeVariant.SoftInfo,
+        "C" => BadgeVariant.SoftWarning,
+        "D" or "E" => BadgeVariant.SoftDestructive,
+        _ => BadgeVariant.Outline,
+    };
+
+    private IReadOnlyList<(string Label, string Value)> NutritionRows(NutritionFacts? nutrition)
+    {
+        List<(string Label, string Value)> rows = [];
+
+        if (nutrition is null)
+            return rows;
+
+        if (nutrition.EnergyKcal is { } energy)
+            rows.Add((Loc["NutritionEnergy"], $"{energy:0} kcal"));
+        if (nutrition.Fat is { } fat)
+            rows.Add((Loc["NutritionFat"], $"{fat:0.#} g"));
+        if (nutrition.SaturatedFat is { } satFat)
+            rows.Add((Loc["NutritionSaturatedFat"], $"{satFat:0.#} g"));
+        if (nutrition.Carbohydrates is { } carbs)
+            rows.Add((Loc["NutritionCarbs"], $"{carbs:0.#} g"));
+        if (nutrition.Sugars is { } sugars)
+            rows.Add((Loc["NutritionSugars"], $"{sugars:0.#} g"));
+        if (nutrition.Proteins is { } protein)
+            rows.Add((Loc["NutritionProtein"], $"{protein:0.#} g"));
+        if (nutrition.Salt is { } salt)
+            rows.Add((Loc["NutritionSalt"], $"{salt:0.##} g"));
+
+        return rows;
     }
 
     /// <summary>
