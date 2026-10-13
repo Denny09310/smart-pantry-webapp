@@ -1,3 +1,10 @@
+## [1.1.1] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- Scan flow: no success toast on lookup hit, rainbow glow while searching, blue viewfinder guide removed
+- Sanitize OpenFoodFacts data before save (single a–e Nutri-Score, 200-char names) so scanned items no longer fail validation silently
+
 ## [1.1.0] - 2026-10-13
 
 ### 🚀 Features
