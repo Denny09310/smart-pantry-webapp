@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Data.Entities;
 using Server.Services;
 using Shared.Models;
 
@@ -19,13 +20,24 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         if (string.IsNullOrWhiteSpace(request.Barcode))
             return TypedResults.NotFound();
 
-        // Try OpenFoodFacts first
+        // Local cache first: repeat scans never touch the network.
+        var cached = await db.CachedProducts.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Barcode == request.Barcode, ct);
+
+        if (cached is not null)
+            return TypedResults.Ok(ToDto(cached));
+
+        // Miss: ask OpenFoodFacts, then remember the answer.
         var product = await lookup.LookupAsync(request.Barcode, ct);
 
         if (product is not null)
+        {
+            await UpsertCachedProductAsync(product, ct);
             return TypedResults.Ok(product);
+        }
 
-        // Fall back to local database for items we've already scanned
+        // Fall back to the local database for barcodes we know from
+        // manually entered pantry items that were never fetched remotely.
         var localProduct = await db.Items.AsNoTracking()
             .Where(x => x.Barcode == request.Barcode)
             .Select(x => new ProductLookupDto(
@@ -43,4 +55,60 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
             ? TypedResults.Ok(localProduct)
             : TypedResults.NotFound();
     }
+
+    private async Task UpsertCachedProductAsync(ProductLookupDto product, CancellationToken ct)
+    {
+        var existing = await db.CachedProducts.FindAsync([product.Barcode], ct);
+
+        if (existing is null)
+        {
+            db.CachedProducts.Add(FromDto(product));
+        }
+        else
+        {
+            existing.Name = product.Name;
+            existing.Brand = product.Brand;
+            existing.Quantity = product.Quantity;
+            existing.Unit = product.Unit;
+            existing.NutriScore = product.NutriScore;
+            existing.NutritionJson = product.Nutrition?.ToJson();
+            existing.ImageUrl = product.ImageUrl;
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Best-effort cache: a concurrent lookup for the same barcode
+            // can win the insert race, and that outcome is fine — the
+            // product is cached either way, so just serve the result.
+            db.ChangeTracker.Clear();
+        }
+    }
+
+    private static ProductLookupDto ToDto(CachedProduct cached) => new(
+        cached.Barcode,
+        cached.Name,
+        cached.Brand,
+        cached.Quantity,
+        cached.Unit,
+        cached.NutriScore,
+        cached.NutritionJson != null ? NutritionFactsExtensions.Parse(cached.NutritionJson) : null,
+        cached.ImageUrl);
+
+    private static CachedProduct FromDto(ProductLookupDto product) => new()
+    {
+        Barcode = product.Barcode,
+        Name = product.Name,
+        Brand = product.Brand,
+        Quantity = product.Quantity,
+        Unit = product.Unit,
+        NutriScore = product.NutriScore,
+        NutritionJson = product.Nutrition?.ToJson(),
+        ImageUrl = product.ImageUrl,
+        UpdatedAt = DateTimeOffset.UtcNow
+    };
 }

@@ -8,6 +8,7 @@ public class ApplicationDbContext(
     : DbContext(options)
 {
     public DbSet<PantryItem> Items => Set<PantryItem>();
+    public DbSet<CachedProduct> CachedProducts => Set<CachedProduct>();
     public DbSet<HouseholdMember> Members => Set<HouseholdMember>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
@@ -31,6 +32,17 @@ public class ApplicationDbContext(
                 .WithMany()
                 .HasForeignKey(x => x.HouseholdMemberId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CachedProduct>(entity =>
+        {
+            entity.HasKey(x => x.Barcode);
+            entity.Property(x => x.Barcode).HasMaxLength(32);
+            entity.Property(x => x.Name).HasMaxLength(200);
+            entity.Property(x => x.Brand).HasMaxLength(200);
+            entity.Property(x => x.Unit).HasMaxLength(32);
+            entity.Property(x => x.NutriScore).HasMaxLength(2);
+            entity.Property(x => x.ImageUrl).HasMaxLength(2000);
         });
 
         modelBuilder.Entity<HouseholdMember>(entity =>
