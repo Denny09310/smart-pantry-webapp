@@ -468,4 +468,13 @@
   <data name="RecipeInstructions" xml:space="preserve">
     <value>Preparazione</value>
   </data>
+  <data name="Barcode" xml:space="preserve">
+    <value>Codice a barre</value>
+  </data>
+  <data name="BarcodeLinked" xml:space="preserve">
+    <value>Codice a barre collegato.</value>
+  </data>
+  <data name="LinkBarcode" xml:space="preserve">
+    <value>Collega codice a barre</value>
+  </data>
 </root>

@@ -2,6 +2,7 @@
 @inject BottomSheetService Sheet
 @inject ServerApi Api
 @inject ILogger<ItemDetailsBody> Logger
+@inject ToastService Toasts
 @inject LocalizationService Loc
 
 <div class="flex h-full flex-col">
@@ -64,7 +65,34 @@
                         <dd>@_item.Notes</dd>
                     </div>
                 }
+                @if (!string.IsNullOrWhiteSpace(_item.Barcode))
+                {
+                    <div class="flex justify-between gap-2">
+                        <dt class="text-muted-foreground">@Loc["Barcode"]</dt>
+                        <dd class="font-mono">@_item.Barcode</dd>
+                    </div>
+                }
             </dl>
+
+            @* Barcode backfill for items added before scanning existed *@
+            @if (string.IsNullOrWhiteSpace(_item.Barcode) && !_linkingBarcode)
+            {
+                <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button"
+                          OnClick="() => _linkingBarcode = true">
+                    <LucideIcon Name="scan-barcode" Size="16" />
+                    @Loc["LinkBarcode"]
+                </BbButton>
+            }
+            @if (_linkingBarcode)
+            {
+                <div class="space-y-2 rounded-md border p-3">
+                    <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="true" />
+                    <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
+                              OnClick="() => _linkingBarcode = false">
+                        @Loc["Cancel"]
+                    </BbButton>
+                </div>
+            }
         }
     </div>
 
@@ -89,6 +117,7 @@
     private string? _loadedId;
     private bool _loading = true;
     private string? _error;
+    private bool _linkingBarcode;
     private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
 
     protected override async Task OnParametersSetAsync()
@@ -140,6 +169,54 @@
 
         // Replaces this body; saving closes the sheet and the list behind refreshes.
         await Sheet.OpenAsync<ItemForm>(new Dictionary<string, object?> { ["Item"] = _item });
+    }
+
+    /// <summary>
+    /// Attaches a scanned barcode (plus the product snapshot) to an existing
+    /// item without touching the user's own data.
+    /// </summary>
+    private async Task OnBarcodeScannedAsync(string barcode)
+    {
+        if (_item is null || string.IsNullOrWhiteSpace(barcode))
+            return;
+
+        try
+        {
+            using var lookup = await Api.Products.LookupAsync(barcode);
+            if (!lookup.IsSuccessfulWithContent || lookup.Content is not ProductLookupDto product)
+            {
+                Toasts.Info(Loc["ProductNotInDatabase"]);
+                return;
+            }
+
+            var item = _item;
+            using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(
+                item.Name,
+                item.Quantity,
+                item.Unit,
+                item.Location,
+                item.Notes,
+                item.ExpirationDate,
+                product.Barcode,
+                product.NutriScore,
+                product.Nutrition));
+
+            if (!update.IsSuccessStatusCode)
+            {
+                Logger.LogWarning("Barcode backfill failed with {StatusCode}", update.StatusCode);
+                Toasts.Error(Loc["CouldNotSave"]);
+                return;
+            }
+
+            Toasts.Success(Loc["BarcodeLinked"]);
+            _linkingBarcode = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Barcode backfill failed for {Barcode}", barcode);
+            Toasts.Error(Loc["LookupFailed"]);
+        }
     }
 
     private async Task DeleteAsync()

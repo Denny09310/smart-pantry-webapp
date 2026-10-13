@@ -27,9 +27,14 @@ internal class RecipeEndpoints(IRecipeService recipes, ITranslationService trans
             return TypedResults.Ok(new SearchRecipesResponse([]));
 
         var lang = (request.Lang ?? "en").ToLowerInvariant();
+
+        // Tags already in the English ingredient list skip translation: saves
+        // quota and avoids mangling words valid in both languages ("pizza").
+        var known = await recipes.GetIngredientNamesAsync(ct);
+        var knownSet = new HashSet<string>(known, StringComparer.OrdinalIgnoreCase);
         var englishTags = lang == "en"
             ? tags
-            : await TranslateAllAsync(tags, lang, "en", ct);
+            : await TranslateUnknownAsync(tags, knownSet, lang, ct);
 
         var meals = await recipes.SearchByIngredientsAsync(englishTags, ct);
 
@@ -75,24 +80,36 @@ internal class RecipeEndpoints(IRecipeService recipes, ITranslationService trans
         if (query.Length < 2)
             return TypedResults.Ok(new IngredientSuggestionsResponse([]));
 
-        // Match against the English ingredient list; translate the query first
-        // so Italian users typing "pomod..." still get "Tomatoes".
         var lang = (request.Lang ?? "en").ToLowerInvariant();
-        if (lang != "en")
-            query = await translations.TranslateAsync(query, lang, "en", ct);
 
+        // Match the raw query first so English input (and identical words)
+        // never spends translation quota; translate only on a miss.
         var names = await recipes.GetIngredientNamesAsync(ct);
-        var matches = names
-            .Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
-            .Take(10)
-            .ToList();
+        var matches = MatchIngredients(names, query);
+        if (matches.Count == 0 && lang != "en")
+        {
+            var english = await translations.TranslateAsync(query, lang, "en", ct);
+            if (!english.Equals(query, StringComparison.OrdinalIgnoreCase))
+                matches = MatchIngredients(names, english);
+        }
 
         return TypedResults.Ok(new IngredientSuggestionsResponse(matches));
     }
 
-    private async Task<List<string>> TranslateAllAsync(
-        List<string> tags, string from, string to, CancellationToken ct) =>
-        (await Task.WhenAll(tags.Select(t => translations.TranslateAsync(t, from, to, ct)))).ToList();
+    private static List<string> MatchIngredients(IReadOnlyList<string> names, string query) =>
+        names.Where(x => x.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Take(10)
+            .ToList();
+
+    private async Task<List<string>> TranslateUnknownAsync(
+        List<string> tags, HashSet<string> known, string lang, CancellationToken ct)
+    {
+        var translated = await Task.WhenAll(tags.Select(t =>
+            known.Contains(t)
+                ? Task.FromResult(t)
+                : translations.TranslateAsync(t, lang, "en", ct)));
+        return translated.ToList();
+    }
 
     private async Task<List<RecipeSummaryDto>> TranslateNamesAsync(
         IReadOnlyList<ThemealDbMeal> meals, string lang, CancellationToken ct)

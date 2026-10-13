@@ -160,6 +160,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Barcode.
+        /// </summary>
+        public static string Barcode {
+            get {
+                return ResourceManager.GetString("Barcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Barcode linked..
+        /// </summary>
+        public static string BarcodeLinked {
+            get {
+                return ResourceManager.GetString("BarcodeLinked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Batch notes.
         /// </summary>
         public static string BatchNotes {
@@ -543,6 +561,15 @@ namespace Client.Resources {
         public static string Language {
             get {
                 return ResourceManager.GetString("Language", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Link barcode.
+        /// </summary>
+        public static string LinkBarcode {
+            get {
+                return ResourceManager.GetString("LinkBarcode", resourceCulture);
             }
         }
         

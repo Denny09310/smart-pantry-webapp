@@ -468,4 +468,13 @@
   <data name="RecipeInstructions" xml:space="preserve">
     <value>Instructions</value>
   </data>
+  <data name="Barcode" xml:space="preserve">
+    <value>Barcode</value>
+  </data>
+  <data name="BarcodeLinked" xml:space="preserve">
+    <value>Barcode linked.</value>
+  </data>
+  <data name="LinkBarcode" xml:space="preserve">
+    <value>Link barcode</value>
+  </data>
 </root>

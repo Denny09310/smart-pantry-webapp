@@ -20,29 +20,37 @@
     <div class="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain py-1 pr-1">
         @if (_loading)
         {
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-3" aria-hidden="true">
-                <BbSkeleton Height="180px" Class="w-full" />
-                <BbSkeleton Height="180px" Class="w-full" />
-                <BbSkeleton Height="180px" Class="w-full" />
-                <BbSkeleton Height="180px" Class="w-full" />
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-3" aria-hidden="true">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="overflow-hidden rounded-xl border bg-card">
+                        <BbSkeleton Height="120px" Class="w-full rounded-none" />
+                        <div class="space-y-1.5 p-2.5">
+                            <BbSkeleton Height="14px" Class="w-full" />
+                            <BbSkeleton Height="14px" Class="w-2/3" />
+                        </div>
+                    </div>
+                }
             </div>
         }
         else if (_meals.Count > 0)
         {
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-3">
                 @foreach (var meal in _meals)
                 {
                     <button type="button" @onclick="() => OpenDetailsAsync(meal.Id)"
-                            class="bg-card block w-full overflow-hidden rounded-md border text-left">
+                            class="bg-card block w-full overflow-hidden rounded-xl border text-left transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring">
                         @if (!string.IsNullOrWhiteSpace(meal.Thumbnail))
                         {
                             <img src="@meal.Thumbnail" alt="" loading="lazy" class="aspect-square w-full object-cover" />
                         }
-                        <span class="block p-2">
-                            <span class="block truncate text-sm font-medium">@DisplayName(meal)</span>
+                        <span class="block space-y-1 p-2.5">
+                            <span class="block min-h-10 text-sm font-medium leading-snug line-clamp-2">
+                                @DisplayName(meal)
+                            </span>
                             @if (!string.IsNullOrWhiteSpace(meal.Area))
                             {
-                                <BbBadge Variant="BadgeVariant.Outline" Class="mt-1">@meal.Area</BbBadge>
+                                <BbBadge Variant="BadgeVariant.Outline">@meal.Area</BbBadge>
                             }
                         </span>
                     </button>

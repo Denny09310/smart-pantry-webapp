@@ -26,33 +26,46 @@ public sealed class MyMemoryTranslationService(HttpClient http, IMemoryCache cac
         if (cache.TryGetValue(key, out string? cached) && cached is not null)
             return cached;
 
-        string result;
+        // Only successful translations are cached: a transient failure must
+        // fall back to the input every time, never stick for 30 days.
+        var translated = await FetchAsync(text, from, to, ct);
+        if (translated is null)
+            return text;
+
+        cache.Set(key, translated, TimeSpan.FromDays(30));
+        return translated;
+    }
+
+    private async Task<string?> FetchAsync(string text, string from, string to, CancellationToken ct)
+    {
         try
         {
             var url = $"{BaseUrl}?q={Uri.EscapeDataString(text)}&langpair={from}|{to}";
             var response = await http.GetFromJsonAsync<MyMemoryResponse>(url, ct);
+            if (response?.ResponseStatus != 200)
+                return null;
             var translated = response?.ResponseData?.TranslatedText;
-            result = string.IsNullOrWhiteSpace(translated) ? text : translated.Trim();
+            return string.IsNullOrWhiteSpace(translated) ? null : translated.Trim();
         }
         catch (HttpRequestException)
         {
-            result = text;
+            return null;
         }
         catch (System.Text.Json.JsonException)
         {
-            result = text;
+            return null;
         }
         catch (OperationCanceledException)
         {
-            result = text;
+            return null;
         }
-
-        cache.Set(key, result, TimeSpan.FromDays(30));
-        return result;
     }
 
     private sealed class MyMemoryResponse
     {
+        [JsonPropertyName("responseStatus")]
+        public int ResponseStatus { get; set; }
+
         [JsonPropertyName("responseData")]
         public ResponseData? ResponseData { get; set; }
     }
