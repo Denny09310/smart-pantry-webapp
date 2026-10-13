@@ -8,7 +8,7 @@
     <div class="min-h-0 flex-1 touch-pan-y space-y-5 overflow-y-auto overscroll-contain py-1 pr-1">
         <div>
             <span class="mb-1 block text-sm font-medium">Location</span>
-            <BbChipSet @bind-Value="_location" Class="scrollbar-none!" Wrap="false">
+            <BbChipSet @bind-Value="_state.Location" Class="scrollbar-none!" Wrap="false">
                 <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
                 @foreach (var location in PantryLocations.Values)
                 {
@@ -19,7 +19,7 @@
 
         <div>
             <span class="mb-1 block text-sm font-medium">Status</span>
-            <BbChipSet @bind-Value="_status" Class="scrollbar-none!" Wrap="false">
+            <BbChipSet @bind-Value="_state.Status" Class="scrollbar-none!" Wrap="false">
                 <BbChip Value="@PantryRules.StatusAll">All statuses</BbChip>
                 <BbChip Value="@PantryRules.StatusExpired">Expired</BbChip>
                 <BbChip Value="@PantryRules.StatusSoon">Expiring soon</BbChip>
@@ -29,7 +29,7 @@
 
         <div>
             <span class="mb-1 block text-sm font-medium">Sort by</span>
-            <BbNativeSelect TValue="ItemSort" @bind-Value="_sort" AriaLabel="Sort items">
+            <BbNativeSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="Sort items">
                 <option value="@ItemSort.ExpiryAsc">Expiring first</option>
                 <option value="@ItemSort.ExpiryDesc">Expiring last</option>
                 <option value="@ItemSort.Name">Name A–Z</option>
@@ -51,35 +51,27 @@
     [Parameter] public string Status { get; set; } = PantryRules.StatusAll;
     [Parameter] public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
 
-    private string? _location = PantryLocations.All;
-    private string _status = PantryRules.StatusAll;
-    private ItemSort _sort = ItemSort.ExpiryAsc;
-
-    private string? _seenLocation = "__none__";
-    private string _seenStatus = "__none__";
-    private ItemSort? _seenSort;
-
     protected override void OnParametersSet()
     {
-        if (_seenSort is null || Location != _seenLocation || Status != _seenStatus || Sort != _seenSort)
+        if (_state.SeenSort is null || Location != _state.SeenLocation || Status != _state.SeenStatus || Sort != _state.SeenSort)
         {
-            _seenLocation = Location;
-            _seenStatus = Status;
-            _seenSort = Sort;
+            _state.SeenLocation = Location;
+            _state.SeenStatus = Status;
+            _state.SeenSort = Sort;
 
-            _location = Location;
-            _status = Status;
-            _sort = Sort;
+            _state.Location = Location;
+            _state.Status = Status;
+            _state.Sort = Sort;
         }
     }
 
     private void Reset()
     {
-        _location = PantryLocations.All;
-        _status = PantryRules.StatusAll;
-        _sort = ItemSort.ExpiryAsc;
+        _state.Location = PantryLocations.All;
+        _state.Status = PantryRules.StatusAll;
+        _state.Sort = ItemSort.ExpiryAsc;
     }
 
     private Task ApplyAsync()
-        => Sheet.CloseAsync(new SelectedFilters(_location, _status, _sort));
+        => Sheet.CloseAsync(new SelectedFilters(_state.Location, _state.Status, _state.Sort));
 }

@@ -8,27 +8,19 @@
 
 @code
 {
-    private Bit.Butil.ButilSubscription? _subscription;
-    private Bit.Butil.ButilSubscription? _visibility;
-    private bool _shown;
-    private bool _started;
-    private bool _reloading;
-    private bool _checking;
-    private bool _disposed;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _started)
+        if (!firstRender || _state.Started)
             return;
 
-        _started = true;
+        _state.Started = true;
 
         try
         {
             if (!await Worker.IsSupported())
                 return;
 
-            _subscription = await Worker.SubscribeControllerChange(OnControllerChange);
+            _state.Subscription = await Worker.SubscribeControllerChange(OnControllerChange);
 
             // Full page loads already trigger the browser's own update check.
             await CheckForUpdateAsync();
@@ -36,7 +28,7 @@
             // While the app stays open nothing navigates, so no further
             // check would ever run: re-check each time the tab becomes
             // visible again instead of polling on a timer.
-            _visibility = await Document.SubscribeVisibilityChange(OnVisibilityChanged);
+            _state.Visibility = await Document.SubscribeVisibilityChange(OnVisibilityChanged);
         }
         catch (Exception ex)
         {
@@ -61,10 +53,10 @@
 
     private async Task CheckForUpdateAsync()
     {
-        if (_checking)
+        if (_state.Checking)
             return;
 
-        _checking = true;
+        _state.Checking = true;
 
         try
         {
@@ -84,7 +76,7 @@
         }
         finally
         {
-            _checking = false;
+            _state.Checking = false;
         }
     }
 
@@ -102,10 +94,10 @@
 
     private Task ReloadAsync()
     {
-        if (_reloading)
+        if (_state.Reloading)
             return Task.CompletedTask;
 
-        _reloading = true;
+        _state.Reloading = true;
         Nav.NavigateTo(Nav.Uri, forceLoad: true);
 
         return Task.CompletedTask;
@@ -113,10 +105,10 @@
 
     private async Task ShowUpdateToastAsync()
     {
-        if (_shown)
+        if (_state.Shown)
             return;
 
-        _shown = true;
+        _state.Shown = true;
 
         await InvokeAsync(() => Toasts.Show(new ToastData
         {
@@ -144,19 +136,19 @@
         // (no waiting worker, stuck activation), reload anyway.
         await Task.Delay(4000);
 
-        if (!_disposed)
+        if (!_state.Disposed)
             await ReloadAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        _disposed = true;
+        _state.Disposed = true;
 
-        if (_visibility is not null)
+        if (_state.Visibility is not null)
         {
             try
             {
-                await _visibility.DisposeAsync();
+                await _state.Visibility.DisposeAsync();
             }
             catch (Exception ex)
             {
@@ -164,15 +156,15 @@
             }
             finally
             {
-                _visibility = null;
+                _state.Visibility = null;
             }
         }
 
-        if (_subscription is not null)
+        if (_state.Subscription is not null)
         {
             try
             {
-                await _subscription.DisposeAsync();
+                await _state.Subscription.DisposeAsync();
             }
             catch (Exception ex)
             {
@@ -180,7 +172,7 @@
             }
             finally
             {
-                _subscription = null;
+                _state.Subscription = null;
             }
         }
     }

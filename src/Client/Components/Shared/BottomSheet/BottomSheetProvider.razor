@@ -4,16 +4,16 @@
 @inject ILogger<BottomSheetProvider> Logger
 @implements IAsyncDisposable
 
-@if (_body is not null)
+@if (_state.Body is not null)
 {
     <div class="sheet-scrim" @onclick="OnScrimClick"></div>
     <section class="sheet-panel" role="dialog" aria-modal="true" aria-label="Bottom sheet">
-        <div class="sheet-inner sheet-pre bg-background border-t" @ref="_innerRef">
-            <div class="sheet-handle" @ref="_handleRef">
+        <div class="sheet-inner sheet-pre bg-background border-t" @ref="_state.InnerRef">
+            <div class="sheet-handle" @ref="_state.HandleRef">
                 <span class="sheet-grip bg-gray-400 dark:bg-gray-600"></span>
             </div>
             <div class="sheet-body px-4 pb-4">
-                <DynamicComponent Type="_body.Type" Parameters="_body.Parameters" />
+                <DynamicComponent Type="_state.Body.Type" Parameters="_state.Body.Parameters" />
             </div>
         </div>
     </section>
@@ -22,17 +22,6 @@
 @code
 {
     private sealed record VisibleBody(Type Type, Dictionary<string, object?> Parameters);
-
-    private VisibleBody? _body;
-    private SheetOptions _options = SheetOptions.Default;
-    private ElementReference _innerRef;
-    private ElementReference _handleRef;
-
-    private BottomSheetInterop? _interop;
-    private DotNetObjectReference<BottomSheetProvider>? _dotNetRef;
-    private bool _pendingShow;
-    private bool _closing;
-    private bool _gestureClosed;
 
     protected override void OnInitialized()
     {
@@ -45,15 +34,15 @@
         {
             if (Sheet.Current is { } entry)
             {
-                _body = new VisibleBody(entry.ComponentType, new Dictionary<string, object?>(entry.Parameters));
-                _options = entry.Options;
-                _closing = false;
-                _pendingShow = true;
+                _state.Body = new VisibleBody(entry.ComponentType, new Dictionary<string, object?>(entry.Parameters));
+                _state.Options = entry.Options;
+                _state.Closing = false;
+                _state.PendingShow = true;
             }
             else
             {
-                _pendingShow = false;
-                _closing = true;
+                _state.PendingShow = false;
+                _state.Closing = true;
             }
 
             await InvokeAsync(StateHasChanged);
@@ -66,39 +55,39 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_pendingShow && _body is not null)
+        if (_state.PendingShow && _state.Body is not null)
         {
-            _pendingShow = false;
+            _state.PendingShow = false;
             await ShowAsync();
             StateHasChanged();
             return;
         }
 
-        if (_closing)
+        if (_state.Closing)
         {
-            _closing = false;
+            _state.Closing = false;
 
-            if (_gestureClosed)
+            if (_state.GestureClosed)
             {
-                _gestureClosed = false;
+                _state.GestureClosed = false;
                 await TeardownAsync();
-                _body = null;
+                _state.Body = null;
             }
             else
             {
-                await (_interop?.CloseAsync() ?? ValueTask.CompletedTask);
+                await (_state.Interop?.CloseAsync() ?? ValueTask.CompletedTask);
                 await TeardownAsync();
 
                 if (Sheet.Current is { } reopened)
                 {
                     // Reopened while the close animation played.
-                    _body = new VisibleBody(reopened.ComponentType, new Dictionary<string, object?>(reopened.Parameters));
-                    _options = reopened.Options;
-                    _pendingShow = true;
+                    _state.Body = new VisibleBody(reopened.ComponentType, new Dictionary<string, object?>(reopened.Parameters));
+                    _state.Options = reopened.Options;
+                    _state.PendingShow = true;
                 }
                 else
                 {
-                    _body = null;
+                    _state.Body = null;
                 }
             }
 
@@ -110,46 +99,46 @@
     {
         try
         {
-            _interop ??= new BottomSheetInterop(JS);
-            _dotNetRef ??= DotNetObjectReference.Create(this);
-            await _interop.ShowAsync(_innerRef, _handleRef, _dotNetRef, _options.SnapPoints, _options.InitialSnapIndex);
+            _state.Interop ??= new BottomSheetInterop(JS);
+            _state.DotNetRef ??= DotNetObjectReference.Create(this);
+            await _state.Interop.ShowAsync(_state.InnerRef, _state.HandleRef, _state.DotNetRef, _state.Options.SnapPoints, _state.Options.InitialSnapIndex);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Bottom sheet failed to open");
-            _pendingShow = false;
-            _body = null;
+            _state.PendingShow = false;
+            _state.Body = null;
         }
     }
 
     private async Task TeardownAsync()
     {
-        if (_interop is not null)
+        if (_state.Interop is not null)
         {
-            await _interop.DisposeAsync();
-            _interop = null;
+            await _state.Interop.DisposeAsync();
+            _state.Interop = null;
         }
 
-        _dotNetRef?.Dispose();
-        _dotNetRef = null;
+        _state.DotNetRef?.Dispose();
+        _state.DotNetRef = null;
     }
 
     private Task OnScrimClick()
-        => _options.Dismissible && _options.CloseOnScrimClick ? Sheet.CloseAsync() : Task.CompletedTask;
+        => _state.Options.Dismissible && _state.Options.CloseOnScrimClick ? Sheet.CloseAsync() : Task.CompletedTask;
 
     [JSInvokable]
     public Task NotifyClosed()
     {
-        if (!_options.Dismissible)
+        if (!_state.Options.Dismissible)
             return Task.CompletedTask;
 
-        _gestureClosed = true;
+        _state.GestureClosed = true;
         return Sheet.CloseAsync();
     }
 
     [JSInvokable]
     public Task NotifyEscape()
-        => _options.Dismissible ? Sheet.CloseAsync() : Task.CompletedTask;
+        => _state.Options.Dismissible ? Sheet.CloseAsync() : Task.CompletedTask;
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
