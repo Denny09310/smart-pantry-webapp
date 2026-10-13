@@ -115,7 +115,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKinds.Created), ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Created), ct);
 
         return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
     }
@@ -156,7 +156,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKinds.Updated), ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Updated), ct);
 
         return TypedResults.Ok(ToDto(entry));
     }
@@ -171,7 +171,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         if (deleted == 0)
             return ItemNotFound(id);
 
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(id, PantryChangeKinds.Removed), ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(id, PantryChangeKind.Removed), ct);
         return TypedResults.NoContent();
     }
 
