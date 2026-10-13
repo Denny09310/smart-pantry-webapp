@@ -1,3 +1,15 @@
+## [1.2.0] - 2026-10-13
+
+### 🚀 Features
+
+- Product details in the item sheet: Nutri-Score, nutrition facts, and ingredients from the cached lookup
+- Unlink barcodes to re-associate product data
+- ml unit chip
+
+### 🐛 Bug Fixes
+
+- Restore the rotating rainbow lookup border as a frame around the camera preview, with a lookup status line
+
 ## [1.1.1] - 2026-10-13
 
 ### 🐛 Bug Fixes
