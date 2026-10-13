@@ -6,33 +6,45 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
 	  <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
-    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
-    <!-- In this hosted layout the Client writes the service-worker manifest hash
-         over its ramp-trimmed bit-butil.js, but the Server host serves the
-         package's untrimmed bundle; the hashes then disagree and the worker's
-         SRI check blocks the script. Ship one untrimmed bundle from both. -->
-    <BitButilTrimScripts>false</BitButilTrimScripts>
+    <SupportedCultures>en-US;it-IT</SupportedCultures>
+    <DefaultCulture>en-US</DefaultCulture>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Bit.Brouter" Version="10.6.2" />
     <PackageReference Include="Bit.Butil" Version="10.6.2" />
-    <PackageReference Include="Bit.Minifier" Version="10.6.2" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.12" />
     <PackageReference Include="BlazorBlueprint.Components" Version="4.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
     <PackageReference Include="Refit" Version="16.3.0" />
     <PackageReference Include="Refit.HttpClientFactory" Version="16.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../Shared/Shared.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Strings.it.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

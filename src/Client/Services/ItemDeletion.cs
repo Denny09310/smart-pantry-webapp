@@ -1,0 +1,52 @@
+using BlazorBlueprint.Components;
+using Shared.Models;
+
+namespace Client.Services;
+
+/// <summary>
+/// Item deletion always starts by closing the sheet: dialogs render beneath
+/// it, so a sheet body never opens a confirm itself. Instead the body closes
+/// with the item as the result and the opener confirms and executes here.
+/// </summary>
+internal static class ItemDeletion
+{
+    public static async Task HandleAsync(
+        DialogResult result,
+        ServerApi api,
+        DialogService dialogs,
+        ToastService toasts,
+        ILogger logger)
+    {
+        if (result.Cancelled)
+            return;
+
+        if (result.GetData<PantryItemDto>() is not { } item)
+            return;
+
+        var confirmed = await dialogs.ConfirmAsync(
+            "Delete item?",
+            $"“{item.Name}” will be permanently removed.",
+            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
+
+        if (!confirmed.Confirmed)
+            return;
+
+        try
+        {
+            using var response = await api.Pantry.DeleteAsync(item.Id);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", item.Id, response.StatusCode);
+                toasts.Error("Couldn't delete the item. Try again.");
+                return;
+            }
+
+            toasts.Success("Item deleted.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Item {ItemId} delete failed", item.Id);
+            toasts.Error("Couldn't delete the item. Try again.");
+        }
+    }
+}

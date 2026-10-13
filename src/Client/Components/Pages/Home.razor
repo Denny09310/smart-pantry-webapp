@@ -1,350 +1,213 @@
-@page "/"
-@using Client.Components.Shared.Home
-
+﻿@page "/"
+@using Client.Resources
 @inject ServerApi Api
-@inject ToastService Toast
-@inject DialogService Dialog
-@inject BottomSheetService BottomSheet
-@inject NavigationManager Nav
-@inject MemberService Members
+@inject BottomSheetService Sheet
+@inject DialogService Dialogs
+@inject ToastService Toasts
+@inject ILogger<Home> Logger
+@inject LocalizationService Loc
 @inject PantryRealtimeService Realtime
-@inject ILogger<Home> Log
-@inject IStringLocalizer<UIStrings> L
 @implements IDisposable
 
-<div class="mx-auto w-full max-w-6xl space-y-4 md:space-y-6">
-    <header class="space-y-3">
-        <div class="flex items-center justify-between gap-2 md:hidden">
-            <h1 class="text-xl font-semibold">Smart Pantry</h1>
-            <div class="flex items-center gap-1">
-                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                          AriaLabel="@L["Common_SwitchMemberAria"]" OnClick="SwitchMemberAsync">
-                    <BbAvatar Class="h-6 w-6">
-                        <BbAvatarFallback Class="text-[10px]"
-                                          style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
-                            @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.Name) : "?")
-                        </BbAvatarFallback>
-                    </BbAvatar>
-                </BbButton>
-                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                          AriaLabel="@L["Common_AddItemAria"]" OnClick="CreateItemAsync">
-                    <LucideIcon Name="plus" Size="18" />
-                </BbButton>
-            </div>
-        </div>
-        <div class="hidden items-end justify-between gap-2 md:flex">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    @L["Home_Eyebrow"]
-                </p>
-                <h1 class="text-2xl font-semibold">@L["Home_Heading"]</h1>
-            </div>
-            <BbBadge Variant="BadgeVariant.SoftSuccess">
-                <BbBadgeIcon Name="circle-dot" />
-                @L["Home_StockBadge", LocationsCount]
-            </BbBadge>
-        </div>
-    </header>
-
-    <PantryToolbar Search="@_name" SearchChanged="@OnSearchChanged" Location="@_location"
-                   LocationChanged="@OnLocationChanged" Status="@_status" StatusChanged="@OnStatusChanged" TotalCount="@TotalCount"
-                   SoonCount="@SoonCount" TodayCount="@TodayCount" ExpiredCount="@ExpiredCount" FreshCount="@FreshCount" />
-
-    @if (_items is null)
-    {
-        <div class="flex justify-center py-12">
-            <BbSpinner Size="SpinnerSize.Large" />
-        </div>
-    }
-    else if (VisibleItems.Count == 0 && TotalCount == 0)
-    {
-        <BbEmpty Title="@L["Common_EmptyTitle"]" Description="@L["Common_EmptyDescription"]"
-                 Size="EmptySize.Default">
-            <Icon>
-                <LucideIcon Name="package" Size="28" />
-            </Icon>
-            <ChildContent>
-                <BbButton Size="ButtonSize.Small" OnClick="CreateItemAsync">
-                    <LucideIcon Name="plus" Size="14" />
-                    @L["Common_AddItem"]
-                </BbButton>
-            </ChildContent>
-        </BbEmpty>
-    }
-    else if (VisibleItems.Count == 0)
-    {
-        <BbEmpty Title="@L["Common_NoMatches"]" Description="@L["Common_NoMatchesHint"]" Size="EmptySize.Default">
-            <Icon>
-                <LucideIcon Name="search" Size="28" />
-            </Icon>
-            <ChildContent>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="ClearFilters">
-                    @L["Common_ClearFilters"]
-                </BbButton>
-            </ChildContent>
-        </BbEmpty>
-    }
-    else
-    {
-        <PantryStats TotalItems="@TotalCount" LocationsCount="@LocationsCount" ExpiredCount="@ExpiredCount"
-                     TodayCount="@TodayCount" SoonCount="@SoonCount" />
-
-        @if (AttentionItems.Count > 0)
+<header class="flex items-center justify-between gap-2">
+    <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
+    <div class="flex items-center gap-2">
+        @if (_total > 0)
         {
-            <div class="hidden md:block">
-                <PantryExpiringTable Items="@AttentionItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
-                                     OnViewAll="@ViewAllItems" OnAdd="@CreateItemAsync" />
-            </div>
+            <span class="text-sm text-muted-foreground">@_total items</span>
         }
-        else
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]" @onclick="OpenAddAsync">
+            <LucideIcon Name="plus" Size="18" />
+        </BbButton>
+        <NotificationsBellButton />
+        <MemberAvatarButton />
+    </div>
+</header>
+
+<div class="flex gap-2">
+    <div class="flex-1">
+        <BbInputGroup>
+            <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+                <LucideIcon Name="search" Size="16" />
+            </BbInputGroupAddon>
+            <BbInputGroupInput @bind-Value="_name" @bind-Value:after="OnSearchInput"
+                               Placeholder="@Loc["SearchPlaceholder"]" />
+        </BbInputGroup>
+    </div>
+    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="@Loc["Filters"]"
+              @onclick="OpenFiltersAsync">
+        <LucideIcon Name="sliders-horizontal" Size="16" />
+        @if (HasFilters)
         {
-            <div class="hidden md:block">
-                <BbEmpty Title="@L["Home_AllFreshTitle"]" Description="@L["Home_AllFreshDescription"]" Size="EmptySize.Default">
-                    <Icon>
-                        <LucideIcon Name="badge-check" Size="28" />
-                    </Icon>
-                </BbEmpty>
-            </div>
+            <span class="h-2 w-2 rounded-full bg-primary"></span>
         }
-
-        <div class="md:hidden">
-            <PantryItemsList Items="@VisibleItems" DeletingIds="@_deletingIds" OnDelete="@DeleteItemAsync"
-                             HighlightId="@_highlightId" />
-        </div>
-
-        <div class="flex flex-col gap-2 md:hidden">
-            <BbButton Class="w-full" OnClick="CreateItemAsync">
-                <LucideIcon Name="plus" Size="14" />
-                @L["Common_AddNewItem"]
-            </BbButton>
-        </div>
-
-        <RecipeSuggestions />
-    }
-
+    </BbButton>
 </div>
 
-@code
-{
-    private DialogOpenOptions AddItemOptions() => new()
-    {
-        Title = L["Common_AddDialogTitle"],
-        Description = L["Common_EmptyDescription"],
-        Size = DialogSize.Large
-    };
+<InfiniteScrollList TItem="PantryItemDto" @ref="_list" LoadPageAsync="LoadPageAsync" KeySelector="@(x => x.Id)"
+                    TotalChanged="OnTotalChanged">
+    <ItemTemplate>
+        @{
+            var status = ExpiryHelper.GetStatus(context.ExpirationDate, _today);
+        }
+        <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
+                class="bg-card block w-full rounded-md border p-3 text-left">
+            <span class="flex items-center justify-between gap-2">
+                <span class="font-medium">@context.Name</span>
+                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
+            </span>
+            <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                <span>@context.Quantity @context.Unit</span>
+                <BbBadge Variant="BadgeVariant.Outline">@context.Location</BbBadge>
+                <span>@context.ExpirationDate.ToString("MMM d")</span>
+            </span>
+        </button>
+    </ItemTemplate>
+    <LoadingTemplate>
+        <div class="space-y-2" aria-hidden="true">
+            <BbSkeleton Height="64px" Class="w-full" />
+            <BbSkeleton Height="64px" Class="w-full" />
+            <BbSkeleton Height="64px" Class="w-full" />
+        </div>
+    </LoadingTemplate>
+    <EmptyTemplate>
+        <BbEmpty Title="@Loc["NoItemsFound"]" Description="@Loc["NoItemsDescription"]">
+            <Icon>
+                <LucideIcon Name="search" Size="24" />
+            </Icon>
+            <ChildContent>
+                <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
+                    <LucideIcon Name="plus" Size="16" />
+                    @Loc["AddItemButton"]
+                </BbButton>
+            </ChildContent>
+        </BbEmpty>
+    </EmptyTemplate>
+</InfiniteScrollList>
 
-    private DialogOpenOptions SwitcherOptions() => new()
-    {
-        Title = L["Common_SwitcherTitle"],
-        Description = L["Common_SwitcherDescription"],
-        Size = DialogSize.Small
-    };
+@code {
+    private InfiniteScrollList<PantryItemDto>? _list;
+    private int _total;
+    private CancellationTokenSource? _searchCts;
 
-    private const int MaxItems = 500;
+    private string? _location = PantryLocations.All, _name;
+    private string _status = PantryRules.StatusAll;
+    private ItemSort _sort = ItemSort.ExpiryAsc;
+    private readonly DateOnly _today = DateOnly.FromDateTime(DateTime.Today);
 
-    private List<PantryItemDto>? _items;
-    private readonly HashSet<string> _deletingIds = [];
-    private string? _highlightId;
+    private bool HasFilters =>
+        _location != PantryLocations.All || _status != PantryRules.StatusAll || _sort != ItemSort.ExpiryAsc;
 
-    private string? _location = "all", _name;
-    private PantryStatusFilter _status = PantryStatusFilter.All;
-
-    private int TotalCount => _items?.Count ?? 0;
-
-    private int LocationsCount => _items?
-        .Select(i => i.Location)
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .Count() ?? 0;
-
-    private int ExpiredCount => _items?.CountByStatus(PantryItemStatus.Expired) ?? 0;
-
-    private int TodayCount => _items?.CountByStatus(PantryItemStatus.Today) ?? 0;
-
-    private int SoonCount => _items?.CountByStatus(PantryItemStatus.Soon) ?? 0;
-
-    private int FreshCount => _items?.CountByStatus(PantryItemStatus.Fresh) ?? 0;
-
-    private IReadOnlyList<PantryItemDto> VisibleItems
-        => _items?
-            .Where(MatchesFilters)
-            .OrderBy(i => i.UrgencyRank())
-            .ThenBy(i => i.ExpirationDate)
-            .ThenBy(i => i.Name)
-            .ToList() ?? [];
-
-    private IReadOnlyList<PantryItemDto> AttentionItems
-        => VisibleItems.Where(i => i.GetStatus() is not PantryItemStatus.Fresh).ToList();
+    private void OnTotalChanged(int total) => _total = total;
 
     protected override async Task OnInitializedAsync()
     {
-        Members.Changed += OnMembersChanged;
         Realtime.Changed += OnRealtimeChanged;
         await Realtime.StartAsync();
-        await LoadAsync();
     }
 
-    public void Dispose()
-    {
-        Members.Changed -= OnMembersChanged;
-        Realtime.Changed -= OnRealtimeChanged;
-    }
+    private Task OnRealtimeChanged(PantryChangedEvent _) => InvokeAsync(ReloadListAsync);
 
-    private async void OnMembersChanged()
+    private async Task<Page<PantryItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
     {
-        try
+        var request = new GetPantryItemsRequest
         {
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (Exception)
-        {
-            // Member switched during navigation/dispose; nothing to render.
-        }
-    }
-
-    private Task OnRealtimeChanged()
-    {
-        try
-        {
-            // Broadcasts are hints: re-query and converge, quietly —
-            // the manual reload path reports its own errors.
-            return InvokeAsync(async () =>
+            Location = _location,
+            Name = _name,
+            Status = _status == PantryRules.StatusAll ? null : _status,
+            Sort = _sort switch
             {
-                await LoadAsync(quiet: true);
-                StateHasChanged();
-            });
-        }
-        catch (Exception)
+                ItemSort.ExpiryDesc => PantryRules.SortExpiryDesc,
+                ItemSort.Name => PantryRules.SortName,
+                _ => PantryRules.SortExpiryAsc
+            },
+            Skip = skip,
+            Take = take
+        };
+
+        using var response = await Api.Pantry.GetAsync(request, ct);
+
+        if (!response.IsSuccessfulWithContent)
         {
-            // Page is going away; nothing left to render.
-            return Task.CompletedTask;
+            Logger.LogWarning("Pantry list load failed with {StatusCode}", response.StatusCode);
+            throw new HttpRequestException($"Pantry list load failed with {response.StatusCode}.");
         }
+
+        return new Page<PantryItemDto>(response.Content.Items.ToList(), response.Content.TotalItems);
     }
 
-    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
-
-    private bool MatchesFilters(PantryItemDto item)
+    private async Task OpenAddAsync()
     {
-        if (!string.IsNullOrWhiteSpace(_name)
-            && !item.Name.Contains(_name, StringComparison.OrdinalIgnoreCase)
-            && (item.Notes is null || !item.Notes.Contains(_name, StringComparison.OrdinalIgnoreCase)))
-            return false;
-
-        if (!string.IsNullOrWhiteSpace(_location)
-            && _location is not "all"
-            && !item.Location.Equals(_location, StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        return item.Matches(_status);
+        var result = await Sheet.OpenAsync<ItemForm>();
+        if (!result.Cancelled)
+            await ReloadListAsync();
     }
 
-    private async Task LoadAsync(bool quiet = false)
+    private async Task OpenDetailsAsync(string id)
     {
-        _highlightId = null;
-
-        try
+        var parameters = new Dictionary<string, object?>
         {
-            using var response = await Api.Pantry.GetAsync(new GetPantryItemsRequest(null, null) { Take = MaxItems });
+            ["ItemId"] = id
+        };
+        
+        var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
+        await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger);
+        if (!result.Cancelled)
+            await ReloadListAsync();
+    }
 
-            if (!response.IsSuccessfulWithContent)
-            {
-                if (!quiet)
-                    Toast.Error(L["Common_LoadError"]);
-
-                return;
-            }
-
-            _items = new(response.Content.Items);
-        }
-        catch (Exception ex)
+    private async Task OpenFiltersAsync()
+    {
+        var parameters = new Dictionary<string, object?>
         {
-            Log.LogWarning(ex, "Pantry load failed.");
+            ["Location"] = _location,
+            ["Status"] = _status,
+            ["Sort"] = _sort
+        };
 
-            if (!quiet)
-                Toast.Error(L["Common_LoadError"]);
-        }
-    }
-
-    private Task OnSearchChanged(string? value)
-    {
-        _name = value;
-        return Task.CompletedTask;
-    }
-
-    private Task OnLocationChanged(string? value)
-    {
-        _location = value;
-        return Task.CompletedTask;
-    }
-
-    private Task OnStatusChanged(PantryStatusFilter value)
-    {
-        _status = value;
-        return Task.CompletedTask;
-    }
-
-    private void ClearFilters()
-    {
-        _name = null;
-        _location = "all";
-        _status = PantryStatusFilter.All;
-    }
-
-    private void ViewAllItems() => Nav.NavigateTo("/pantry");
-
-    private async Task CreateItemAsync()
-    {
-        var result = await BottomSheet.OpenAsync<CreatePantryItemDialog>(AddItemOptions());
+        var result = await Sheet.OpenAsync<FilterSheetBody>(parameters);
 
         if (result.Cancelled)
             return;
 
-        if (result.GetData<CreatePantryItemRequest>() is not { } request)
+        var data = result.GetData<FilterSheetBody.SelectedFilters>();
+
+        if (data is not { } filters)
             return;
 
-        using var response = await Api.Pantry.CreateAsync(request, Members.CurrentMemberId);
-
-        if (!response.IsSuccessfulWithContent)
-        {
-            Toast.Error(L["Common_CreateError"]);
-            return;
-        }
-
-        var createdId = response.Content?.Id;
-
-        Toast.Success(L["Common_Created"]);
-        await LoadAsync();
-        _highlightId = createdId;
+        (_location, _status, _sort) = (filters.Location, filters.Status, filters.Sort);
+        await ReloadListAsync();
     }
 
-    private async Task DeleteItemAsync(PantryItemDto item)
+    private Task ReloadListAsync()
+        => _list is not null ? _list.ReloadAsync() : Task.CompletedTask;
+
+    /// <summary>Debounced search: one reload per pause in typing, not per keystroke.</summary>
+    private void OnSearchInput()
     {
-        var confirm = await Dialog.ConfirmAsync(
-            L["Home_DeleteTitle", item.Name],
-            L["Common_DeleteUndone"],
-            new ConfirmDialogOptions { ConfirmText = L["Common_Delete"], CancelText = L["Common_Cancel"], Destructive = true });
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        _ = DebouncedReloadAsync(_searchCts.Token);
+    }
 
-        if (!confirm.Confirmed)
-            return;
-
-        if (!_deletingIds.Add(item.Id))
-            return;
-
+    private async Task DebouncedReloadAsync(CancellationToken ct)
+    {
         try
         {
-            using var response = await Api.Pantry.DeleteAsync(item.Id);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Toast.Error(L["Common_DeleteError"]);
-                return;
-            }
-
-            _items?.RemoveAll(i => i.Id == item.Id);
-            Toast.Success(L["Common_Removed", item.Name]);
+            await Task.Delay(300, ct);
+            await InvokeAsync(ReloadListAsync);
         }
-        finally
+        catch (OperationCanceledException)
         {
-            _deletingIds.Remove(item.Id);
+            // Superseded by newer input; nothing to do.
         }
+    }
+
+    public void Dispose()
+    {
+        Realtime.Changed -= OnRealtimeChanged;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
     }
 }

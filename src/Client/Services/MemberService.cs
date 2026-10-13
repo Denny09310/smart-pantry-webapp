@@ -1,27 +1,28 @@
 using Bit.Butil;
-
 using Shared.Models;
 
 namespace Client.Services;
 
 /// <summary>
 /// Household member state: list, current selection (persisted in
-/// localStorage), and CRUD. Attribution only — never access control.
+/// localStorage), and management. Attribution only — never access control.
 /// </summary>
 internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger<MemberService> log)
 {
     private const string StorageKey = "smart-pantry.member-id";
 
-    private readonly List<MemberDto> _members = [];
+    private readonly List<HouseholdMemberDto> _members = [];
     private bool _initialized;
+    private bool _creating;
 
-    public IReadOnlyList<MemberDto> Members => _members;
+    public IReadOnlyList<HouseholdMemberDto> Members => _members;
+
+    public IEnumerable<HouseholdMemberDto> ActiveMembers => _members.Where(m => !m.IsArchived);
 
     public string? CurrentMemberId { get; private set; }
 
-    public MemberDto? CurrentMember => _members.FirstOrDefault(m => m.Id == CurrentMemberId);
-
-    public bool IsReady => _initialized;
+    public HouseholdMemberDto? CurrentMember =>
+        _members.FirstOrDefault(m => m.Id == CurrentMemberId && !m.IsArchived);
 
     public bool LoadFailed { get; private set; }
 
@@ -44,10 +45,19 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
 
             _members.AddRange(response.Content);
 
-            var stored = await storage.GetItem(StorageKey);
-            CurrentMemberId = _members.Any(m => m.Id == stored)
+            string? stored = null;
+            try
+            {
+                stored = await storage.GetItem(StorageKey);
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "Member selection restore failed.");
+            }
+
+            CurrentMemberId = _members.Any(m => m.Id == stored && !m.IsArchived)
                 ? stored
-                : _members.FirstOrDefault()?.Id;
+                : ActiveMembers.FirstOrDefault()?.Id;
 
             _initialized = true;
         }
@@ -62,7 +72,7 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
 
     public async Task SelectMemberAsync(string id)
     {
-        if (!_members.Any(m => m.Id == id))
+        if (!_members.Any(m => m.Id == id && !m.IsArchived))
             return;
 
         CurrentMemberId = id;
@@ -70,9 +80,7 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
         Changed?.Invoke();
     }
 
-    private bool _creating;
-
-    public async Task<MemberDto?> CreateMemberAsync(string name, string? color)
+    public async Task<HouseholdMemberDto?> CreateMemberAsync(string name, string? color)
     {
         if (_creating)
             return null;
@@ -81,7 +89,28 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
 
         try
         {
-            return await CreateMemberInnerAsync(name, color);
+            HouseholdMemberDto? created = null;
+
+            try
+            {
+                using var response = await api.Members.CreateAsync(new CreateHouseholdMemberRequest(name, color));
+                if (response.IsSuccessfulWithContent)
+                    created = response.Content;
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "Member creation failed.");
+            }
+
+            if (created is null)
+                return null;
+
+            _members.Add(created);
+            CurrentMemberId = created.Id;
+            await PersistAsync();
+            Changed?.Invoke();
+
+            return created;
         }
         finally
         {
@@ -89,57 +118,36 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
         }
     }
 
-    private async Task<MemberDto?> CreateMemberInnerAsync(string name, string? color)
+    public async Task<HouseholdMemberDto?> UpdateMemberAsync(string id, string name, string? color, bool archived)
     {
-        MemberDto? created = null;
+        HouseholdMemberDto? updated = null;
 
         try
         {
-            using var response = await api.Members.CreateAsync(new CreateMemberRequest(name, color));
-
+            using var response = await api.Members.UpdateAsync(id, new UpdateHouseholdMemberRequest(name, color, archived));
             if (response.IsSuccessfulWithContent)
-                created = response.Content;
+                updated = response.Content;
         }
         catch (Exception ex)
         {
-            log.LogWarning(ex, "Member creation failed.");
+            log.LogWarning(ex, "Member update failed.");
         }
 
-        if (created is null)
+        if (updated is null)
             return null;
 
-        _members.Add(created);
-        CurrentMemberId = created.Id;
-        await PersistAsync();
-        Changed?.Invoke();
+        var index = _members.FindIndex(m => m.Id == id);
+        if (index >= 0)
+            _members[index] = updated;
 
-        return created;
-    }
-
-    public async Task DeleteMemberAsync(string id)
-    {
-        try
+        if (CurrentMemberId == id && (archived || !_members.Any(m => m.Id == id && !m.IsArchived)))
         {
-            using var response = await api.Members.DeleteAsync(id);
-
-            if (!response.IsSuccessStatusCode)
-                return;
-        }
-        catch (Exception ex)
-        {
-            log.LogWarning(ex, "Member deletion failed.");
-            return;
-        }
-
-        _members.RemoveAll(m => m.Id == id);
-
-        if (CurrentMemberId == id)
-        {
-            CurrentMemberId = _members.FirstOrDefault()?.Id;
+            CurrentMemberId = ActiveMembers.FirstOrDefault()?.Id;
             await PersistAsync();
         }
 
         Changed?.Invoke();
+        return updated;
     }
 
     private async Task PersistAsync()

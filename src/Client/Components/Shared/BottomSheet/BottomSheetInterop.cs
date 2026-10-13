@@ -1,60 +1,39 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace Client.Components.Shared;
+namespace Client.Components;
 
-/// <summary>Options passed to the colocated JS module in a single interop call.</summary>
-public sealed class BottomSheetJsOptions
-{
-    public double[] SnapPoints { get; init; } = [0.5, 0.9];
-
-    public int InitialSnap { get; init; }
-
-    public bool Dismissible { get; init; } = true;
-
-    public bool OverlayDismiss { get; init; } = true;
-
-    public bool EscapeDismiss { get; init; } = true;
-}
-
-/// <summary>Typed wrapper around the colocated BottomSheet JS module.</summary>
+/// <summary>Typed wrapper around the colocated bottom sheet JS module.</summary>
 public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
 {
-    internal const string ModulePath = "./Components/Shared/BottomSheet/BottomSheet.razor.js";
-    internal const string AttachMethod = "attach";
-    internal const string DismissMethod = "dismiss";
-    internal const string DetachMethod = "detach";
+    internal const string ModulePath = "./Components/Shared/BottomSheet/BottomSheetProvider.razor.js";
+    internal const string ShowMethod = "show";
+    internal const string CloseMethod = "close";
+    internal const string DisposeMethod = "dispose";
+
+    private readonly IJSRuntime _js = js;
     private IJSObjectReference? _module;
 
     private async ValueTask<IJSObjectReference> GetModuleAsync()
-        => _module ??= await js.InvokeAsync<IJSObjectReference>("import", ModulePath);
+        => _module ??= await _js.InvokeAsync<IJSObjectReference>("import", ModulePath);
 
-    public async ValueTask AttachAsync(
-        string id,
-        ElementReference sheet,
-        ElementReference overlay,
+    public async ValueTask ShowAsync(
+        ElementReference inner,
         ElementReference handle,
-        DotNetObjectReference<BottomSheet> dotNetRef,
-        BottomSheetJsOptions options)
+        DotNetObjectReference<BottomSheetProvider> dotNet,
+        double[] snapPoints,
+        int initialSnapIndex)
     {
         var module = await GetModuleAsync();
-        await module.InvokeVoidAsync(AttachMethod, id, sheet, overlay, handle, dotNetRef, options);
+        await module.InvokeVoidAsync(ShowMethod, inner, handle, dotNet, snapPoints, initialSnapIndex);
     }
 
-    public async ValueTask DismissAsync(string id)
+    public async ValueTask CloseAsync()
     {
         if (_module is null)
             return;
 
-        await _module.InvokeVoidAsync(DismissMethod, id);
-    }
-
-    public async ValueTask DetachAsync(string id)
-    {
-        if (_module is null)
-            return;
-
-        await _module.InvokeVoidAsync(DetachMethod, id);
+        await _module.InvokeVoidAsync(CloseMethod);
     }
 
     public async ValueTask DisposeAsync()
@@ -62,13 +41,11 @@ public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
         try
         {
             if (_module is not null)
+            {
+                await _module.InvokeVoidAsync(DisposeMethod);
                 await _module.DisposeAsync();
+            }
         }
-        catch (Exception)
-        {
-            // Teardown during navigation: module may already be gone.
-        }
-
-        _module = null;
+        catch (JSDisconnectedException) { }
     }
 }

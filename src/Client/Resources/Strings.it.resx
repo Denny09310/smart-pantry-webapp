@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Smart Pantry</value>
+  </data>
+  <data name="Pantry" xml:space="preserve">
+    <value>Dispensa</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Lingua</value>
+  </data>
+  <data name="SelectLanguage" xml:space="preserve">
+    <value>Seleziona lingua</value>
+  </data>
+  <data name="English" xml:space="preserve">
+    <value>Inglese</value>
+  </data>
+  <data name="Italian" xml:space="preserve">
+    <value>Italiano</value>
+  </data>
+  <data name="User" xml:space="preserve">
+    <value>Utente</value>
+  </data>
+  <data name="CurrentUser" xml:space="preserve">
+    <value>Utente corrente</value>
+  </data>
+  <data name="AddItem" xml:space="preserve">
+    <value>Aggiungi articolo</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Cerca articoli in dispensa...</value>
+  </data>
+  <data name="Filters" xml:space="preserve">
+    <value>Filtri</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Nome articolo</value>
+  </data>
+  <data name="QuantityAndUnit" xml:space="preserve">
+    <value>Quantità e unità</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Posizione</value>
+  </data>
+  <data name="Expiry" xml:space="preserve">
+    <value>Scadenza</value>
+  </data>
+  <data name="DurationAndExpiry" xml:space="preserve">
+    <value>Durata e scadenza</value>
+  </data>
+  <data name="BatchNotes" xml:space="preserve">
+    <value>Note lotto</value>
+  </data>
+  <data name="SaveItem" xml:space="preserve">
+    <value>Salva articolo</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Salva modifiche</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Annulla</value>
+  </data>
+  <data name="AddItemButton" xml:space="preserve">
+    <value>Crea</value>
+  </data>
+  <data name="EditItem" xml:space="preserve">
+    <value>Modifica articolo</value>
+  </data>
+  <data name="AddItemTitle" xml:space="preserve">
+    <value>Aggiungi articolo</value>
+  </data>
+  <data name="EditItemTitle" xml:space="preserve">
+    <value>Modifica articolo</value>
+  </data>
+  <data name="ItemDetails" xml:space="preserve">
+    <value>Dettagli articolo</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Quantità</value>
+  </data>
+  <data name="ExpiresOn" xml:space="preserve">
+    <value>Scade il</value>
+  </data>
+  <data name="ExpiredYesterday" xml:space="preserve">
+    <value>Scaduto ieri</value>
+  </data>
+  <data name="ExpiredDaysAgo" xml:space="preserve">
+    <value>Scaduto {0} giorni fa</value>
+  </data>
+  <data name="ExpiresToday" xml:space="preserve">
+    <value>Scade oggi</value>
+  </data>
+  <data name="UseSoonOneDay" xml:space="preserve">
+    <value>Da consumare · 1 giorno rimasto</value>
+  </data>
+  <data name="UseSoonDaysLeft" xml:space="preserve">
+    <value>Da consumare · {0} giorni rimasti</value>
+  </data>
+  <data name="FreshOneDay" xml:space="preserve">
+    <value>Fresco · 1 giorno rimasto</value>
+  </data>
+  <data name="FreshDaysLeft" xml:space="preserve">
+    <value>Fresco · {0} giorni rimasti</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Modifica</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Elimina</value>
+  </data>
+  <data name="DeleteItemConfirm" xml:space="preserve">
+    <value>Eliminare l'articolo?</value>
+  </data>
+  <data name="DeleteItemMessage" xml:space="preserve">
+    <value>"{0}" verrà rimosso permanentemente.</value>
+  </data>
+  <data name="PickADate" xml:space="preserve">
+    <value>Scegli una data</value>
+  </data>
+  <data name="DeleteConfirm" xml:space="preserve">
+    <value>Elimina</value>
+  </data>
+  <data name="ItemDeleted" xml:space="preserve">
+    <value>Articolo eliminato.</value>
+  </data>
+  <data name="CouldNotDelete" xml:space="preserve">
+    <value>Impossibile eliminare l'articolo. Riprova.</value>
+  </data>
+  <data name="ItemAdded" xml:space="preserve">
+    <value>Articolo aggiunto.</value>
+  </data>
+  <data name="ItemUpdated" xml:space="preserve">
+    <value>Articolo aggiornato.</value>
+  </data>
+  <data name="CouldNotSave" xml:space="preserve">
+    <value>Impossibile salvare. Riprova.</value>
+  </data>
+  <data name="CouldNotLoad" xml:space="preserve">
+    <value>Impossibile caricare l'articolo. Riprova.</value>
+  </data>
+  <data name="Retry" xml:space="preserve">
+    <value>Riprova</value>
+  </data>
+  <data name="NoItemsFound" xml:space="preserve">
+    <value>Nessun articolo trovato</value>
+  </data>
+  <data name="NoItemsDescription" xml:space="preserve">
+    <value>Prova a rimuovere i filtri o aggiungine uno</value>
+  </data>
+  <data name="Fridge" xml:space="preserve">
+    <value>Frigo</value>
+  </data>
+  <data name="Freezer" xml:space="preserve">
+    <value>Freezer</value>
+  </data>
+  <data name="Cabinet" xml:space="preserve">
+    <value>Mobiletto</value>
+  </data>
+  <data name="UnitsPcs" xml:space="preserve">
+    <value>pz</value>
+  </data>
+  <data name="UnitsKg" xml:space="preserve">
+    <value>kg</value>
+  </data>
+  <data name="UnitsG" xml:space="preserve">
+    <value>g</value>
+  </data>
+  <data name="UnitsL" xml:space="preserve">
+    <value>l</value>
+  </data>
+  <data name="UnitsMl" xml:space="preserve">
+    <value>ml</value>
+  </data>
+  <data name="ScanBarcode" xml:space="preserve">
+    <value>Scansiona codice a barre (opzionale)</value>
+  </data>
+  <data name="ClickToStartScanning" xml:space="preserve">
+    <value>Clicca per iniziare la scansione</value>
+  </data>
+  <data name="StartCamera" xml:space="preserve">
+    <value>Avvia fotocamera</value>
+  </data>
+  <data name="ScannerUnsupported" xml:space="preserve">
+    <value>La scansione con fotocamera non è supportata su questo dispositivo.</value>
+  </data>
+  <data name="ScannerDenied" xml:space="preserve">
+    <value>Accesso alla fotocamera negato.</value>
+  </data>
+  <data name="ProductFound" xml:space="preserve">
+    <value>Prodotto trovato! Dettagli pre-compilati.</value>
+  </data>
+  <data name="ProductNotInDatabase" xml:space="preserve">
+    <value>Prodotto non nel database. Puoi aggiungerlo manualmente.</value>
+  </data>
+  <data name="LookupFailed" xml:space="preserve">
+    <value>Impossibile cercare il prodotto. Riprova o aggiungi manualmente.</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Notifiche</value>
+  </data>
+  <data name="MarkAllRead" xml:space="preserve">
+    <value>Segna tutto come letto</value>
+  </data>
+  <data name="EnableNotifications" xml:space="preserve">
+    <value>Attiva notifiche</value>
+  </data>
+  <data name="DisableNotifications" xml:space="preserve">
+    <value>Disattiva notifiche</value>
+  </data>
+  <data name="NotificationsEnabled" xml:space="preserve">
+    <value>Notifiche attivate</value>
+  </data>
+  <data name="NotificationsDisabled" xml:space="preserve">
+    <value>Notifiche disattivate</value>
+  </data>
+  <data name="PushNotConfigured" xml:space="preserve">
+    <value>Notifiche push non configurate</value>
+  </data>
+  <data name="CouldNotEnable" xml:space="preserve">
+    <value>Impossibile attivare le notifiche push. Controlla le impostazioni del sito nel browser se sono bloccate.</value>
+  </data>
+  <data name="ArchiveMemberConfirm" xml:space="preserve">
+    <value>Archiviare {0}?</value>
+  </data>
+  <data name="ArchiveMemberMessage" xml:space="preserve">
+    <value>Scomparirà dalla lista membri. I suoi articoli rimangono.</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archivia</value>
+  </data>
+  <data name="MemberArchived" xml:space="preserve">
+    <value>{0} archiviato.</value>
+  </data>
+  <data name="CouldNotArchive" xml:space="preserve">
+    <value>Impossibile archiviare il membro. Riprova.</value>
+  </data>
+  <data name="HouseholdMembers" xml:space="preserve">
+    <value>Membri del nucleo familiare</value>
+  </data>
+  <data name="Current" xml:space="preserve">
+    <value>Corrente</value>
+  </data>
+  <data name="TapToSwitch" xml:space="preserve">
+    <value>Tocca per cambiare</value>
+  </data>
+  <data name="AddMember" xml:space="preserve">
+    <value>Aggiungi membro</value>
+  </data>
+  <data name="MemberName" xml:space="preserve">
+    <value>Nome membro</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Colore</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Salva</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>Rinomina</value>
+  </data>
+  <data name="Unarchive" xml:space="preserve">
+    <value>Ripristina</value>
+  </data>
+  <data name="Archived" xml:space="preserve">
+    <value>Archiviati</value>
+  </data>
+  <data name="WhoIsUsing" xml:space="preserve">
+    <value>Chi sta usando questo dispositivo? I nuovi articoli sono attribuiti al membro corrente.</value>
+  </data>
+  <data name="StatusExpired" xml:space="preserve">
+    <value>Scaduto</value>
+  </data>
+  <data name="StatusExpiringSoon" xml:space="preserve">
+    <value>In scadenza</value>
+  </data>
+  <data name="StatusFresh" xml:space="preserve">
+    <value>Fresco</value>
+  </data>
+  <data name="SortByExpiry" xml:space="preserve">
+    <value>Ordina per scadenza</value>
+  </data>
+  <data name="SortByName" xml:space="preserve">
+    <value>Ordina per nome</value>
+  </data>
+  <data name="FilterByLocation" xml:space="preserve">
+    <value>Filtra per posizione</value>
+  </data>
+  <data name="FilterByStatus" xml:space="preserve">
+    <value>Filtra per stato</value>
+  </data>
+  <data name="AllLocations" xml:space="preserve">
+    <value>Tutte le posizioni</value>
+  </data>
+  <data name="AllStatuses" xml:space="preserve">
+    <value>Tutti gli stati</value>
+  </data>
+  <data name="Shortcut3Days" xml:space="preserve">
+    <value>+3 giorni</value>
+  </data>
+  <data name="Shortcut1Week" xml:space="preserve">
+    <value>+1 settimana</value>
+  </data>
+  <data name="Shortcut1Month" xml:space="preserve">
+    <value>+1 mese</value>
+  </data>
+  <data name="Shortcut6Months" xml:space="preserve">
+    <value>+6 mesi</value>
+  </data>
+  <data name="Optional" xml:space="preserve">
+    <value>Opzionale</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>Obbligatorio</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Aggiornamento disponibile</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>Ricarica</value>
+  </data>
+  <data name="ChangeUser" xml:space="preserve">
+    <value>Cambia utente</value>
+  </data>
+  <data name="NoUserSelected" xml:space="preserve">
+    <value>Nessun utente selezionato</value>
+  </data>
+  <data name="Recipes" xml:space="preserve">
+    <value>Ricette</value>
+  </data>
+  <data name="RecipeSearchPlaceholder" xml:space="preserve">
+    <value>Aggiungi ingredienti...</value>
+  </data>
+  <data name="NoRecipesFound" xml:space="preserve">
+    <value>Nessuna ricetta trovata</value>
+  </data>
+  <data name="NoRecipesDescription" xml:space="preserve">
+    <value>Prova con ingredienti diversi.</value>
+  </data>
+  <data name="SearchRecipesFailed" xml:space="preserve">
+    <value>Ricerca ricette non riuscita. Riprova.</value>
+  </data>
+  <data name="RecipeIngredients" xml:space="preserve">
+    <value>Ingredienti</value>
+  </data>
+  <data name="RecipeInstructions" xml:space="preserve">
+    <value>Preparazione</value>
+  </data>
+  <data name="Barcode" xml:space="preserve">
+    <value>Codice a barre</value>
+  </data>
+  <data name="BarcodeLinked" xml:space="preserve">
+    <value>Codice a barre collegato.</value>
+  </data>
+  <data name="LinkBarcode" xml:space="preserve">
+    <value>Collega codice a barre</value>
+  </data>
+</root>

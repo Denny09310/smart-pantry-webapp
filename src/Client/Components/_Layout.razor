@@ -1,29 +1,53 @@
 ﻿@inherits LayoutComponentBase
-@inject IStringLocalizer<UIStrings> L
+@inject LocalizationService Loc
 
-<AppHeader />
+<BbSidebarProvider>
+    <BbSidebar>
+        <BbSidebarHeader>
+            <BbSidebarHeaderContent>
+                <BbSidebarHeaderInfo>
+                    <span class="font-semibold">Smart Pantry</span>
+                </BbSidebarHeaderInfo>
+            </BbSidebarHeaderContent>
+        </BbSidebarHeader>
+        <BbSidebarContent>
+            <BbSidebarMenu>
+                <BbSidebarMenuItem>
+                    <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Tooltip="Pantry">
+                        <LucideIcon Name="package" />
+                        <span>@Loc["Pantry"]</span>
+                    </BbSidebarMenuButton>
+                </BbSidebarMenuItem>
+                <BbSidebarMenuItem>
+                    <BbSidebarMenuButton Href="/recipes" Tooltip="Recipes">
+                        <LucideIcon Name="chef-hat" />
+                        <span>@Loc["Recipes"]</span>
+                    </BbSidebarMenuButton>
+                </BbSidebarMenuItem>
+                <BbSidebarMenuItem>
+                    <BbSidebarMenuButton Href="/settings" Tooltip="Settings">
+                        <LucideIcon Name="settings" />
+                        <span>@Loc["Settings"]</span>
+                    </BbSidebarMenuButton>
+                </BbSidebarMenuItem>
+            </BbSidebarMenu>
+        </BbSidebarContent>
+    </BbSidebar>
+    <BbSidebarInset Class="space-y-4 p-4 pb-28 md:mx-auto md:w-full md:max-w-7xl md:pb-8">
+        @Body
+    </BbSidebarInset>
+</BbSidebarProvider>
 
-<main class="space-y-4 p-4 pb-28 md:pb-16">
-    @Body
-</main>
+<BottomBar />
 
-<BottomNav />
-
-<footer class="fixed inset-x-0 bottom-0 hidden border-t bg-card md:block">
-    <div
-        class="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-4 py-2 text-xs text-muted-foreground">
-        <p>@L["Layout_FooterBrand"]</p>
-        <p>@L["Layout_FooterStatus"]</p>
-    </div>
-</footer>
-
-<UpdateNotifier />
-
-<ThemeInitializer />
-
-<MemberInit />
-
+<!-- Required for portal-based components (Popover, Dialog, Select, etc.) -->
 <BbPortalHost />
+
+<!-- Required if you use ToastService to show toasts -->
 <BbToastProvider />
+
+<!-- Required if you use DialogService for programmatic confirm dialogs -->
 <BbDialogProvider />
+
+<!-- Global bottom sheet (BottomSheetService) -->
 <BottomSheetProvider />

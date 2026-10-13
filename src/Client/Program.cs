@@ -1,87 +1,35 @@
-using System.Globalization;
-
 using Bit.Brouter;
 using Bit.Butil;
-
 using BlazorBlueprint.Components;
-
 using Client.Components;
 using Client.Services;
-
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-
-using Shared.Resources;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Logging.SetMinimumLevel(LogLevel.Warning);
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-builder.Services.AddLocalization();
+builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddBitButilServices();
 builder.Services.AddBitBrouterServices(o =>
 {
     o.ViewTransitions = true;
-    o.FocusOnNavigateSelector = "h1";
 });
-builder.Services.AddBlazorBlueprintComponents();
-builder.Services.AddBitButilServices();
-builder.Services.AddBottomSheet();
 builder.Services.AddServerApi();
+builder.Services.AddBottomSheet();
 builder.Services.AddScoped<MemberService>();
-builder.Services.AddScoped<LanguageService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PantryRealtimeService>();
+builder.Services.AddLocalization();
+builder.Services.AddScoped<LocalizationService>();
 
 var host = builder.Build();
 
-try
-{
-    var culture = await host.Services.GetRequiredService<LanguageService>().ResolveAsync();
-
-    CultureInfo.DefaultThreadCurrentCulture = culture;
-    CultureInfo.DefaultThreadCurrentUICulture = culture;
-
-    // IBbLocalizer is the registered service (DefaultBbLocalizer is only
-    // its implementation): resolving the concrete type throws
-    // NoServiceRegistered and the Blueprint chrome stays English.
-    if (host.Services.GetRequiredService<IBbLocalizer>() is DefaultBbLocalizer defaults)
-        ApplyBlueprintStrings(defaults, culture);
-}
-catch (Exception ex)
-{
-    host.Services.GetRequiredService<ILoggerFactory>()
-        .CreateLogger("Startup")
-        .LogWarning(ex, "Culture boot failed.");
-}
+// Initialize localization before running
+var locService = host.Services.GetRequiredService<LocalizationService>();
+await locService.InitializeAsync();
 
 await host.RunAsync();
-
-static void ApplyBlueprintStrings(DefaultBbLocalizer localizer, CultureInfo culture)
-{
-    // The library's chrome follows the startup culture; language switches
-    // reload the page, so startup configuration is sufficient.
-    (string Key, string Resource)[] mappings =
-    [
-        ("Dialog.Close", nameof(UIStrings.Bb_DialogClose)),
-        ("Calendar.GoToPreviousMonth", nameof(UIStrings.Bb_CalendarPrev)),
-        ("Calendar.GoToNextMonth", nameof(UIStrings.Bb_CalendarNext)),
-        ("DatePicker.Placeholder", nameof(UIStrings.Bb_DatePickerPlaceholder)),
-        ("DatePicker.OpenCalendar", nameof(UIStrings.Bb_DatePickerOpen)),
-        ("Pagination.Pagination", nameof(UIStrings.Bb_Pagination)),
-        ("Pagination.Previous", nameof(UIStrings.Bb_PaginationPrev)),
-        ("Pagination.Next", nameof(UIStrings.Bb_PaginationNext)),
-        ("Pagination.MorePages", nameof(UIStrings.Bb_PaginationMore)),
-        ("Pagination.GoToFirstPage", nameof(UIStrings.Bb_PaginationFirst)),
-        ("Pagination.GoToLastPage", nameof(UIStrings.Bb_PaginationLast)),
-        ("Pagination.RowsPerPage", nameof(UIStrings.Bb_PaginationRows)),
-        ("Pagination.ShowingFormat", nameof(UIStrings.Bb_PaginationShowing)),
-        ("Pagination.PageFormat", nameof(UIStrings.Bb_PaginationPage)),
-        ("Pagination.NoItems", nameof(UIStrings.Bb_PaginationEmpty)),
-        ("DataGrid.Loading", nameof(UIStrings.Bb_GridLoading)),
-        ("DataGrid.NoResultsFound", nameof(UIStrings.Bb_GridNoResults)),
-    ];
-
-    foreach (var (key, resource) in mappings)
-        localizer.Set(key, UIStrings.Get(resource, culture));
-}

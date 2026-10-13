@@ -1,0 +1,104 @@
+using System.Net;
+using System.Text;
+using Server.Services;
+
+namespace Server.Tests;
+
+public class ProductLookupTests
+{
+    private const string Barcode = "8003590780284";
+
+    private static OpenFoodFactsProductLookupService LookupWithJson(string json, HttpStatusCode status = HttpStatusCode.OK)
+        => new(new HttpClient(new StubHandler(new HttpResponseMessage(status)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        })));
+
+    [Fact]
+    public async Task Lookup_Maps_Snake_Case_Payload()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Biscuits",
+                "brands": "TestBrand",
+                "quantity": "500 g",
+                "nutriscore_grade": "b",
+                "image_url": "https://example/img.jpg",
+                "nutriments": {
+                  "energy-kcal_100g": 450,
+                  "proteins_100g": 7.5,
+                  "carbohydrates_100g": 60,
+                  "sugars_100g": 20,
+                  "fat_100g": 18,
+                  "saturated-fat_100g": 9,
+                  "salt_100g": 0.5
+                }
+              }
+            }
+            """);
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Test Biscuits", result.Name);
+        Assert.Equal("TestBrand", result.Brand);
+        Assert.Equal(500, result.Quantity);
+        Assert.Equal("g", result.Unit);
+        Assert.Equal("B", result.NutriScore);
+        Assert.Equal("https://example/img.jpg", result.ImageUrl);
+        Assert.NotNull(result.Nutrition);
+        Assert.Equal(450, result.Nutrition.EnergyKcal);
+        Assert.Equal(7.5, result.Nutrition.Proteins);
+        Assert.Equal(0.5, result.Nutrition.Salt);
+    }
+
+    [Fact]
+    public async Task Lookup_Tolerates_String_Nutriments()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Soup",
+                "nutriments": {
+                  "energy-kcal_100g": "52,5",
+                  "salt_100g": ""
+                }
+              }
+            }
+            """);
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.Nutrition);
+        Assert.Equal(52.5, result.Nutrition.EnergyKcal);
+        Assert.Null(result.Nutrition.Salt);
+        Assert.Null(result.Nutrition.Proteins);
+    }
+
+    [Fact]
+    public async Task Lookup_Unknown_Barcode_Returns_Null()
+    {
+        var service = LookupWithJson("""{ "status": 0, "status_verbose": "product not found" }""");
+
+        Assert.Null(await service.LookupAsync(Barcode, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Lookup_Http_Failure_Returns_Null()
+    {
+        var service = LookupWithJson("{}", HttpStatusCode.InternalServerError);
+
+        Assert.Null(await service.LookupAsync(Barcode, CancellationToken.None));
+    }
+
+    private sealed class StubHandler(HttpResponseMessage response) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(response);
+    }
+}

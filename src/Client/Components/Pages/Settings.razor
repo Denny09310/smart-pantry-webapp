@@ -1,70 +1,146 @@
-@namespace Client.Components.Pages
-@using Client.Components.Shared.Members
-@inject LanguageService Languages
+@page "/settings"
+@using Client.Models
+@inject LocalizationService Loc
 @inject MemberService Members
-@inject BottomSheetService BottomSheet
-@inject IStringLocalizer<UIStrings> L
+@inject BottomSheetService Sheet
+@inject ToastService Toasts
+@implements IDisposable
 
-<div class="mx-auto w-full max-w-6xl space-y-4 p-4 md:space-y-6">
-    <header class="space-y-1">
-        <p class="text-xs font-medium uppercase text-muted-foreground">@L["Settings_Eyebrow"]</p>
-        <h1 class="text-xl font-semibold md:text-2xl">@L["Settings_Title"]</h1>
-        <p class="text-sm text-muted-foreground">@L["Settings_Description"]</p>
-    </header>
+<div class="flex h-full flex-col">
+    <div class="flex-none">
+        <h1 class="text-xl font-semibold">@Loc["Settings"]</h1>
+    </div>
 
-    <BbCard Class="p-4 md:p-6">
-        <div class="flex items-center gap-3">
-            <span
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <LucideIcon Name="globe" Size="18" />
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium">@L["Settings_LanguageLabel"]</p>
-                <p class="truncate text-xs text-muted-foreground">@L["Settings_LanguageDescription"]</p>
-            </div>
-        </div>
-        <div class="mt-4">
-            <BbSelect TValue="string" Class="w-full text-base" AriaLabel="@L["Settings_LanguageLabel"]"
-                      Value="@Languages.Current" ValueChanged="@OnLanguageChanged" Options="@_options" />
-        </div>
-    </BbCard>
+    <div class="min-h-0 flex-1 touch-pan-y space-y-6 overflow-y-auto overscroll-contain py-1 pr-1">
+        @* Language Section *@
+        <section class="space-y-3">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["Language"]</h2>
+            <BbSelect TValue="string" Value="@Loc.CurrentCulture.Name" ValueChanged="@ChangeLanguageAsync"
+                      Placeholder="@Loc["SelectLanguage"]">
+                @foreach (var culture in LocalizationService.SupportedCultures)
+                {
+                    <BbSelectItem Value="@culture.Name">
+                        <span class="flex items-center gap-2">
+                            <span class="text-lg">@GetFlagEmoji(culture.Name)</span>
+                            <span>@GetCultureDisplayName(culture.Name)</span>
+                        </span>
+                    </BbSelectItem>
+                }
+            </BbSelect>
+        </section>
 
-    <BbCard Class="p-4 md:p-6">
-        <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <LucideIcon Name="users" Size="18" />
-                </span>
-                <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium">@L["Common_SwitcherTitle"]</p>
-                    <p class="truncate text-xs text-muted-foreground">@L["Common_SwitcherDescription"]</p>
-                </div>
-            </div>
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="SwitchMemberAsync">
-                <LucideIcon Name="user-round" Size="14" />
-                @L["Common_SwitchMemberAria"]
+        @* User Section *@
+        <section class="space-y-3">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["User"]</h2>
+            
+            <BbField>
+                <BbFieldLabel Class="text-sm font-medium">@Loc["CurrentUser"]</BbFieldLabel>
+                <BbFieldContent>
+                    @if (Members.CurrentMember is { } current)
+                    {
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+                            <BbAvatar>
+                                <BbAvatarFallback
+                                    style="@($"background-color: {current.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(current.Color)}")">
+                                    @MemberDisplay.Initials(current.DisplayName)
+                                </BbAvatarFallback>
+                            </BbAvatar>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium">@current.DisplayName</p>
+                                <p class="text-xs text-muted-foreground">@Loc["Current"]</p>
+                            </div>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                      OnClick="OpenMemberManagerAsync" AriaLabel="@Loc["ChangeUser"]">
+                                <LucideIcon Name="chevron-right" Size="18" />
+                            </BbButton>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+                            <BbAvatar>
+                                <BbAvatarFallback Class="text-muted-foreground">?</BbAvatarFallback>
+                            </BbAvatar>
+                            <p class="text-muted-foreground">@Loc["NoUserSelected"]</p>
+                        </div>
+                    }
+                </BbFieldContent>
+            </BbField>
+
+            <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="OpenMemberManagerAsync">
+                <LucideIcon Name="users" Size="18" class="mr-2" />
+                @Loc["HouseholdMembers"]
             </BbButton>
-        </div>
-    </BbCard>
+        </section>
+    </div>
 </div>
 
 @code
 {
-    private static readonly IReadOnlyList<SelectOption<string>> _options =
-    [
-        new("en", "English"),
-        new("it", "Italiano"),
-    ];
-
-    private DialogOpenOptions SwitcherOptions() => new()
+    protected override void OnInitialized()
     {
-        Title = L["Common_SwitcherTitle"],
-        Description = L["Common_SwitcherDescription"],
-        Size = DialogSize.Small,
-    };
+        Members.Changed += OnChanged;
+        Loc.CultureChanged += OnCultureChanged;
+    }
 
-    private Task SwitchMemberAsync() => BottomSheet.OpenAsync<MemberSwitcher>(SwitcherOptions());
+    public void Dispose()
+    {
+        Members.Changed -= OnChanged;
+        Loc.CultureChanged -= OnCultureChanged;
+    }
 
-    private Task OnLanguageChanged(string? value)
-        => Languages.SetAsync(value ?? UIStrings.DefaultLanguage);
+    private async void OnChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async void OnCultureChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async Task ChangeLanguageAsync(string cultureName)
+    {
+        await Loc.SetCultureAsync(cultureName);
+        Toasts.Success($"{GetCultureDisplayName(cultureName)} selected");
+    }
+
+    private async Task OpenMemberManagerAsync()
+    {
+        await Sheet.OpenAsync<MemberSwitcher>();
+    }
+
+    private static string GetFlagEmoji(string cultureName)
+    {
+        return cultureName switch
+        {
+            "en-US" => "🇺🇸",
+            "it-IT" => "🇮🇹",
+            _ => "🏳️"
+        };
+    }
+
+    private static string GetCultureDisplayName(string cultureName)
+    {
+        return cultureName switch
+        {
+            "en-US" => "English",
+            "it-IT" => "Italiano",
+            _ => cultureName
+        };
+    }
 }
