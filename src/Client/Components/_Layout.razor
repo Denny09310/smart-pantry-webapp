@@ -1,5 +1,4 @@
 ﻿@inherits LayoutComponentBase
-@using Client.Resources
 @inject LocalizationService Loc
 
 <BbSidebarProvider>
@@ -20,15 +19,15 @@
                     </BbSidebarMenuButton>
                 </BbSidebarMenuItem>
                 <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/settings" Tooltip="Settings">
-                        <LucideIcon Name="settings" />
-                        <span>@Loc["Settings"]</span>
-                    </BbSidebarMenuButton>
-                </BbSidebarMenuItem>
-                <BbSidebarMenuItem>
                     <BbSidebarMenuButton Href="/recipes" Tooltip="Recipes">
                         <LucideIcon Name="chef-hat" />
                         <span>@Loc["Recipes"]</span>
+                    </BbSidebarMenuButton>
+                </BbSidebarMenuItem>
+                <BbSidebarMenuItem>
+                    <BbSidebarMenuButton Href="/settings" Tooltip="Settings">
+                        <LucideIcon Name="settings" />
+                        <span>@Loc["Settings"]</span>
                     </BbSidebarMenuButton>
                 </BbSidebarMenuItem>
             </BbSidebarMenu>
