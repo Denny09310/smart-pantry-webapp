@@ -24,10 +24,10 @@ internal sealed class FakeLocalizer(Dictionary<string, string> values) : IString
 
 internal sealed class FakeJsRuntime : IJSRuntime
 {
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[] args)
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
         => throw new NotImplementedException("JS is not available in unit tests.");
 
-    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[] args)
+    public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
         => throw new NotImplementedException("JS is not available in unit tests.");
 }
 
