@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using Server.Data;
 using Server.Data.Entities;
@@ -206,8 +207,10 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
     private ReminderWorker GetWorker()
     {
         using var scope = factory.Services.CreateScope();
-        var hosted = scope.ServiceProvider.GetServices<IHostedService>();
-        return Assert.IsType<ReminderWorker>(hosted.OfType<ReminderWorker>().Single());
+        return new ReminderWorker(
+            scope.ServiceProvider.GetRequiredService<IServiceScopeFactory>(),
+            scope.ServiceProvider.GetRequiredService<IPushSender>(),
+            NullLogger<ReminderWorker>.Instance);
     }
 
     private async Task<PantryItem> SeedItemAsync(string name, DateOnly expiration)
