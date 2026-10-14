@@ -31,9 +31,14 @@
         <div>
             <span class="mb-1 block text-sm font-medium">@Loc["SortBy"]</span>
             <BbSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="@Loc["SortBy"]">
-                <BbSelectItem Value="@ItemSort.ExpiryAsc">@Loc["SortExpiryAsc"]</BbSelectItem>
-                <BbSelectItem Value="@ItemSort.ExpiryDesc">@Loc["SortExpiryDesc"]</BbSelectItem>
-                <BbSelectItem Value="@ItemSort.Name">@Loc["SortByNameAZ"]</BbSelectItem>
+                <BbSelectTrigger>
+                    <BbSelectValue />
+                </BbSelectTrigger>
+                <BbSelectContent>
+                    <BbSelectItem Value="@ItemSort.ExpiryAsc" Text="@Loc["SortExpiryAsc"]" />
+                    <BbSelectItem Value="@ItemSort.ExpiryDesc" Text="@Loc["SortExpiryDesc"]" />
+                    <BbSelectItem Value="@ItemSort.Name" Text="@Loc["SortByNameAZ"]" />
+                </BbSelectContent>
             </BbSelect>
         </div>
     </div>

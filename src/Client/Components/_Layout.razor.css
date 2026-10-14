@@ -1,0 +1,9 @@
+@media (min-width: 768px) {
+    ::deep aside[data-side][data-variant="sidebar"] {
+        position: sticky;
+        top: 0;
+        height: 100dvh;
+        align-self: flex-start;
+        overflow-y: auto;
+    }
+}
