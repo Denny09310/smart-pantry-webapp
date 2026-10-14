@@ -1,3 +1,17 @@
+## [1.3.3] - 2026-10-14
+
+### ✨ Features
+
+- Delete archived members (confirmation dialog; their items keep working with nulled attribution)
+
+### 🧹 Refactoring & Chores
+
+- Split large components (`ItemDetailsBody`, `RecipeDetailBody`) into Header/Content/Actions sub-components
+- Organized folder structure: components used by one page now live under that page's subfolder
+- Prettified `Program.cs` (Client & Server) with categorized service registration sections
+- `LocalStorage` via Bit.Butil instead of raw JS interop
+- Removed redundant `@using Client.Resources` from pages/components
+
 ## [1.3.2] - 2026-10-14
 
 ### 🐛 Bug Fixes
