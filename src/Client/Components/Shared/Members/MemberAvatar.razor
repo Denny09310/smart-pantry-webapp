@@ -3,7 +3,7 @@
 @inject PantryRealtimeService Realtime
 @implements IDisposable
 
-<span class="relative @WrapperClass">
+<span class="relative flex @WrapperClass">
     <BbAvatar Class="@AvatarClass">
         <BbAvatarFallback Class="@FallbackClass"
                           style="@($"background-color: {Member?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Member?.Color)}")">
