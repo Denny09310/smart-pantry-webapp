@@ -48,17 +48,19 @@
                 <div class="space-y-2">
                     <BbLabel Class="text-sm font-medium">@Loc["QuantityAndUnit"]</BbLabel>
 
-                    <div class="flex items-center justify-between rounded-lg bg-muted p-1">
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                                  AriaLabel="@Loc["Quantity"]" OnClick="DecrementQuantity">
+                    <div class="flex items-center justify-between">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                                  AriaLabel="@Loc["DecreaseQuantity"]" OnClick="DecrementQuantity">
                             <LucideIcon Name="minus" Size="16" />
                         </BbButton>
                         <div class="flex flex-col items-center leading-none">
-                            <span class="text-base font-semibold" aria-live="polite">@_state.Input.Quantity</span>
+                            <input type="number" @bind-value="_state.Input.Quantity" @bind-value:event="oninput"
+                                   class="bg-transparent border-0 outline-none text-base font-semibold text-center w-16"
+                                   min="0" max="9999" step="1" aria-label="@Loc["Quantity"]" />
                             <span class="text-xs text-muted-foreground">@_state.Input.Unit</span>
                         </div>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                                  AriaLabel="@Loc["Quantity"]" OnClick="IncrementQuantity">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                                  AriaLabel="@Loc["IncreaseQuantity"]" OnClick="IncrementQuantity">
                             <LucideIcon Name="plus" Size="16" />
                         </BbButton>
                     </div>

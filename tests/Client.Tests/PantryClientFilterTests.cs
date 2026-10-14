@@ -17,7 +17,7 @@ public class PantryClientFilterTests
         string name = "Milk",
         string location = "fridge",
         DateOnly? expiration = null)
-        => new(id, name, 1, "pcs", location, null, expiration ?? Today.AddDays(3), null, null, null, null);
+        => new(id, name, 1, "pcs", location, null, expiration ?? Today.AddDays(3), null, null, null, null, null, null);
 
     [Fact]
     public void MatchesFilters_AllPassesEverything()

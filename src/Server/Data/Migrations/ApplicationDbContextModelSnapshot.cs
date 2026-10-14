@@ -162,6 +162,14 @@ namespace Server.Data.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("barcode");
 
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<string>("ConsumedByMemberId")
+                        .HasColumnType("text")
+                        .HasColumnName("consumed_by_member_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");

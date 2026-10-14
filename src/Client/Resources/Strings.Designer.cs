@@ -844,6 +844,42 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a {0} marked as used..
+        /// </summary>
+        public static string ItemMarkedAsUsed {
+            get {
+                return ResourceManager.GetString("ItemMarkedAsUsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Couldn&apos;t mark item as used. Try again..
+        /// </summary>
+        public static string CouldNotMarkAsUsed {
+            get {
+                return ResourceManager.GetString("CouldNotMarkAsUsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Mark as used.
+        /// </summary>
+        public static string MarkAsUsed {
+            get {
+                return ResourceManager.GetString("MarkAsUsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Used.
+        /// </summary>
+        public static string Used {
+            get {
+                return ResourceManager.GetString("Used", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a {0} items.
         /// </summary>
         public static string ItemsCount {
@@ -1240,6 +1276,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Decrease quantity.
+        /// </summary>
+        public static string DecreaseQuantity {
+            get {
+                return ResourceManager.GetString("DecreaseQuantity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Increase quantity.
+        /// </summary>
+        public static string IncreaseQuantity {
+            get {
+                return ResourceManager.GetString("IncreaseQuantity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Ingredients.
         /// </summary>
         public static string RecipeIngredients {
@@ -1524,6 +1578,15 @@ namespace Client.Resources {
         public static string SortByNameAZ {
             get {
                 return ResourceManager.GetString("SortByNameAZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Include consumed items.
+        /// </summary>
+        public static string IncludeConsumedItems {
+            get {
+                return ResourceManager.GetString("IncludeConsumedItems", resourceCulture);
             }
         }
         
