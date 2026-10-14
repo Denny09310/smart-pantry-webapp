@@ -1,16 +1,19 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+
 using Server.Data;
 using Server.Data.Entities;
 using Server.Endpoints;
 using Server.Models;
 using Server.Services;
+
 using Shared.Models;
 
 namespace Server.Tests;

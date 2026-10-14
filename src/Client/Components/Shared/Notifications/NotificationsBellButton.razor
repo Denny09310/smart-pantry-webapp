@@ -1,9 +1,10 @@
 @namespace Client.Components
 @inject NotificationService Notifications
 @inject BottomSheetService Sheet
+@inject LocalizationService Loc
 @implements IDisposable
 
-<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="Open notifications" OnClick="OpenAsync">
+<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["Notifications"]" OnClick="OpenAsync">
     @if (Notifications.Unread > 0)
     {
         <BbNotificationBadge Count="@Notifications.Unread">

@@ -1,5 +1,7 @@
 using Client.Services.Api;
+
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
 using Refit;
 
 namespace Client.Services;

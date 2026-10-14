@@ -1,5 +1,6 @@
 @namespace Client.Components
 @using BlazorBlueprint.Primitives.SwipeArea
+@inject LocalizationService Loc
 
 <BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY" OnSwipe="HandleSwipe"
              OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
@@ -8,14 +9,14 @@
             <button type="button" @onclick="ViewAsync"
                     class="flex w-[66px] flex-col items-center justify-center gap-1 bg-secondary text-secondary-foreground">
                 <LucideIcon Name="eye" Size="18" />
-                <span class="text-xs">View</span>
+                <span class="text-xs">@Loc["View"]</span>
             </button>
             @if (Item.ReadAt is null)
             {
                 <button type="button" @onclick="MarkReadAsync"
                         class="flex w-[66px] flex-col items-center justify-center gap-1 bg-primary text-primary-foreground">
                     <LucideIcon Name="check" Size="18" />
-                    <span class="text-xs">Read</span>
+                    <span class="text-xs">@Loc["MarkRead"]</span>
                 </button>
             }
         </div>
@@ -29,7 +30,7 @@
             <span class="min-w-0 flex-1">
                 <span class="block truncate text-sm font-medium">@Item.ItemName</span>
                 <span class="block text-xs text-muted-foreground">
-                    Expires @Item.ExpirationDate.ToString("MMM d") · @Ago(Item.CreatedAt)
+                    @Loc["ExpiresAt", Item.ExpirationDate.ToString("MMM d")] · @Ago(Item.CreatedAt)
                 </span>
             </span>
         </button>
@@ -109,18 +110,18 @@
         await OnMarkRead.InvokeAsync(Item);
     }
 
-    private static string Ago(DateTimeOffset created)
+    private string Ago(DateTimeOffset created)
     {
         var age = DateTimeOffset.UtcNow - created;
 
         if (age.TotalMinutes < 1)
-            return "just now";
+            return Loc["JustNow"];
         if (age.TotalHours < 1)
-            return $"{(int)age.TotalMinutes}m ago";
+            return Loc["MinutesAgo", (int)age.TotalMinutes];
         if (age.TotalDays < 1)
-            return $"{(int)age.TotalHours}h ago";
+            return Loc["HoursAgo", (int)age.TotalHours];
         if (age.TotalDays < 7)
-            return $"{(int)age.TotalDays}d ago";
+            return Loc["DaysAgo", (int)age.TotalDays];
 
         return created.LocalDateTime.ToString("MMM d");
     }

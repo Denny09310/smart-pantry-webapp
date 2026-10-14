@@ -7,8 +7,8 @@
 
 <div class="flex h-full flex-col">
     <div class="flex flex-none items-start justify-between gap-2">
-        <h2 class="text-lg font-semibold">Item details</h2>
-        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" AriaLabel="Close"
+        <h2 class="text-lg font-semibold">@Loc["ItemDetails"]</h2>
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" AriaLabel="@Loc["Close"]"
                   @onclick="() => Sheet.CloseAsync()">
             <LucideIcon Name="x" Size="16" />
         </BbButton>
@@ -26,13 +26,13 @@
         else if (_state.Error is not null)
         {
             <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
-                <p class="text-sm">Couldn't load the item. Try again.</p>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">Retry</BbButton>
+                <p class="text-sm">@Loc["CouldNotLoad"]</p>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">@Loc["Retry"]</BbButton>
             </div>
         }
         else if (_state.Item is null)
         {
-            <BbEmpty Title="Item not found" Description="It may have been deleted">
+            <BbEmpty Title="@Loc["ItemNotFound"]" Description="@Loc["ItemGoneDescription"]">
                 <Icon>
                     <LucideIcon Name="search" Size="24" />
                 </Icon>
@@ -51,17 +51,17 @@
 
             <dl class="space-y-2 rounded-md border p-4 text-sm">
                 <div class="flex justify-between gap-2">
-                    <dt class="text-muted-foreground">Quantity</dt>
+                    <dt class="text-muted-foreground">@Loc["Quantity"]</dt>
                     <dd>@_state.Item.Quantity @_state.Item.Unit</dd>
                 </div>
                 <div class="flex justify-between gap-2">
-                    <dt class="text-muted-foreground">Expires on</dt>
+                    <dt class="text-muted-foreground">@Loc["ExpiresOn"]</dt>
                     <dd>@_state.Item.ExpirationDate.ToString("MMM d, yyyy")</dd>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(_state.Item.Notes))
                 {
                     <div class="space-y-1">
-                        <dt class="text-muted-foreground">Notes</dt>
+                        <dt class="text-muted-foreground">@Loc["Notes"]</dt>
                         <dd>@_state.Item.Notes</dd>
                     </div>
                 }
@@ -141,9 +141,9 @@
         <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
             <BbButton Variant="ButtonVariant.Outline" @onclick="OpenEditAsync">
                 <LucideIcon Name="pencil" Size="16" />
-                Edit
+                @Loc["Edit"]
             </BbButton>
-            <BbButton Variant="ButtonVariant.Destructive" @onclick="DeleteAsync">Delete</BbButton>
+            <BbButton Variant="ButtonVariant.Destructive" @onclick="DeleteAsync">@Loc["Delete"]</BbButton>
         </div>
     }
 </div>

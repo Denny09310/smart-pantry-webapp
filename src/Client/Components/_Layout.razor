@@ -2,7 +2,7 @@
 @inject LocalizationService Loc
 
 <BbSidebarProvider>
-    <BbSidebar>
+    <BbSidebar style="view-transition-name: sidebar;">
         <BbSidebarHeader>
             <BbSidebarHeaderContent>
                 <BbSidebarHeaderInfo>
@@ -13,19 +13,19 @@
         <BbSidebarContent>
             <BbSidebarMenu>
                 <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Tooltip="Pantry">
+                    <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Tooltip="@Loc["Pantry"]">
                         <LucideIcon Name="package" />
                         <span>@Loc["Pantry"]</span>
                     </BbSidebarMenuButton>
                 </BbSidebarMenuItem>
                 <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/recipes" Tooltip="Recipes">
+                    <BbSidebarMenuButton Href="/recipes" Tooltip="@Loc["Recipes"]">
                         <LucideIcon Name="chef-hat" />
                         <span>@Loc["Recipes"]</span>
                     </BbSidebarMenuButton>
                 </BbSidebarMenuItem>
                 <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/settings" Tooltip="Settings">
+                    <BbSidebarMenuButton Href="/settings" Tooltip="@Loc["Settings"]">
                         <LucideIcon Name="settings" />
                         <span>@Loc["Settings"]</span>
                     </BbSidebarMenuButton>

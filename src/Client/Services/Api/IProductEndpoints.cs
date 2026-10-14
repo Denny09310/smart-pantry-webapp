@@ -1,4 +1,5 @@
 using Refit;
+
 using Shared.Models;
 
 namespace Client.Services.Api;

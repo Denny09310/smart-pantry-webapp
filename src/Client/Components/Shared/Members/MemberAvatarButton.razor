@@ -5,25 +5,27 @@
 @inject DialogService Dialogs
 @inject ToastService Toasts
 @inject ILogger<MemberAvatarButton> Logger
+@inject LocalizationService Loc
 @implements IDisposable
 
-<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="Switch member"
+<BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["SwitchUser"]"
           OnClick="OpenSwitcherAsync">
-    <BbAvatar Class="h-6 w-6">
-        <BbAvatarFallback Class="text-[10px]"
-                          style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
-            @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.DisplayName) : "?")
-        </BbAvatarFallback>
-    </BbAvatar>
+    <MemberAvatar Member="Members.CurrentMember" AvatarClass="h-6 w-6" FallbackClass="text-[10px]" />
 </BbButton>
 
 @code
 {
-    protected override void OnInitialized() => Members.Changed += OnChanged;
+    protected override void OnInitialized()
+    {
+        Members.Changed += OnMembersChanged;
+    }
 
-    public void Dispose() => Members.Changed -= OnChanged;
+    public void Dispose()
+    {
+        Members.Changed -= OnMembersChanged;
+    }
 
-    private async void OnChanged()
+    private async void OnMembersChanged()
     {
         try
         {
@@ -43,9 +45,9 @@
             return;
 
         var confirmed = await Dialogs.ConfirmAsync(
-            $"Archive {member.DisplayName}?",
-            "They will disappear from the member list. Their items stay.",
-            new ConfirmDialogOptions { ConfirmText = "Archive", Destructive = true });
+            Loc["ArchiveMemberConfirm", member.DisplayName],
+            Loc["ArchiveMemberMessage"],
+            new ConfirmDialogOptions { ConfirmText = Loc["Archive"], Destructive = true });
 
         if (!confirmed.Confirmed)
             return;
@@ -55,16 +57,16 @@
             var updated = await Members.UpdateMemberAsync(member.Id, member.DisplayName, member.Color, true);
             if (updated is null)
             {
-                Toasts.Error("Couldn't archive the member. Try again.");
+                Toasts.Error(Loc["CouldNotArchive"]);
                 return;
             }
 
-            Toasts.Success($"{member.DisplayName} archived.");
+            Toasts.Success(Loc["MemberArchived", member.DisplayName]);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Member {MemberId} archive failed", member.Id);
-            Toasts.Error("Couldn't archive the member. Try again.");
+            Toasts.Error(Loc["CouldNotArchive"]);
         }
     }
 }

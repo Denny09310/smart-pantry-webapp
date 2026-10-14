@@ -5,12 +5,13 @@
 @inject BottomSheetService Sheet
 @inject ToastService Toasts
 @inject ILogger<MemberForm> Logger
+@inject LocalizationService Loc
 
 <div class="flex h-full flex-col">
     <div class="flex-none">
-        <h2 class="text-lg font-semibold">@(EditMember is null ? "Add member" : "Edit member")</h2>
+        <h2 class="text-lg font-semibold">@(EditMember is null ? Loc["AddMember"] : Loc["EditMember"])</h2>
         <p class="text-sm text-muted-foreground">
-            @(EditMember is null ? "Someone new in the household." : "Update the profile.")
+            @(EditMember is null ? Loc["AddMemberSubtitle"] : Loc["EditMemberSubtitle"])
         </p>
     </div>
 
@@ -19,7 +20,7 @@
 
         <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
             <BbField IsInvalid="@(!context.IsValid(() => Input.DisplayName))">
-                <BbFieldLabel For="member-name" Class="text-sm font-medium">Display name *</BbFieldLabel>
+                <BbFieldLabel For="member-name" Class="text-sm font-medium">@Loc["MemberName"] <span class="text-xs text-muted-foreground">@Loc["Required"]</span></BbFieldLabel>
                 <BbFieldContent>
                     <BbInputGroup Class="bg-card">
                         <BbInputGroupInput Id="member-name" @bind-Value="Input.DisplayName" Placeholder="e.g. Alex"
@@ -30,11 +31,11 @@
             </BbField>
 
             <div class="space-y-2">
-                <BbLabel Class="text-sm font-medium">Color</BbLabel>
+                <BbLabel Class="text-sm font-medium">@Loc["Color"]</BbLabel>
                 <div class="flex flex-wrap gap-2">
                     @foreach (var color in Palette)
                     {
-                        <button type="button" aria-label="@($"Use color {color}")" @onclick="@(() => Input.Color = color)"
+                        <button type="button" aria-label="@Loc["UseColor", color]" @onclick="@(() => Input.Color = color)"
                                 class="@ColorClass(color)" style="background-color: @color">
                             @if (Input.Color == color)
                             {
@@ -48,13 +49,13 @@
 
         <div class="flex-none space-y-1 border-t pt-3">
             <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_saving">
-                <ChildContent>@(EditMember is null ? "Save member" : "Save changes")</ChildContent>
+                <ChildContent>@(EditMember is null ? Loc["SaveMember"] : Loc["SaveChanges"])</ChildContent>
             </BbButton>
             @if (AllowCancel)
             {
                 <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
                           OnClick="() => Sheet.CloseAsync()">
-                    Cancel
+                    @Loc["Cancel"]
                 </BbButton>
             }
         </div>
@@ -113,7 +114,7 @@
 
             if (saved is null)
             {
-                Toasts.Error("Couldn't save the member. Try again.");
+                Toasts.Error(Loc["CouldNotSaveMember"]);
                 return;
             }
 

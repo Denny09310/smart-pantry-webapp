@@ -1,4 +1,5 @@
 using System.Text.Json;
+
 using Refit;
 
 namespace Client.Services;

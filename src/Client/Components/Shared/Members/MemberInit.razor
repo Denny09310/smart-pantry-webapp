@@ -2,6 +2,7 @@
 @inject MemberService Members
 @inject ToastService Toasts
 @inject BottomSheetService Sheet
+@inject LocalizationService Loc
 
 @code
 {
@@ -17,7 +18,7 @@
 
         if (Members.LoadFailed)
         {
-            Toasts.Error("Couldn't load household members.");
+            Toasts.Error(Loc["MembersLoadFailed"]);
             return;
         }
 

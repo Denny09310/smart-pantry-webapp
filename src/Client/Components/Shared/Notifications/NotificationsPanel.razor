@@ -4,21 +4,22 @@
 @inject BottomSheetService Sheet
 @inject ToastService Toasts
 @inject ILogger<NotificationsPanel> Logger
+@inject LocalizationService Loc
 @implements IDisposable
 
-<div class="flex h-full flex-col">
+<div class="flex h-full flex-col gap-4">
     <div class="flex flex-none items-center justify-between gap-2">
-        <h2 class="text-lg font-semibold">Notifications</h2>
+        <h2 class="text-lg font-semibold">@Loc["Notifications"]</h2>
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
                   Disabled="@(_unread == 0)" @onclick="MarkAllReadAsync">
-            Mark all read
+            @Loc["MarkAllRead"]
         </BbButton>
     </div>
 
     <div class="flex items-center justify-between rounded-lg border p-4">
         <div class="space-y-0.5">
-            <BbLabel>Notifications</BbLabel>
-            <p class="text-sm text-muted-foreground">Enable push notifications</p>
+            <BbLabel>@Loc["Notifications"]</BbLabel>
+            <p class="text-sm text-muted-foreground">@Loc["EnablePushDescription"]</p>
         </div>
         <BbSwitch Checked="Notifications.Enabled" CheckedChanged="ToggleNotificationsAsync" />
     </div>
@@ -27,9 +28,7 @@
         <InfiniteScrollList TItem="NotificationDto" @ref="_list" LoadPageAsync="LoadPageAsync"
                             KeySelector="@(x => x.Id)" PageSize="20">
             <ItemTemplate>
-                <div class="mb-2">
-                    <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
-                </div>
+                <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
             </ItemTemplate>
             <LoadingTemplate>
                 <div class="space-y-2" aria-hidden="true">
@@ -38,7 +37,7 @@
                 </div>
             </LoadingTemplate>
             <EmptyTemplate>
-                <BbEmpty Title="All caught up" Description="New expiry reminders will appear here">
+                <BbEmpty Title="@Loc["AllCaughtUp"]" Description="@Loc["RemindersAppearHere"]">
                     <Icon>
                         <LucideIcon Name="bell" Size="24" />
                     </Icon>
@@ -113,7 +112,7 @@
         if (value)
         {
             if (!await Notifications.EnableAsync())
-                Toasts.Warning("Couldn't enable push notifications. Check the browser site settings if they are blocked.");
+                Toasts.Warning(Loc["CouldNotEnable"]);
         }
         else
         {

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
+
 using Server.Data;
 using Server.Hubs;
 using Server.Models;
 using Server.Services;
+
 using Shared.Validation;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,7 @@ builder.Services.AddHealthChecks()
 builder.Services.AddMemoryCache();
 builder.Services.AddVapidOptions(builder.Configuration);
 builder.Services.AddSingleton<IPushSender, WebPushSender>();
+builder.Services.AddSingleton<PresenceTracker>();
 builder.Services.AddHostedService<ReminderWorker>();
 
 builder.Services.AddHttpClient<IProductLookupService, OpenFoodFactsProductLookupService>(

@@ -13,7 +13,7 @@
     <div class="flex-none">
         <h2 class="text-lg font-semibold">@(Item is null ? Loc["AddItemTitle"] : Loc["EditItemTitle"])</h2>
         <p class="text-sm text-muted-foreground">
-            @(Item is null ? "Register a new batch with its expiry date." : "Update the batch details.")
+            @(Item is null ? Loc["AddItemSubtitle"] : Loc["EditItemSubtitle"])
         </p>
     </div>
 

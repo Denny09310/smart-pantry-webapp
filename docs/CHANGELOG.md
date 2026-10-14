@@ -1,3 +1,25 @@
+## [1.3.0] - 2026-10-14
+
+### 🚀 Features
+
+- Member presence with activity dots on avatars over the realtime hub
+- Granular realtime list patching instead of full reloads
+- Pull-to-refresh on the Home and Recipes lists, with body scroll lock while sheets are open
+- Bottom sheet drag from the full handle row
+- Recipes page with page scroll and horizontal cards on mobile
+- BlazorBlueprint component chrome localized through a scoped localizer
+- Client.Tests suite covering expiry, members, realtime filter mirror, outbox and connectivity
+- Transparent maskable PWA icon for the Android splash screen
+
+### 🐛 Bug Fixes
+
+- Runtime culture switch crash via full globalization data
+- Recipe results trapped in a non-scrolling container
+- Sidebar animating with page view transitions
+- Sheet drag dead on touch from scoped touch-action CSS
+- Presence dot detached from avatars in the member list
+- Styled select with binding instead of the native select in filters
+
 ## [1.2.0] - 2026-10-13
 
 ### 🚀 Features

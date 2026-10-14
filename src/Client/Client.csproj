@@ -8,6 +8,7 @@
 	  <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
     <SupportedCultures>en-US;it-IT</SupportedCultures>
     <DefaultCulture>en-US</DefaultCulture>
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <BitButilTrimScripts>false</BitButilTrimScripts>
   </PropertyGroup>
 

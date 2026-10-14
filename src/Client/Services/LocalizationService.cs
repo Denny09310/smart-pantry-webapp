@@ -1,7 +1,9 @@
+using System.Globalization;
+
+using Client.Resources;
+
 using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
-using Client.Resources;
-using System.Globalization;
 
 namespace Client.Services;
 

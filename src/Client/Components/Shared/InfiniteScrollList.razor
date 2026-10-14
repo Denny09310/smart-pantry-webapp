@@ -2,19 +2,20 @@
 @typeparam TItem
 @using Bit.Butil
 @inject IJSRuntime JS
+@inject LocalizationService Loc
 @implements IAsyncDisposable
 
 @if (_state.Error is not null)
 {
     <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
-        <p class="text-sm">Couldn't load more items. Try again.</p>
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadNextAsync">Retry</BbButton>
+        <p class="text-sm">@Loc["LoadMoreFailed"]</p>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadNextAsync">@Loc["Retry"]</BbButton>
     </div>
 }
 
 @foreach (var item in _state.Items)
 {
-    <div @key="@(KeySelector?.Invoke(item) ?? item)">
+    <div @key="@(KeySelector?.Invoke(item) ?? item)" class="mb-2">
         @ItemTemplate(item)
     </div>
 }
@@ -27,7 +28,7 @@
     }
     else
     {
-        <p class="py-2 text-center text-sm text-muted-foreground">Loading…</p>
+        <p class="py-2 text-center text-sm text-muted-foreground">@Loc["LoadingState"]</p>
     }
 }
 else if (_state.Error is null && _state.Items.Count == 0)
@@ -108,6 +109,71 @@ else if (_state.Error is null && _state.Items.Count == 0)
             await LoadNextAsync();
     }
 
+    /// <summary>
+    /// Drops the row with the given key without refetching. The query total
+    /// only shrinks when a loaded row actually disappears; a later page load
+    /// re-syncs it from the server either way.
+    /// </summary>
+    public async Task<bool> RemoveByKeyAsync(object? key)
+    {
+        var index = FindIndex(key);
+        if (index < 0)
+            return false;
+
+        _state.Items.RemoveAt(index);
+        _state.Total = Math.Max(0, _state.Total - 1);
+        await TotalChanged.InvokeAsync(_state.Total);
+        StateHasChanged();
+        return true;
+    }
+
+    /// <summary>Replaces the loaded row with the same key, if present.</summary>
+    public Task<bool> ReplaceAsync(TItem item)
+    {
+        var index = FindIndex(KeySelector?.Invoke(item));
+        if (index < 0)
+            return Task.FromResult(false);
+
+        _state.Items[index] = item;
+        StateHasChanged();
+        return Task.FromResult(true);
+    }
+
+    /// <summary>
+    /// Inserts one item at its sorted position and bumps the total. Only call
+    /// when <see cref="IsFullyLoaded"/> — otherwise the position is a guess
+    /// and the caller should <see cref="ReloadAsync"/> instead.
+    /// </summary>
+    public async Task InsertSortedAsync(TItem item, Comparison<TItem> comparison)
+    {
+        var index = _state.Items.FindIndex(x => comparison(item, x) < 0);
+        if (index < 0)
+            _state.Items.Add(item);
+        else
+            _state.Items.Insert(index, item);
+
+        _state.Total++;
+        await TotalChanged.InvokeAsync(_state.Total);
+        StateHasChanged();
+    }
+
+    /// <summary>True when every row is loaded with no error or pending load.</summary>
+    public bool IsFullyLoaded => !_state.HasMore && !_state.Loading && _state.Error is null;
+
+    private int FindIndex(object? key)
+    {
+        if (KeySelector is null || key is null)
+            return -1;
+
+        for (var i = 0; i < _state.Items.Count; i++)
+        {
+            if (Equals(KeySelector(_state.Items[i]), key))
+                return i;
+        }
+
+        return -1;
+    }
+
     private Task LoadNextAsync()
     {
         if (_state.Loading || !_state.HasMore || _state.Disposed)
@@ -135,7 +201,25 @@ else if (_state.Error is null && _state.Items.Count == 0)
             if (generation != _state.Generation || _state.Disposed)
                 return;
 
-            _state.Items.AddRange(page.Items);
+            // A granular patch may have inserted rows while this page was in
+            // flight: skip anything already loaded instead of duplicating it.
+            if (KeySelector is not null)
+            {
+                var known = new HashSet<object?>();
+                foreach (var existing in _state.Items)
+                    known.Add(KeySelector(existing));
+
+                foreach (var item in page.Items)
+                {
+                    if (known.Add(KeySelector(item)))
+                        _state.Items.Add(item);
+                }
+            }
+            else
+            {
+                _state.Items.AddRange(page.Items);
+            }
+
             _state.Total = page.Total;
             await TotalChanged.InvokeAsync(_state.Total);
         }

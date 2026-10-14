@@ -21,7 +21,7 @@ function afterTransition(element) {
 
 class Sheet {
     #inner;
-    #handle;
+    #dragEl;
     #dotNet;
     #snaps;
     #index;
@@ -31,7 +31,9 @@ class Sheet {
 
     constructor(inner, handle, dotNet, snapPoints, initialIndex) {
         this.#inner = inner;
-        this.#handle = handle;
+        // The whole sheet head is draggable: bodies mark their header with
+        // data-sheet-drag, otherwise the grip handle is the drag surface.
+        this.#dragEl = inner.querySelector('[data-sheet-drag]') ?? handle;
         this.#dotNet = dotNet;
         this.#snaps = [...snapPoints]
             .map(Number)
@@ -72,6 +74,7 @@ class Sheet {
         this.#abort = null;
         if (active === this) {
             active = null;
+            restoreBodyScroll();
         }
     }
 
@@ -86,7 +89,7 @@ class Sheet {
     #attach() {
         this.#abort = new AbortController();
         const options = { signal: this.#abort.signal };
-        this.#handle.addEventListener('pointerdown', (event) => this.#onDown(event), options);
+        this.#dragEl.addEventListener('pointerdown', (event) => this.#onDown(event), options);
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 this.#notify(ON_ESCAPE);
@@ -102,22 +105,27 @@ class Sheet {
         if (event.button !== undefined && event.button !== 0) {
             return;
         }
+        // Interactive content keeps working: buttons, fields and links in
+        // the head must not start a sheet drag (or swallow their click).
+        if (event.target.closest?.('button, a, input, select, textarea, [contenteditable="true"], [data-nodrag]')) {
+            return;
+        }
         event.preventDefault();
-        this.#handle.setPointerCapture(event.pointerId);
+        this.#dragEl.setPointerCapture(event.pointerId);
         this.#drag = { startY: event.clientY };
         this.#moves = [{ t: performance.now(), y: event.clientY }];
         this.#inner.classList.add('sheet-drag');
 
         const move = (moveEvent) => this.#onMove(moveEvent);
         const up = (upEvent) => {
-            this.#handle.removeEventListener('pointermove', move);
-            this.#handle.removeEventListener('pointerup', up);
-            this.#handle.removeEventListener('pointercancel', up);
+            this.#dragEl.removeEventListener('pointermove', move);
+            this.#dragEl.removeEventListener('pointerup', up);
+            this.#dragEl.removeEventListener('pointercancel', up);
             this.#onUp(upEvent);
         };
-        this.#handle.addEventListener('pointermove', move);
-        this.#handle.addEventListener('pointerup', up);
-        this.#handle.addEventListener('pointercancel', up);
+        this.#dragEl.addEventListener('pointermove', move);
+        this.#dragEl.addEventListener('pointerup', up);
+        this.#dragEl.addEventListener('pointercancel', up);
     }
 
     #onMove(event) {
@@ -185,10 +193,26 @@ class Sheet {
 }
 
 let active = null;
+let savedBodyOverflow = null;
+
+function lockBodyScroll() {
+    if (savedBodyOverflow === null) {
+        savedBodyOverflow = document.body.style.overflow;
+    }
+    document.body.style.overflow = 'hidden';
+}
+
+function restoreBodyScroll() {
+    if (savedBodyOverflow !== null) {
+        document.body.style.overflow = savedBodyOverflow;
+        savedBodyOverflow = null;
+    }
+}
 
 export function show(inner, handle, dotNet, snapPoints, initialSnapIndex) {
     active?.teardown();
     active = new Sheet(inner, handle, dotNet, snapPoints, initialSnapIndex ?? 0);
+    lockBodyScroll();
     active.enter();
 }
 

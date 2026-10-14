@@ -1,0 +1,49 @@
+@namespace Client.Components
+@using Client.Models
+@inject PantryRealtimeService Realtime
+@implements IDisposable
+
+<span class="relative flex @WrapperClass">
+    <BbAvatar Class="@AvatarClass">
+        <BbAvatarFallback Class="@FallbackClass"
+                          style="@($"background-color: {Member?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Member?.Color)}")">
+            @(Member is { } member ? MemberDisplay.Initials(member.DisplayName) : "?")
+        </BbAvatarFallback>
+    </BbAvatar>
+    @if (Member is not null && Realtime.IsMemberOnline(Member.Id))
+    {
+        <span aria-hidden="true" class="absolute h-2 w-2 rounded-full"
+              style="bottom:-2px;right:-2px;background-color:#10b981;box-shadow:0 0 0 2px var(--background)"></span>
+    }
+</span>
+
+@code
+{
+    [Parameter]
+    public HouseholdMemberDto? Member { get; set; }
+
+    [Parameter]
+    public string AvatarClass { get; set; } = string.Empty;
+
+    [Parameter]
+    public string FallbackClass { get; set; } = string.Empty;
+
+    [Parameter]
+    public string WrapperClass { get; set; } = string.Empty;
+
+    protected override void OnInitialized() => Realtime.PresenceChanged += OnPresenceChanged;
+
+    public void Dispose() => Realtime.PresenceChanged -= OnPresenceChanged;
+
+    private async void OnPresenceChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+}
