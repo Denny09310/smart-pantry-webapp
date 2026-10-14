@@ -6,65 +6,66 @@
 @inject LocalizationService Loc
 @implements IDisposable
 
-<div class="space-y-3">
-    <div>
-        <h1 class="text-xl font-semibold">@Loc["Recipes"]</h1>
-    </div>
+<PullToRefresh OnRefresh="RefreshRecipesAsync">
+    <div class="space-y-3">
+        <div>
+            <h1 class="text-xl font-semibold">@Loc["Recipes"]</h1>
+        </div>
 
-    <BbTagInput @bind-Tags="_tags" @bind-Tags:after="OnTagsChanged"
-                Placeholder="@Loc["RecipeSearchPlaceholder"]"
-                MaxTags="5" Clearable
-                OnSearchSuggestions="SearchSuggestionsAsync"
-                AriaLabel="@Loc["Recipes"]" />
+        <BbTagInput @bind-Tags="_tags" @bind-Tags:after="OnTagsChanged" Placeholder="@Loc["RecipeSearchPlaceholder"]"
+                    MaxTags="5" Clearable OnSearchSuggestions="SearchSuggestionsAsync" AriaLabel="@Loc["Recipes"]" />
 
-    @if (_loading)
-    {
-        <div class="space-y-2 md:grid md:grid-cols-3 md:gap-3 md:space-y-0" aria-hidden="true">
-            @for (var i = 0; i < 6; i++)
-            {
-                <div class="bg-card flex gap-3 overflow-hidden rounded-xl border p-2.5 md:block md:p-0">
-                    <BbSkeleton Height="80px" Class="w-20 flex-none rounded-lg md:h-auto md:w-full md:aspect-square md:rounded-none" />
-                    <div class="min-w-0 flex-1 space-y-1.5 md:p-2.5">
-                        <BbSkeleton Height="14px" Class="w-full" />
-                        <BbSkeleton Height="14px" Class="w-2/3" />
+        @if (_loading)
+        {
+            <div class="space-y-2 md:grid md:grid-cols-3 md:gap-3 md:space-y-0" aria-hidden="true">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="bg-card flex gap-3 overflow-hidden rounded-xl border p-2.5 md:block md:p-0">
+                        <BbSkeleton Height="80px"
+                                    Class="w-20 flex-none rounded-lg md:h-auto md:w-full md:aspect-square md:rounded-none" />
+                        <div class="min-w-0 flex-1 space-y-1.5 md:p-2.5">
+                            <BbSkeleton Height="14px" Class="w-full" />
+                            <BbSkeleton Height="14px" Class="w-2/3" />
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
-    else if (_meals.Count > 0)
-    {
-        <div class="space-y-2 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
-            @foreach (var meal in _meals)
-            {
-                <button type="button" @onclick="() => OpenDetailsAsync(meal.Id)"
-                        class="bg-card flex w-full gap-3 overflow-hidden rounded-xl border p-2.5 text-left transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring md:block md:p-0">
-                    @if (!string.IsNullOrWhiteSpace(meal.Thumbnail))
-                    {
-                        <img src="@meal.Thumbnail" alt="" loading="lazy" class="h-20 w-20 flex-none rounded-lg object-cover md:h-auto md:w-full md:rounded-none md:aspect-square" />
-                    }
-                    <span class="block min-w-0 flex-1 space-y-1 md:p-2.5">
-                        <span class="block text-sm font-medium leading-snug line-clamp-2">
-                            @DisplayName(meal)
-                        </span>
-                        @if (!string.IsNullOrWhiteSpace(meal.Area))
+                }
+            </div>
+        }
+        else if (_meals.Count > 0)
+        {
+            <div class="space-y-2 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
+                @foreach (var meal in _meals)
+                {
+                    <button type="button" @onclick="() => OpenDetailsAsync(meal.Id)"
+                            class="bg-card flex w-full gap-3 overflow-hidden rounded-xl border p-2.5 text-left transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring md:block md:p-0">
+                        @if (!string.IsNullOrWhiteSpace(meal.Thumbnail))
                         {
-                            <BbBadge Variant="BadgeVariant.Outline">@meal.Area</BbBadge>
+                            <img src="@meal.Thumbnail" alt="" loading="lazy"
+                                 class="h-20 w-20 flex-none rounded-lg object-cover md:h-auto md:w-full md:rounded-none md:aspect-square" />
                         }
-                    </span>
-                </button>
-            }
-        </div>
-    }
-    else if (_searched)
-    {
-        <BbEmpty Title="@Loc["NoRecipesFound"]" Description="@Loc["NoRecipesDescription"]">
-            <Icon>
-                <LucideIcon Name="chef-hat" Size="24" />
-            </Icon>
-        </BbEmpty>
-    }
-</div>
+                        <span class="block min-w-0 flex-1 space-y-1 md:p-2.5">
+                            <span class="block text-sm font-medium leading-snug line-clamp-2">
+                                @DisplayName(meal)
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(meal.Area))
+                            {
+                                <BbBadge Variant="BadgeVariant.Outline">@meal.Area</BbBadge>
+                            }
+                        </span>
+                    </button>
+                }
+            </div>
+        }
+        else if (_searched)
+        {
+            <BbEmpty Title="@Loc["NoRecipesFound"]" Description="@Loc["NoRecipesDescription"]">
+                <Icon>
+                    <LucideIcon Name="chef-hat" Size="24" />
+                </Icon>
+            </BbEmpty>
+        }
+    </div>
+</PullToRefresh>
 
 @code
 {
@@ -102,6 +103,9 @@
     }
 
     private Task OnTagsChanged() => SearchAsync();
+
+    /// <summary>Pull-to-refresh re-runs the current search; with no tags there is nothing to refresh.</summary>
+    private Task RefreshRecipesAsync() => _tags is { Count: > 0 } ? SearchAsync() : Task.CompletedTask;
 
     private async Task<IEnumerable<string>> SearchSuggestionsAsync(string query, CancellationToken ct)
     {

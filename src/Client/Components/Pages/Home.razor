@@ -9,81 +9,84 @@
 @inject PantryRealtimeService Realtime
 @implements IDisposable
 
-<header class="flex items-center justify-between gap-2">
-    <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
-    <div class="flex items-center gap-2">
-        @if (_state.Total > 0)
-        {
-            <span class="text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</span>
-        }
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]" @onclick="OpenAddAsync">
-            <LucideIcon Name="plus" Size="18" />
-        </BbButton>
-        <NotificationsBellButton />
-        <MemberAvatarButton />
-    </div>
-</header>
-
-<div class="flex gap-2">
-    <div class="flex-1">
-        <BbInputGroup>
-            <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
-                <LucideIcon Name="search" Size="16" />
-            </BbInputGroupAddon>
-            <BbInputGroupInput @bind-Value="_state.Name" @bind-Value:after="OnSearchInput"
-                               Placeholder="@Loc["SearchPlaceholder"]" />
-        </BbInputGroup>
-    </div>
-    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="@Loc["Filters"]"
-              @onclick="OpenFiltersAsync">
-        <LucideIcon Name="sliders-horizontal" Size="16" />
-        @if (HasFilters)
-        {
-            <span class="h-2 w-2 rounded-full bg-primary"></span>
-        }
-    </BbButton>
-</div>
-
-<InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync" KeySelector="@(x => x.Id)"
-                    TotalChanged="OnTotalChanged">
-    <ItemTemplate>
-        @{
-            var status = ExpiryHelper.GetStatus(context.ExpirationDate, _state.Today);
-        }
-        <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
-                class="bg-card block w-full rounded-md border p-3 text-left">
-            <span class="flex items-center justify-between gap-2">
-                <span class="font-medium">@context.Name</span>
-                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
-            </span>
-            <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                <span>@context.Quantity @context.Unit</span>
-                <BbBadge Variant="BadgeVariant.Outline">@context.Location</BbBadge>
-                <span>@context.ExpirationDate.ToString("MMM d")</span>
-            </span>
-        </button>
-    </ItemTemplate>
-    <LoadingTemplate>
-        <div class="space-y-2" aria-hidden="true">
-            <BbSkeleton Height="64px" Class="w-full" />
-            <BbSkeleton Height="64px" Class="w-full" />
-            <BbSkeleton Height="64px" Class="w-full" />
+<PullToRefresh OnRefresh="ReloadListAsync">
+    <header class="flex items-center justify-between gap-2">
+        <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
+        <div class="flex items-center gap-2">
+            @if (_state.Total > 0)
+            {
+                <span class="text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</span>
+            }
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]"
+                      @onclick="OpenAddAsync">
+                <LucideIcon Name="plus" Size="18" />
+            </BbButton>
+            <NotificationsBellButton />
+            <MemberAvatarButton />
         </div>
-    </LoadingTemplate>
-    <EmptyTemplate>
-        <BbEmpty Title="@Loc["NoItemsFound"]" Description="@Loc["NoItemsDescription"]">
-            <Icon>
-                <LucideIcon Name="search" Size="24" />
-            </Icon>
-            <ChildContent>
-                <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
-                    <LucideIcon Name="plus" Size="16" />
-                    @Loc["AddItemButton"]
-                </BbButton>
-            </ChildContent>
-        </BbEmpty>
-    </EmptyTemplate>
-</InfiniteScrollList>
+    </header>
+
+    <div class="flex gap-2">
+        <div class="flex-1">
+            <BbInputGroup>
+                <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+                    <LucideIcon Name="search" Size="16" />
+                </BbInputGroupAddon>
+                <BbInputGroupInput @bind-Value="_state.Name" @bind-Value:after="OnSearchInput"
+                                   Placeholder="@Loc["SearchPlaceholder"]" />
+            </BbInputGroup>
+        </div>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="@Loc["Filters"]"
+                  @onclick="OpenFiltersAsync">
+            <LucideIcon Name="sliders-horizontal" Size="16" />
+            @if (HasFilters)
+            {
+                <span class="h-2 w-2 rounded-full bg-primary"></span>
+            }
+        </BbButton>
+    </div>
+
+    <InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync"
+                        KeySelector="@(x => x.Id)" TotalChanged="OnTotalChanged">
+        <ItemTemplate>
+            @{
+                var status = ExpiryHelper.GetStatus(context.ExpirationDate, _state.Today);
+            }
+            <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
+                    class="bg-card block w-full rounded-md border p-3 text-left">
+                <span class="flex items-center justify-between gap-2">
+                    <span class="font-medium">@context.Name</span>
+                    <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
+                </span>
+                <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>@context.Quantity @context.Unit</span>
+                    <BbBadge Variant="BadgeVariant.Outline">@context.Location</BbBadge>
+                    <span>@context.ExpirationDate.ToString("MMM d")</span>
+                </span>
+            </button>
+        </ItemTemplate>
+        <LoadingTemplate>
+            <div class="space-y-2" aria-hidden="true">
+                <BbSkeleton Height="64px" Class="w-full" />
+                <BbSkeleton Height="64px" Class="w-full" />
+                <BbSkeleton Height="64px" Class="w-full" />
+            </div>
+        </LoadingTemplate>
+        <EmptyTemplate>
+            <BbEmpty Title="@Loc["NoItemsFound"]" Description="@Loc["NoItemsDescription"]">
+                <Icon>
+                    <LucideIcon Name="search" Size="24" />
+                </Icon>
+                <ChildContent>
+                    <BbButton Variant="ButtonVariant.Outline" @onclick="OpenAddAsync">
+                        <LucideIcon Name="plus" Size="16" />
+                        @Loc["AddItemButton"]
+                    </BbButton>
+                </ChildContent>
+            </BbEmpty>
+        </EmptyTemplate>
+    </InfiniteScrollList>
+</PullToRefresh>
 
 @code
 {
@@ -209,12 +212,14 @@
         {
             var cmp = b.ExpirationDate.CompareTo(a.ExpirationDate);
             return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
-        },
+        }
+        ,
         ItemSort.Name => (a, b) =>
         {
             var cmp = string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
             return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
-        },
+        }
+        ,
         _ => (a, b) =>
         {
             var cmp = a.ExpirationDate.CompareTo(b.ExpirationDate);

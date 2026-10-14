@@ -59,6 +59,16 @@
     border-radius: 9999px;
 }
 
+/* Sheet bodies mark their header with data-sheet-drag so the whole head
+   (not just the grip) starts a drag. Interactive children are excluded
+   in JS, so buttons and fields inside keep working. */
+[data-sheet-drag] {
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 .sheet-body {
     flex: 1 1 auto;
     min-height: 0;

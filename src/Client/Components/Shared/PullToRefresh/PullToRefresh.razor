@@ -1,0 +1,65 @@
+@namespace Client.Components
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div @ref="_state.Ref" class="ptr">
+    <div class="ptr-indicator" aria-hidden="true">
+        <span class="ptr-spinner"></span>
+    </div>
+    @ChildContent
+</div>
+
+@code
+{
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback OnRefresh { get; set; }
+
+    /// <summary>Pull distance in px that triggers a refresh.</summary>
+    [Parameter]
+    public int ThresholdPx { get; set; } = 70;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _state.Interop is not null)
+            return;
+
+        _state.Interop = new PullToRefreshInterop(JS);
+        _state.DotNetRef ??= DotNetObjectReference.Create(this);
+        await _state.Interop.AttachAsync(_state.Ref, _state.DotNetRef, ThresholdPx);
+    }
+
+    /// <summary>Called from JS when the pull passes the threshold.</summary>
+    [JSInvokable]
+    public async Task OnPulled()
+    {
+        if (_state.Refreshing || _state.Disposed || !OnRefresh.HasDelegate)
+            return;
+
+        _state.Refreshing = true;
+        try
+        {
+            await OnRefresh.InvokeAsync();
+        }
+        finally
+        {
+            _state.Refreshing = false;
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _state.Disposed = true;
+
+        if (_state.Interop is not null)
+        {
+            await _state.Interop.DisposeAsync();
+            _state.Interop = null;
+        }
+
+        _state.DotNetRef?.Dispose();
+        _state.DotNetRef = null;
+    }
+}

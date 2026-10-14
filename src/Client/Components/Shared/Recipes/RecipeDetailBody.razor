@@ -6,7 +6,7 @@
 @inject LocalizationService Loc
 
 <div class="flex h-full flex-col">
-    <div class="flex flex-none items-start justify-between gap-2">
+    <div class="flex flex-none items-start justify-between gap-2" data-sheet-drag>
         <h2 class="text-lg font-semibold">@Loc["Recipes"]</h2>
         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" AriaLabel="@Loc["Close"]"
                   @onclick="() => Sheet.CloseAsync()">
