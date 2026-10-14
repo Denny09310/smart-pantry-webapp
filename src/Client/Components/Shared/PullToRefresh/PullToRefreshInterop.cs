@@ -20,7 +20,7 @@ public sealed class PullToRefreshInterop(IJSRuntime js) : IAsyncDisposable
 
     public async Task AttachAsync(
         ElementReference element,
-        DotNetObjectReference<PullToRefresh> dotNet,
+        DotNetObjectReference<PullToRefresh> instance,
         int thresholdPx)
     {
         if (_attached)
@@ -29,7 +29,7 @@ public sealed class PullToRefreshInterop(IJSRuntime js) : IAsyncDisposable
         try
         {
             var module = await GetModuleAsync();
-            _handle = await module.InvokeAsync<IJSObjectReference>(AttachMethod, element, dotNet, thresholdPx);
+            _handle = await module.InvokeAsync<IJSObjectReference>(AttachMethod, element, instance, thresholdPx);
             _attached = true;
         }
         catch (JSDisconnectedException) { }

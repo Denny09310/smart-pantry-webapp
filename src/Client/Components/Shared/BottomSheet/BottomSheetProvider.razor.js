@@ -22,19 +22,19 @@ function afterTransition(element) {
 class Sheet {
     #inner;
     #dragEl;
-    #dotNet;
+    #instance;
     #snaps;
     #index;
     #drag = null;
     #moves = [];
     #abort = null;
 
-    constructor(inner, handle, dotNet, snapPoints, initialIndex) {
+    constructor(inner, handle, instance, snapPoints, initialIndex) {
         this.#inner = inner;
         // The whole sheet head is draggable: bodies mark their header with
         // data-sheet-drag, otherwise the grip handle is the drag surface.
         this.#dragEl = inner.querySelector('[data-sheet-drag]') ?? handle;
-        this.#dotNet = dotNet;
+        this.#instance = instance;
         this.#snaps = [...snapPoints]
             .map(Number)
             .filter((f) => Number.isFinite(f) && f > 0 && f <= 1)
@@ -182,9 +182,9 @@ class Sheet {
     async #notify(method, arg) {
         try {
             if (arg === undefined) {
-                await this.#dotNet.invokeMethodAsync(method);
+                await this.#instance.invokeMethodAsync(method);
             } else {
-                await this.#dotNet.invokeMethodAsync(method, arg);
+                await this.#instance.invokeMethodAsync(method, arg);
             }
         } catch {
             // Circuit gone or component disposed; nothing to do.
@@ -209,9 +209,9 @@ function restoreBodyScroll() {
     }
 }
 
-export function show(inner, handle, dotNet, snapPoints, initialSnapIndex) {
+export function show(inner, handle, instance, snapPoints, initialSnapIndex) {
     active?.teardown();
-    active = new Sheet(inner, handle, dotNet, snapPoints, initialSnapIndex ?? 0);
+    active = new Sheet(inner, handle, instance, snapPoints, initialSnapIndex ?? 0);
     lockBodyScroll();
     active.enter();
 }

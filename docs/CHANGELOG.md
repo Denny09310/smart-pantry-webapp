@@ -1,3 +1,13 @@
+## [1.3.2] - 2026-10-14
+
+### 🐛 Bug Fixes
+
+- Sort filter trigger showing the raw enum name instead of the localized label
+
+### 🧹 Chores
+
+- Consistent `Instance` naming for JS interop references across components
+
 ## [1.3.1] - 2026-10-14
 
 ### 🐛 Bug Fixes
