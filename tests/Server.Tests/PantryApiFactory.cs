@@ -46,8 +46,9 @@ public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 Database = "postgres"
             }.ConnectionString;
 
-            NpgsqlConnection.ClearAllPools();
-
+            // No ClearAllPools: the pool is process-global and test classes run
+            // in parallel, so clearing would abort siblings' in-flight commands.
+            // DROP ... WITH (FORCE) already terminates backends on its own.
             await using var connection = new NpgsqlConnection(maintenance);
             await connection.OpenAsync();
 
@@ -70,8 +71,7 @@ public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             Database = "postgres"
         }.ConnectionString;
 
-        NpgsqlConnection.ClearAllPools();
-
+        // No ClearAllPools here either (see DisposeAsync): force-drop is enough.
         await using var connection = new NpgsqlConnection(maintenance);
         await connection.OpenAsync();
 
