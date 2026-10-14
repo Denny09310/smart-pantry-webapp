@@ -1,3 +1,11 @@
+## [1.4.1] - 2026-10-14
+
+### 🐛 Bug Fixes
+
+- Marking an item as used now deletes it outright; consumed tracking and its filter are gone
+- Details error state binds the real error instead of a literal string, so it only shows on failure
+- Delete action lives inside the item card
+
 ## [1.4.0] - 2026-10-14
 
 ### ✨ Features
