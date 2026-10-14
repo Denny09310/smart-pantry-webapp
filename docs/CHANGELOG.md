@@ -1,3 +1,16 @@
+## [1.4.0] - 2026-10-14
+
+### ✨ Features
+
+- Mark pantry items as used (consumed) — check-circle button on each item, hidden when consumed
+- Consumed items excluded from lists by default; toggle in filter sheet to include them
+- Consumption tracked with timestamp and member attribution
+
+### 🎨 UI Improvements
+
+- Quantity input in item form is now an invisible numeric field (no outline/background)
+- Item name truncates in list so badges never wrap
+
 ## [1.3.3] - 2026-10-14
 
 ### ✨ Features

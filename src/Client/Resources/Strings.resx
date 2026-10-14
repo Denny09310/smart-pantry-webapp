@@ -162,6 +162,12 @@
   <data name="QuantityAndUnit" xml:space="preserve">
     <value>Quantity and unit</value>
   </data>
+  <data name="DecreaseQuantity" xml:space="preserve">
+    <value>Decrease quantity</value>
+  </data>
+  <data name="IncreaseQuantity" xml:space="preserve">
+    <value>Increase quantity</value>
+  </data>
   <data name="Location" xml:space="preserve">
     <value>Location</value>
   </data>
@@ -293,6 +299,18 @@
   </data>
   <data name="ItemUpdated" xml:space="preserve">
     <value>Item updated.</value>
+  </data>
+  <data name="ItemMarkedAsUsed" xml:space="preserve">
+    <value>{0} marked as used.</value>
+  </data>
+  <data name="CouldNotMarkAsUsed" xml:space="preserve">
+    <value>Couldn't mark item as used. Try again.</value>
+  </data>
+  <data name="MarkAsUsed" xml:space="preserve">
+    <value>Mark as used</value>
+  </data>
+  <data name="Used" xml:space="preserve">
+    <value>Used</value>
   </data>
   <data name="CouldNotSave" xml:space="preserve">
     <value>Couldn't save. Try again.</value>
@@ -542,6 +560,9 @@
   </data>
   <data name="SortByNameAZ" xml:space="preserve">
     <value>Name A–Z</value>
+  </data>
+  <data name="IncludeConsumedItems" xml:space="preserve">
+    <value>Include consumed items</value>
   </data>
   <data name="Reset" xml:space="preserve">
     <value>Reset</value>

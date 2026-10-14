@@ -49,6 +49,10 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
 
         var query = db.Items.AsNoTracking();
 
+        // Exclude consumed items by default
+        if (request.IncludeConsumed != true)
+            query = query.Where(x => x.ConsumedAt == null);
+
         // Closed location set: exact match, case-insensitive like Name.
         if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not PantryRules.LocationAll)
             query = query.Where(x => EF.Functions.ILike(x.Location, request.Location));
@@ -87,7 +91,9 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
                 x.HouseholdMemberId,
                 x.Barcode,
                 x.NutriScore,
-                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null))
+                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null,
+                x.ConsumedAt,
+                x.ConsumedByMemberId))
             .ToListAsync(ct);
 
         return TypedResults.Ok(new GetPantryItemsResponse(
@@ -163,6 +169,29 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         return TypedResults.Ok(ToDto(entry));
     }
 
+    [MapPost("/{id}/consume")]
+    public async Task<Results<Ok<PantryItemDto>, ProblemHttpResult>> ConsumePantryItemAsync(
+        string id,
+        [FromHeader(Name = "X-Member-Id")] string? memberId,
+        CancellationToken ct)
+    {
+        var entry = await db.Items.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (entry is null)
+            return ItemNotFound(id);
+
+        if (entry.ConsumedAt is not null)
+            return TypedResults.Problem(statusCode: StatusCodes.Status409Conflict, detail: "Item already consumed.");
+
+        entry.ConsumedAt = DateTime.UtcNow;
+        entry.ConsumedByMemberId = await ResolveMemberIdAsync(memberId, ct);
+        entry.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Updated), ct);
+
+        return TypedResults.Ok(ToDto(entry));
+    }
+
     [MapDelete("/{id}")]
     public async Task<Results<NoContent, ProblemHttpResult>> DeletePantryItemAsync(
         string id,
@@ -206,5 +235,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         item.HouseholdMemberId,
         item.Barcode,
         item.NutriScore,
-        item.NutritionJson != null ? NutritionFactsExtensions.Parse(item.NutritionJson) : null);
+        item.NutritionJson != null ? NutritionFactsExtensions.Parse(item.NutritionJson) : null,
+        item.ConsumedAt,
+        item.ConsumedByMemberId);
 }
