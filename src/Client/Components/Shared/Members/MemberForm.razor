@@ -8,7 +8,7 @@
 @inject LocalizationService Loc
 
 <div class="flex h-full flex-col">
-    <div class="flex-none" data-sheet-drag>
+    <div class="flex-none">
         <h2 class="text-lg font-semibold">@(EditMember is null ? Loc["AddMember"] : Loc["EditMember"])</h2>
         <p class="text-sm text-muted-foreground">
             @(EditMember is null ? Loc["AddMemberSubtitle"] : Loc["EditMemberSubtitle"])

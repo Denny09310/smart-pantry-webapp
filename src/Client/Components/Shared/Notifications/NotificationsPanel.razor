@@ -8,7 +8,7 @@
 @implements IDisposable
 
 <div class="flex h-full flex-col gap-4">
-    <div class="flex flex-none items-center justify-between gap-2" data-sheet-drag>
+    <div class="flex flex-none items-center justify-between gap-2">
         <h2 class="text-lg font-semibold">@Loc["Notifications"]</h2>
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
                   Disabled="@(_unread == 0)" @onclick="MarkAllReadAsync">

@@ -10,7 +10,7 @@
     <div class="sheet-scrim" @onclick="OnScrimClick"></div>
     <section class="sheet-panel" role="dialog" aria-modal="true" aria-label="@Loc["BottomSheetLabel"]">
         <div class="sheet-inner sheet-pre bg-background border-t" @ref="_state.InnerRef">
-            <div class="sheet-handle" @ref="_state.HandleRef">
+            <div class="sheet-handle" data-sheet-drag @ref="_state.HandleRef">
                 <span class="sheet-grip bg-gray-400 dark:bg-gray-600"></span>
             </div>
             <div class="sheet-body px-4 pb-4">

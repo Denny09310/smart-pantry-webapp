@@ -73,11 +73,10 @@ h1:focus {
     content: var(--blazor-load-percentage-text, "Loading");
 }
 
-/* Sheet bodies mark their header with data-sheet-drag so the whole head
-   (not just the grip) starts a drag. This must live in global CSS: scoped
-   component styles only match their own component's markup, while these
-   headers are rendered by the various sheet body components. Interactive
-   children are excluded in JS, so buttons and fields inside keep working. */
+/* The sheet handle row starts a drag anywhere along its width.
+   This must live in global CSS: Blazor scopes component stylesheets to their
+   own component's markup. Interactive children are excluded in JS, so buttons
+   and fields keep working. */
 [data-sheet-drag] {
     touch-action: none;
     cursor: grab;
