@@ -7,24 +7,78 @@ using Shared.Models;
 namespace Client.Services;
 
 /// <summary>
-/// Realtime pantry broadcasts over the typed SignalR hub.
+/// Realtime pantry broadcasts over the typed SignalR hub, plus member presence.
 /// Broadcasts are hints, never required: receivers re-query the endpoints,
 /// and a dead connection leaves manual reload fully working.
+/// The connection identifies as the current member (?memberId=); switching
+/// members reconnects so presence follows the user, not the device.
 /// </summary>
-public sealed class PantryRealtimeService(NavigationManager nav, ILogger<PantryRealtimeService> log) : IAsyncDisposable
+internal sealed class PantryRealtimeService(
+    NavigationManager nav,
+    MemberService members,
+    ILogger<PantryRealtimeService> log) : IAsyncDisposable
 {
     public event Func<PantryChangedEvent, Task>? Changed;
+    public event Action? PresenceChanged;
 
     private HubConnection? _connection;
+    private string? _memberId;
     private bool _disposed;
+
+    private readonly HashSet<string> _onlineIds = new(StringComparer.Ordinal);
+
+    public IReadOnlySet<string> OnlineMemberIds => _onlineIds;
+
+    public bool IsMemberOnline(string? memberId) =>
+        memberId is not null && _onlineIds.Contains(memberId);
 
     public async Task StartAsync()
     {
         if (_connection is not null || _disposed)
             return;
 
+        members.Changed += OnMembersChanged;
+        await ConnectAsync();
+    }
+
+    private async void OnMembersChanged()
+    {
+        try
+        {
+            // Reconnect only when the identity actually changed: creates and
+            // renames keep the same connection.
+            if (members.CurrentMemberId != _memberId)
+                await ReconnectAsync();
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Realtime reconnect after member change failed.");
+        }
+    }
+
+    private async Task ReconnectAsync()
+    {
+        if (_disposed)
+            return;
+
+        if (_connection is not null)
+        {
+            await _connection.DisposeAsync();
+            _connection = null;
+        }
+
+        await ConnectAsync();
+    }
+
+    private async Task ConnectAsync()
+    {
+        _memberId = members.CurrentMemberId;
+        var url = _memberId is null
+            ? "/hubs/pantry"
+            : $"/hubs/pantry?memberId={Uri.EscapeDataString(_memberId)}";
+
         var connection = new HubConnectionBuilder()
-            .WithUrl(nav.ToAbsoluteUri("/hubs/pantry"))
+            .WithUrl(nav.ToAbsoluteUri(url))
             .WithAutomaticReconnect()
             .Build();
 
@@ -38,6 +92,17 @@ public sealed class PantryRealtimeService(NavigationManager nav, ILogger<PantryR
 
                 foreach (Func<PantryChangedEvent, Task> handler in handlers)
                     await handler(change);
+            });
+
+        connection.On<IReadOnlyList<string>>(
+            nameof(IPantryHubClient.PresenceChanged),
+            roster =>
+            {
+                _onlineIds.Clear();
+                foreach (var id in roster)
+                    _onlineIds.Add(id);
+                PresenceChanged?.Invoke();
+                return Task.CompletedTask;
             });
 
         try
@@ -57,6 +122,7 @@ public sealed class PantryRealtimeService(NavigationManager nav, ILogger<PantryR
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
+        members.Changed -= OnMembersChanged;
 
         if (_connection is not null)
         {

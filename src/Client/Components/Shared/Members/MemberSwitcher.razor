@@ -3,6 +3,7 @@
 @inject MemberService Members
 @inject BottomSheetService Sheet
 @inject LocalizationService Loc
+@inject PantryRealtimeService Realtime
 @implements IDisposable
 
 <div class="flex h-full flex-col">
@@ -16,12 +17,19 @@
             {
                 <div @key="member.Id"
                      class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
-                    <BbAvatar>
-                        <BbAvatarFallback
-                            style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
-                            @MemberDisplay.Initials(member.DisplayName)
-                        </BbAvatarFallback>
-                    </BbAvatar>
+                    <span class="relative flex-none">
+                        <BbAvatar>
+                            <BbAvatarFallback
+                                style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
+                                @MemberDisplay.Initials(member.DisplayName)
+                            </BbAvatarFallback>
+                        </BbAvatar>
+                        @if (Realtime.IsMemberOnline(member.Id))
+                        {
+                            <span aria-hidden="true" class="absolute h-2 w-2 rounded-full"
+                                  style="bottom:-2px;right:-2px;background-color:#10b981;box-shadow:0 0 0 2px var(--background)"></span>
+                        }
+                    </span>
                     <button type="button" class="min-w-0 flex-1 text-left" @onclick="@(() => SelectAsync(member.Id))">
                         <p class="truncate text-sm font-medium">@member.DisplayName</p>
                         <p class="text-xs text-muted-foreground">
@@ -76,11 +84,31 @@
 
 @code
 {
-    protected override void OnInitialized() => Members.Changed += OnChanged;
+    protected override void OnInitialized()
+    {
+        Members.Changed += OnMembersChanged;
+        Realtime.PresenceChanged += OnPresenceChanged;
+    }
 
-    public void Dispose() => Members.Changed -= OnChanged;
+    public void Dispose()
+    {
+        Members.Changed -= OnMembersChanged;
+        Realtime.PresenceChanged -= OnPresenceChanged;
+    }
 
-    private async void OnChanged()
+    private async void OnMembersChanged()
+    {
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
+        }
+    }
+
+    private async void OnPresenceChanged()
     {
         try
         {

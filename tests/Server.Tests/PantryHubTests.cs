@@ -101,6 +101,149 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
     }
 
+    [Fact]
+    public async Task Connect_WithMember_BroadcastsPresence()
+    {
+        var memberId = await SeedMemberAsync();
+
+        try
+        {
+            var roster = await ConnectAndCaptureRosterAsync($"?memberId={memberId}");
+            Assert.Contains(memberId, roster);
+        }
+        finally
+        {
+            await DeleteMemberAsync(memberId);
+        }
+    }
+
+    [Fact]
+    public async Task Connect_UnknownMember_StaysAnonymous()
+    {
+        var roster = await ConnectAndCaptureRosterAsync("?memberId=does-not-exist");
+
+        Assert.DoesNotContain("does-not-exist", roster);
+    }
+
+    [Fact]
+    public async Task Disconnect_RemovesFromRoster()
+    {
+        var memberId = await SeedMemberAsync();
+
+        try
+        {
+            // The member's own connect echo proves registration completed.
+            var memberTcs = new TaskCompletionSource<IReadOnlyList<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+            await using var memberConnection = await StartConnectionAsync(
+                $"?memberId={memberId}",
+                c => c.On<IReadOnlyList<string>>(
+                    nameof(IPantryHubClient.PresenceChanged),
+                    roster =>
+                    {
+                        memberTcs.TrySetResult(roster);
+                        return Task.CompletedTask;
+                    }));
+            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                Assert.Contains(memberId, await memberTcs.Task.WaitAsync(cts.Token));
+
+            // The observer's own connect broadcast necessarily lists them now.
+            var rosters = new List<IReadOnlyList<string>>();
+            await using var observer = await StartConnectionAsync(
+                null,
+                c => c.On<IReadOnlyList<string>>(
+                    nameof(IPantryHubClient.PresenceChanged),
+                    roster =>
+                    {
+                        lock (rosters)
+                            rosters.Add(roster);
+                        return Task.CompletedTask;
+                    }));
+            Assert.Contains(memberId, await WaitForRosterAsync(rosters, 0));
+
+            await memberConnection.StopAsync();
+            Assert.DoesNotContain(memberId, await WaitForRosterAsync(rosters, 1));
+        }
+        finally
+        {
+            await DeleteMemberAsync(memberId);
+        }
+    }
+
+    private async Task<IReadOnlyList<string>> ConnectAndCaptureRosterAsync(string? query)
+    {
+        var tcs = new TaskCompletionSource<IReadOnlyList<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var connection = await StartConnectionAsync(
+            query,
+            c => c.On<IReadOnlyList<string>>(
+                nameof(IPantryHubClient.PresenceChanged),
+                roster =>
+                {
+                    tcs.TrySetResult(roster);
+                    return Task.CompletedTask;
+                }));
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            return await tcs.Task.WaitAsync(cts.Token);
+        }
+        finally
+        {
+            await connection.StopAsync();
+        }
+    }
+
+    private async Task<HubConnection> StartConnectionAsync(string? query, Action<HubConnection>? setup = null)
+    {
+        var connection = new HubConnectionBuilder()
+            .WithUrl(new Uri(factory.Server.BaseAddress, "/hubs/pantry" + query), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+            })
+            .Build();
+
+        setup?.Invoke(connection);
+        await connection.StartAsync();
+        return connection;
+    }
+
+    private static async Task<IReadOnlyList<string>> WaitForRosterAsync(List<IReadOnlyList<string>> rosters, int index)
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        while (true)
+        {
+            lock (rosters)
+            {
+                if (rosters.Count > index)
+                    return rosters[index];
+            }
+
+            await Task.Delay(50, cts.Token);
+        }
+    }
+
+    private async Task<string> SeedMemberAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var member = new HouseholdMember
+        {
+            DisplayName = $"test-member-{Guid.CreateVersion7()}",
+            Color = "#3b82f6"
+        };
+        db.Members.Add(member);
+        await db.SaveChangesAsync();
+        return member.Id;
+    }
+
+    private async Task DeleteMemberAsync(string id)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
+    }
+
     private async Task<PantryItem?> FindByNameAsync(string name)
     {
         using var scope = factory.Services.CreateScope();

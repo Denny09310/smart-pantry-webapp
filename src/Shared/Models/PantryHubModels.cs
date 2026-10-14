@@ -30,4 +30,6 @@ public sealed record PantryChangedEvent(string ItemId, PantryChangeKind ChangeKi
 public interface IPantryHubClient
 {
     Task PantryChanged(PantryChangedEvent change, CancellationToken ct);
+
+    Task PresenceChanged(IReadOnlyList<string> onlineMemberIds, CancellationToken ct);
 }
