@@ -85,7 +85,8 @@
     </EmptyTemplate>
 </InfiniteScrollList>
 
-@code {
+@code
+{
     private bool HasFilters =>
         _state.Location != PantryLocations.All || _state.Status != PantryRules.StatusAll || _state.Sort != ItemSort.ExpiryAsc;
 

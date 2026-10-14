@@ -67,6 +67,27 @@
     overflow: hidden;
 }
 
+/* Thin scrollbars for everything scrollable inside the sheet body. */
+.sheet-body,
+.sheet-body * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+}
+
+.sheet-body ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.sheet-body ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sheet-body ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 9999px;
+}
+
 @media (min-width: 768px) {
     .sheet-inner {
         max-width: 42rem;
