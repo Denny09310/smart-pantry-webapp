@@ -6,24 +6,11 @@
 @inject ToastService Toasts
 @inject ILogger<MemberAvatarButton> Logger
 @inject LocalizationService Loc
-@inject PantryRealtimeService Realtime
 @implements IDisposable
 
 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["SwitchUser"]"
           OnClick="OpenSwitcherAsync">
-    <span class="relative">
-        <BbAvatar Class="h-6 w-6">
-            <BbAvatarFallback Class="text-[10px]"
-                              style="@($"background-color: {Members.CurrentMember?.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(Members.CurrentMember?.Color)}")">
-                @(Members.CurrentMember is { } current ? MemberDisplay.Initials(current.DisplayName) : "?")
-            </BbAvatarFallback>
-        </BbAvatar>
-        @if (Realtime.IsMemberOnline(Members.CurrentMemberId))
-        {
-            <span aria-hidden="true" class="absolute h-2 w-2 rounded-full"
-                  style="bottom:-2px;right:-2px;background-color:#10b981;box-shadow:0 0 0 2px var(--background)"></span>
-        }
-    </span>
+    <MemberAvatar Member="Members.CurrentMember" AvatarClass="h-6 w-6" FallbackClass="text-[10px]" />
 </BbButton>
 
 @code
@@ -31,28 +18,14 @@
     protected override void OnInitialized()
     {
         Members.Changed += OnMembersChanged;
-        Realtime.PresenceChanged += OnPresenceChanged;
     }
 
     public void Dispose()
     {
         Members.Changed -= OnMembersChanged;
-        Realtime.PresenceChanged -= OnPresenceChanged;
     }
 
     private async void OnMembersChanged()
-    {
-        try
-        {
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (Exception ex)
-        {
-            await DispatchExceptionAsync(ex);
-        }
-    }
-
-    private async void OnPresenceChanged()
     {
         try
         {
