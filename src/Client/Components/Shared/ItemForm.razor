@@ -1,7 +1,7 @@
 @namespace Client.Components
 @using System.ComponentModel.DataAnnotations
 @using Client.Models
-@using Client.Resources
+
 @inject BottomSheetService Sheet
 @inject MemberService Members
 @inject ServerApi Api
@@ -24,131 +24,135 @@
         <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
             @* Barcode Scanner *@
             <div class="space-y-2">
-                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false" Searching="_state.LookingUp" />
+                <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false"
+                                Searching="_state.LookingUp" />
                 <p class="text-xs text-muted-foreground">@Loc["ScanBarcode"]</p>
             </div>
 
             @* Item name *@
             <BbField IsInvalid="@(!context.IsValid(() => _state.Input.Name))">
                 <div class="flex items-center justify-between">
-                    <BbFieldLabel For="item-name" Class="text-sm font-medium">@Loc["ItemName"] <span class="text-xs text-muted-foreground">@Loc["Required"]</span></BbFieldLabel>
-                </div>
-                <BbFieldContent>
-                    <BbInputGroup Class="bg-card">
-                        <BbInputGroupInput Id="item-name" @bind-Value="_state.Input.Name"
-                                           Placeholder="e.g. Tomato passata, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
-                    </BbInputGroup>
-                    <BbFieldError Errors="@context.GetValidationMessages(() => _state.Input.Name)" />
-                </BbFieldContent>
-            </BbField>
-
-            @* Quantity & unit *@
-            <div class="space-y-2">
-                <BbLabel Class="text-sm font-medium">@Loc["QuantityAndUnit"]</BbLabel>
-
-                <div class="flex items-center justify-between rounded-lg bg-muted p-1">
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                              AriaLabel="@Loc["Quantity"]" OnClick="DecrementQuantity">
-                        <LucideIcon Name="minus" Size="16" />
-                    </BbButton>
-                    <div class="flex flex-col items-center leading-none">
-                        <span class="text-base font-semibold" aria-live="polite">@_state.Input.Quantity</span>
-                        <span class="text-xs text-muted-foreground">@_state.Input.Unit</span>
+                    <BbFieldLabel For="item-name" Class="text-sm font-medium">@Loc["ItemName"] <span
+                        class="text-xs text-muted-foreground">@Loc["Required"]</span></BbFieldLabel>
                     </div>
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                              AriaLabel="@Loc["Quantity"]" OnClick="IncrementQuantity">
-                        <LucideIcon Name="plus" Size="16" />
-                    </BbButton>
+                    <BbFieldContent>
+                        <BbInputGroup Class="bg-card">
+                            <BbInputGroupInput Id="item-name" @bind-Value="_state.Input.Name"
+                                               Placeholder="e.g. Tomato passata, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
+                        </BbInputGroup>
+                        <BbFieldError Errors="@context.GetValidationMessages(() => _state.Input.Name)" />
+                    </BbFieldContent>
+                </BbField>
+
+                @* Quantity & unit *@
+                <div class="space-y-2">
+                    <BbLabel Class="text-sm font-medium">@Loc["QuantityAndUnit"]</BbLabel>
+
+                    <div class="flex items-center justify-between rounded-lg bg-muted p-1">
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                                  AriaLabel="@Loc["Quantity"]" OnClick="DecrementQuantity">
+                            <LucideIcon Name="minus" Size="16" />
+                        </BbButton>
+                        <div class="flex flex-col items-center leading-none">
+                            <span class="text-base font-semibold" aria-live="polite">@_state.Input.Quantity</span>
+                            <span class="text-xs text-muted-foreground">@_state.Input.Unit</span>
+                        </div>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                                  AriaLabel="@Loc["Quantity"]" OnClick="IncrementQuantity">
+                            <LucideIcon Name="plus" Size="16" />
+                        </BbButton>
+                    </div>
+                    <ValidationMessage For="@(() => _state.Input.Quantity)" class="text-sm text-destructive" />
+
+                    <BbChipSet @bind-Value="_state.Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
+                        @foreach (var unit in PantryLocations.Units)
+                        {
+                            <BbChip Value="@(unit)">@unit</BbChip>
+                        }
+                    </BbChipSet>
+                    <ValidationMessage For="@(() => _state.Input.Unit)" class="text-sm text-destructive" />
                 </div>
-                <ValidationMessage For="@(() => _state.Input.Quantity)" class="text-sm text-destructive" />
 
-                <BbChipSet @bind-Value="_state.Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
-                    @foreach (var unit in PantryLocations.Units)
-                    {
-                        <BbChip Value="@(unit)">@unit</BbChip>
-                    }
-                </BbChipSet>
-                <ValidationMessage For="@(() => _state.Input.Unit)" class="text-sm text-destructive" />
-            </div>
-
-            @* Location *@
-            <div class="space-y-2">
-                <BbLabel Class="text-sm font-medium">@Loc["Location"]</BbLabel>
-                <BbToggleGroup @bind-Value="_state.Input.Location" Type="ToggleGroupType.Single" Required="true"
-                               Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
-                    <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
-                        <LucideIcon Name="package" Size="20" />
-                        <span class="text-xs font-medium">@Loc["Pantry"]</span>
-                    </BbToggleGroupItem>
-                    <BbToggleGroupItem Value="@("fridge")" Class="h-auto flex-col gap-1 py-2">
-                        <LucideIcon Name="refrigerator" Size="20" />
-                        <span class="text-xs font-medium">@Loc["Fridge"]</span>
-                    </BbToggleGroupItem>
-                    <BbToggleGroupItem Value="@("freezer")" Class="h-auto flex-col gap-1 py-2">
-                        <LucideIcon Name="snowflake" Size="20" />
-                        <span class="text-xs font-medium">@Loc["Freezer"]</span>
-                    </BbToggleGroupItem>
-                    <BbToggleGroupItem Value="@("cabinet")" Class="h-auto flex-col gap-1 py-2">
-                        <LucideIcon Name="archive" Size="20" />
-                        <span class="text-xs font-medium">@Loc["Cabinet"]</span>
-                    </BbToggleGroupItem>
-                </BbToggleGroup>
-                <ValidationMessage For="@(() => _state.Input.Location)" class="text-sm text-destructive" />
-            </div>
-
-            @* Expiry *@
-            <BbField>
-                <BbFieldLabel Class="text-sm font-medium">@Loc["DurationAndExpiry"]</BbFieldLabel>
-                <BbFieldContent>
-                    <BbDatePicker @bind-Value="_state.Input.ExpirationDate" MinDate="@(Item is null ? DateTime.Today : null)"
-                                  DateFormat="dd/MM/yyyy" Placeholder="@Loc["PickADate"]" Class="w-full" />
-                    <ValidationMessage For="@(() => _state.Input.ExpirationDate)" class="text-sm text-destructive" />
-                </BbFieldContent>
-            </BbField>
-
-            <div class="space-y-2">
-                <span class="text-xs text-muted-foreground">@Loc["Shortcuts"]</span>
-                <div class="flex flex-wrap gap-1.5">
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
-                              OnClick="@(() => SetExpiry(3))">@Loc["Shortcut3Days"]</BbButton>
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
-                              OnClick="@(() => SetExpiry(7))">@Loc["Shortcut1Week"]</BbButton>
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
-                              OnClick="@(() => SetExpiry(30))">@Loc["Shortcut1Month"]</BbButton>
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
-                              OnClick="@(() => SetExpiry(182))">@Loc["Shortcut6Months"]</BbButton>
+                @* Location *@
+                <div class="space-y-2">
+                    <BbLabel Class="text-sm font-medium">@Loc["Location"]</BbLabel>
+                    <BbToggleGroup @bind-Value="_state.Input.Location" Type="ToggleGroupType.Single" Required="true"
+                                   Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
+                        <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="package" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Pantry"]</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("fridge")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="refrigerator" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Fridge"]</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("freezer")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="snowflake" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Freezer"]</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("cabinet")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="archive" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Cabinet"]</span>
+                        </BbToggleGroupItem>
+                    </BbToggleGroup>
+                    <ValidationMessage For="@(() => _state.Input.Location)" class="text-sm text-destructive" />
                 </div>
-                <BbBadge Variant="@Banner.Variant">
-                    <BbBadgeIcon Name="@Banner.Icon" />
-                    @Banner.Text
-                </BbBadge>
-            </div>
 
-            @* Notes *@
-            <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                    <BbLabel For="batch-notes" Class="text-sm font-medium">@Loc["BatchNotes"]</BbLabel>
-                    <span class="text-xs text-muted-foreground">@Loc["Optional"]</span>
+                @* Expiry *@
+                <BbField>
+                    <BbFieldLabel Class="text-sm font-medium">@Loc["DurationAndExpiry"]</BbFieldLabel>
+                    <BbFieldContent>
+                        <BbDatePicker @bind-Value="_state.Input.ExpirationDate"
+                                      MinDate="@(Item is null ? DateTime.Today : null)" DateFormat="dd/MM/yyyy"
+                                      Placeholder="@Loc["PickADate"]" Class="w-full" />
+                        <ValidationMessage For="@(() => _state.Input.ExpirationDate)" class="text-sm text-destructive" />
+                    </BbFieldContent>
+                </BbField>
+
+                <div class="space-y-2">
+                    <span class="text-xs text-muted-foreground">@Loc["Shortcuts"]</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(3))">@Loc["Shortcut3Days"]</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(7))">@Loc["Shortcut1Week"]</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(30))">@Loc["Shortcut1Month"]</BbButton>
+                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Type="ButtonType.Button"
+                                  OnClick="@(() => SetExpiry(182))">@Loc["Shortcut6Months"]</BbButton>
+                    </div>
+                    <BbBadge Variant="@Banner.Variant">
+                        <BbBadgeIcon Name="@Banner.Icon" />
+                        @Banner.Text
+                    </BbBadge>
                 </div>
-                <BbTextarea Id="batch-notes" @bind-Value="_state.Input.Notes" Placeholder="e.g. Arrabbiata, top shelf, opened"
-                            rows="2" />
-            </div>
-        </div>
 
-        <div class="flex-none space-y-1 border-t pt-3">
-            <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_state.Saving" IconPosition="IconPosition.Start">
-                <Icon>
-                    <LucideIcon Name="save" Size="16" />
-                </Icon>
-                <ChildContent>@(Item is null ? Loc["SaveItem"] : Loc["SaveChanges"])</ChildContent>
-            </BbButton>
-            <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
-                      OnClick="() => Sheet.CloseAsync()">
-                @Loc["Cancel"]
-            </BbButton>
-        </div>
-    </EditForm>
-</div>
+                @* Notes *@
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <BbLabel For="batch-notes" Class="text-sm font-medium">@Loc["BatchNotes"]</BbLabel>
+                        <span class="text-xs text-muted-foreground">@Loc["Optional"]</span>
+                    </div>
+                    <BbTextarea Id="batch-notes" @bind-Value="_state.Input.Notes"
+                                Placeholder="e.g. Arrabbiata, top shelf, opened" rows="2" />
+                </div>
+            </div>
+
+            <div class="flex-none space-y-1 border-t pt-3">
+                <BbButton Type="ButtonType.Submit" Class="w-full" Loading="@_state.Saving"
+                          IconPosition="IconPosition.Start">
+                    <Icon>
+                        <LucideIcon Name="save" Size="16" />
+                    </Icon>
+                    <ChildContent>@(Item is null ? Loc["SaveItem"] : Loc["SaveChanges"])</ChildContent>
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
+                          OnClick="() => Sheet.CloseAsync()">
+                    @Loc["Cancel"]
+                </BbButton>
+            </div>
+        </EditForm>
+    </div>
 
 @code
 {

@@ -21,4 +21,9 @@ internal interface IMemberEndpoints
         string id,
         [Body] UpdateHouseholdMemberRequest request,
         CancellationToken ct = default);
+
+    [Delete("/{id}")]
+    Task<IApiResponse> DeleteAsync(
+        string id,
+        CancellationToken ct = default);
 }

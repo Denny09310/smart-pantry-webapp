@@ -151,6 +151,32 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
         return updated;
     }
 
+    public async Task<bool> DeleteMemberAsync(string id)
+    {
+        try
+        {
+            using var response = await api.Members.DeleteAsync(id);
+            if (!response.IsSuccessStatusCode)
+                return false;
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Member deletion failed.");
+            return false;
+        }
+
+        _members.RemoveAll(m => m.Id == id);
+
+        if (CurrentMemberId == id)
+        {
+            CurrentMemberId = ActiveMembers.FirstOrDefault()?.Id;
+            await PersistAsync();
+        }
+
+        Changed?.Invoke();
+        return true;
+    }
+
     private async Task PersistAsync()
     {
         try

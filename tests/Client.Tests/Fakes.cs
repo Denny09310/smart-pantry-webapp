@@ -34,5 +34,5 @@ internal sealed class FakeJsRuntime : IJSRuntime
 internal static class TestLoc
 {
     public static LocalizationService Create(Dictionary<string, string>? values = null)
-        => new(new FakeLocalizer(values ?? []), new FakeJsRuntime());
+        => new(new FakeLocalizer(values ?? []), new Bit.Butil.LocalStorage(new FakeJsRuntime()));
 }
