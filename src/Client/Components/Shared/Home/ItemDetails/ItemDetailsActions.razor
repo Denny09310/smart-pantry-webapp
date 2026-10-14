@@ -1,0 +1,21 @@
+@namespace Client.Components
+@inject LocalizationService Loc
+
+@if (Item is not null && Error is null)
+{
+    <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
+        <BbButton Variant="ButtonVariant.Outline" @onclick="OnEdit">
+            <LucideIcon Name="pencil" Size="16" />
+            @Loc["Edit"]
+        </BbButton>
+        <BbButton Variant="ButtonVariant.Destructive" @onclick="OnDelete">@Loc["Delete"]</BbButton>
+    </div>
+}
+
+@code
+{
+    [Parameter] public PantryItemDto? Item { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+}
