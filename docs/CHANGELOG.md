@@ -8,7 +8,7 @@
 - Bottom sheet drag from the full handle row
 - Recipes page with page scroll and horizontal cards on mobile
 - BlazorBlueprint component chrome localized through a scoped localizer
-- Client.Tests suite covering expiry, members, realtime filter mirror, outbox and connectivity
+- Client.Tests suite covering expiry, members and realtime filter mirror
 - Transparent maskable PWA icon for the Android splash screen
 
 ### 🐛 Bug Fixes

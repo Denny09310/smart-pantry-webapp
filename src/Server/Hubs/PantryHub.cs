@@ -12,7 +12,8 @@ namespace Server.Hubs;
 
 /// <summary>
 /// Typed pantry hub: one broadcast channel for the whole household.
-/// Clients re-query the endpoints on broadcast; the hub never carries item data.
+/// Clients patch their lists from single-item fetches on broadcast; the hub
+/// never carries item data.
 /// Member presence (one member id per connection via ?memberId=) is broadcast
 /// on every connect and disconnect; unknown ids stay anonymous.
 /// </summary>
@@ -27,7 +28,15 @@ public sealed class PantryHub(PresenceTracker presence, IServiceScopeFactory sco
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        await Clients.All.PresenceChanged(presence.Disconnect(Context.ConnectionId), CancellationToken.None);
+        try
+        {
+            await Clients.All.PresenceChanged(presence.Disconnect(Context.ConnectionId), CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException || ex is InvalidOperationException)
+        {
+            // Shutting down or connection already gone: roster state is already updated.
+        }
+
         await base.OnDisconnectedAsync(exception);
     }
 
