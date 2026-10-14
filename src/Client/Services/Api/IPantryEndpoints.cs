@@ -33,10 +33,4 @@ internal interface IPantryEndpoints
     Task<IApiResponse> DeleteAsync(
         string id,
         CancellationToken ct = default);
-
-    [Post("/{id}/consume")]
-    Task<ApiResponse<PantryItemDto>> ConsumeAsync(
-        string id,
-        [Header("X-Member-Id")] string? memberId,
-        CancellationToken ct = default);
 }

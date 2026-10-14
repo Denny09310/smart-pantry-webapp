@@ -13,12 +13,10 @@ public partial class FilterSheetBody
         public string? Location { get; set; } = PantryLocations.All;
         public string Status { get; set; } = PantryRules.StatusAll;
         public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
-        public bool IncludeConsumed { get; set; }
 
         public string? SeenLocation { get; set; } = "__none__";
         public string SeenStatus { get; set; } = "__none__";
         public ItemSort? SeenSort { get; set; }
-        public bool? SeenIncludeConsumed { get; set; }
     }
 
     private readonly State _state = new();

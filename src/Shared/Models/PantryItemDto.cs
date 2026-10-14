@@ -11,6 +11,4 @@ public record PantryItemDto(
     string? HouseholdMemberId,
     string? Barcode,
     string? NutriScore,
-    NutritionFacts? Nutrition,
-    DateTimeOffset? ConsumedAt,
-    string? ConsumedByMemberId);
+    NutritionFacts? Nutrition);

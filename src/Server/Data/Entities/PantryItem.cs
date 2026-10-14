@@ -24,7 +24,4 @@ public class PantryItem
 
     public DateTimeOffset CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTimeOffset? UpdatedAt { get; set; }
-
-    public DateTimeOffset? ConsumedAt { get; set; }
-    public string? ConsumedByMemberId { get; set; }
 }

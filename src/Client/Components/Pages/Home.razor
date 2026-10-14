@@ -7,7 +7,6 @@
 @inject ILogger<Home> Logger
 @inject LocalizationService Loc
 @inject PantryRealtimeService Realtime
-@inject MemberService Members
 @implements IDisposable
 
 <header class="flex items-center justify-between gap-2">
@@ -53,34 +52,26 @@
             @{
                 var status = ExpiryHelper.GetStatus(context.ExpirationDate, _state.Today);
             }
-            <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
-                    class="bg-card block w-full rounded-md border p-3 text-left">
-                <span class="flex items-center justify-between gap-2">
-                    <span class="font-medium truncate">@context.Name</span>
-                    <BbBadge Variant="@ExpiryHelper.Badge(status)" class="shrink-0">@ExpiryHelper.Label(status, Loc)</BbBadge>
-                </span>
-                <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>@context.Quantity @context.Unit</span>
-                    <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@context.Location</BbBadge>
-                    <span class="shrink-0">@context.ExpirationDate.ToString("MMM d")</span>
-                </span>
-            </button>
-            @if (context.ConsumedAt is null)
-            {
+            <div class="flex items-center gap-2">
+                <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
+                        class="bg-card block min-w-0 flex-1 rounded-md border p-3 text-left">
+                    <span class="flex items-center justify-between gap-2">
+                        <span class="font-medium truncate">@context.Name</span>
+                        <BbBadge Variant="@ExpiryHelper.Badge(status)" class="shrink-0">@ExpiryHelper.Label(status, Loc)</BbBadge>
+                    </span>
+                    <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>@context.Quantity @context.Unit</span>
+                        <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@context.Location</BbBadge>
+                        <span class="shrink-0">@context.ExpirationDate.ToString("MMM d")</span>
+                    </span>
+                </button>
                 <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                          AriaLabel="@Loc["MarkAsUsed", context.Name]"
-                          OnClick="@(async () => await ConsumeItemAsync(context.Id, context.Name))"
-                          class="mt-1 ml-auto">
-                    <LucideIcon Name="check-circle-2" Size="16" />
+                          AriaLabel="@Loc["DeleteItemMessage", context.Name]"
+                          OnClick="@(async () => await DeleteItemAsync(context.Id))"
+                          Class="shrink-0">
+                    <LucideIcon Name="trash-2" Size="16" />
                 </BbButton>
-            }
-            else
-            {
-                <span class="mt-1 ml-auto text-xs text-muted-foreground flex items-center gap-1">
-                    <LucideIcon Name="check-circle-2" Size="12" />
-                    @Loc["Used"]
-                </span>
-            }
+            </div>
         </ItemTemplate>
         <LoadingTemplate>
             <div class="space-y-2" aria-hidden="true">
@@ -214,8 +205,7 @@
                 _ => PantryRules.SortExpiryAsc
             },
             Skip = skip,
-            Take = take,
-            IncludeConsumed = _state.IncludeConsumed
+            Take = take
         };
 
         using var response = await Api.Pantry.GetAsync(request, ct);
@@ -255,8 +245,7 @@
         {
             ["Location"] = _state.Location,
             ["Status"] = _state.Status,
-            ["Sort"] = _state.Sort,
-            ["IncludeConsumed"] = _state.IncludeConsumed
+            ["Sort"] = _state.Sort
         };
 
         var result = await Sheet.OpenAsync<FilterSheetBody>(parameters);
@@ -269,7 +258,7 @@
         if (data is not { } filters)
             return;
 
-        (_state.Location, _state.Status, _state.Sort, _state.IncludeConsumed) = (filters.Location, filters.Status, filters.Sort, filters.IncludeConsumed);
+        (_state.Location, _state.Status, _state.Sort) = (filters.Location, filters.Status, filters.Sort);
         await ReloadListAsync();
     }
 
@@ -298,24 +287,25 @@
         }
     }
 
-    private async Task ConsumeItemAsync(string id, string name)
+    private async Task DeleteItemAsync(string id)
     {
         try
         {
-            using var response = await Api.Pantry.ConsumeAsync(id, Members.CurrentMemberId);
-            if (response.IsSuccessfulWithContent)
+            using var response = await Api.Pantry.DeleteAsync(id);
+            if (!response.IsSuccessStatusCode)
             {
-                Toasts.Success(Loc["ItemMarkedAsUsed", name]);
+                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", id, response.StatusCode);
+                Toasts.Error(Loc["CouldNotDelete"]);
+                return;
             }
-            else
-            {
-                Toasts.Error(Loc["CouldNotMarkAsUsed"]);
-            }
+
+            Toasts.Success(Loc["ItemDeleted"]);
+            await ReloadListAsync();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Item {ItemId} consume failed", id);
-            Toasts.Error(Loc["CouldNotMarkAsUsed"]);
+            Logger.LogError(ex, "Item {ItemId} delete failed", id);
+            Toasts.Error(Loc["CouldNotDelete"]);
         }
     }
 
