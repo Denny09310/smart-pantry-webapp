@@ -7,14 +7,13 @@ using Microsoft.JSInterop;
 
 namespace Client.Services;
 
-public sealed class LocalizationService(IStringLocalizer<Strings> localizer, IJSRuntime js)
+public sealed class LocalizationService(IStringLocalizer<Strings> localizer, Bit.Butil.LocalStorage storage)
 {
     private const string StorageKey = "smart-pantry:culture";
-    private CultureInfo _currentCulture = new("en-US");
 
     public event Action? CultureChanged;
 
-    public CultureInfo CurrentCulture => _currentCulture;
+    public CultureInfo CurrentCulture { get; private set; } = new("en-US");
 
     public string this[string key] => localizer[key];
 
@@ -24,11 +23,11 @@ public sealed class LocalizationService(IStringLocalizer<Strings> localizer, IJS
     {
         try
         {
-            var saved = await js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            var saved = await storage.GetItem<string>(StorageKey);
             if (!string.IsNullOrWhiteSpace(saved))
             {
                 var culture = CultureInfo.GetCultureInfo(saved);
-                _currentCulture = culture;
+                CurrentCulture = culture;
                 CultureInfo.DefaultThreadCurrentCulture = culture;
                 CultureInfo.DefaultThreadCurrentUICulture = culture;
             }
@@ -42,13 +41,13 @@ public sealed class LocalizationService(IStringLocalizer<Strings> localizer, IJS
     public async Task SetCultureAsync(string cultureName)
     {
         var culture = CultureInfo.GetCultureInfo(cultureName);
-        _currentCulture = culture;
+        CurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
 
         try
         {
-            await js.InvokeVoidAsync("localStorage.setItem", StorageKey, cultureName);
+            await storage.SetItem(StorageKey, cultureName);
         }
         catch
         {

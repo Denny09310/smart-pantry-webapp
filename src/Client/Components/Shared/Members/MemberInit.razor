@@ -24,7 +24,11 @@
 
         while (Members.Members.Count == 0 && !Members.LoadFailed)
         {
-            var parameters = new Dictionary<string, object?> { ["AllowCancel"] = false };
+            var parameters = new Dictionary<string, object?>
+            {
+                ["AllowCancel"] = false
+            };
+            
             var options = new SheetOptions { Dismissible = false };
             var result = await Sheet.OpenAsync<MemberForm>(parameters, options);
 
