@@ -675,4 +675,7 @@
   <data name="BbSelectChoose" xml:space="preserve">
     <value>Choose an option</value>
   </data>
+  <data name="Shortcuts" xml:space="preserve">
+    <value>Shortcuts</value>
+  </data>
 </root>

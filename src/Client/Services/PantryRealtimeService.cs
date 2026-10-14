@@ -24,6 +24,7 @@ internal sealed class PantryRealtimeService(
     private HubConnection? _connection;
     private string? _memberId;
     private bool _disposed;
+    private int _connectGeneration;
 
     private readonly HashSet<string> _onlineIds = new(StringComparer.Ordinal);
 
@@ -38,7 +39,7 @@ internal sealed class PantryRealtimeService(
             return;
 
         members.Changed += OnMembersChanged;
-        await ConnectAsync();
+        _connection = await ConnectAsync();
     }
 
     private async void OnMembersChanged()
@@ -61,16 +62,33 @@ internal sealed class PantryRealtimeService(
         if (_disposed)
             return;
 
-        if (_connection is not null)
+        // Rapid member switches overlap: only the newest run may keep its
+        // connection, so a stale run can neither leak one nor orphan roster state.
+        var generation = ++_connectGeneration;
+        var old = _connection;
+        _connection = null;
+        _onlineIds.Clear();
+        PresenceChanged?.Invoke();
+
+        if (old is not null)
+            await old.DisposeAsync();
+
+        if (_disposed || generation != _connectGeneration)
+            return;
+
+        var fresh = await ConnectAsync();
+        if (_disposed || generation != _connectGeneration)
         {
-            await _connection.DisposeAsync();
-            _connection = null;
+            // Superseded while connecting: drop it so no ghost stays online.
+            if (fresh is not null)
+                await fresh.DisposeAsync();
+            return;
         }
 
-        await ConnectAsync();
+        _connection = fresh;
     }
 
-    private async Task ConnectAsync()
+    private async Task<HubConnection?> ConnectAsync()
     {
         _memberId = members.CurrentMemberId;
         var url = _memberId is null
@@ -113,10 +131,10 @@ internal sealed class PantryRealtimeService(
         {
             log.LogWarning(ex, "Realtime hub unreachable; falling back to manual reload.");
             await connection.DisposeAsync();
-            return;
+            return null;
         }
 
-        _connection = connection;
+        return connection;
     }
 
     public async ValueTask DisposeAsync()

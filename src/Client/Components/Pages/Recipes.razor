@@ -93,8 +93,8 @@
             // Re-search so names come back in the new language.
             if (_tags?.Count > 0)
                 await SearchAsync();
-            else
-                await InvokeAsync(StateHasChanged);
+
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {

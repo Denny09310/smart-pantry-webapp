@@ -1,42 +1,44 @@
 ﻿@inherits LayoutComponentBase
 @inject LocalizationService Loc
 
-<BbSidebarProvider>
-    <BbSidebar style="view-transition-name: sidebar;">
-        <BbSidebarHeader>
-            <BbSidebarHeaderContent>
-                <BbSidebarHeaderInfo>
-                    <span class="font-semibold">Smart Pantry</span>
-                </BbSidebarHeaderInfo>
-            </BbSidebarHeaderContent>
-        </BbSidebarHeader>
-        <BbSidebarContent>
-            <BbSidebarMenu>
-                <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Tooltip="@Loc["Pantry"]">
-                        <LucideIcon Name="package" />
-                        <span>@Loc["Pantry"]</span>
-                    </BbSidebarMenuButton>
-                </BbSidebarMenuItem>
-                <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/recipes" Tooltip="@Loc["Recipes"]">
-                        <LucideIcon Name="chef-hat" />
-                        <span>@Loc["Recipes"]</span>
-                    </BbSidebarMenuButton>
-                </BbSidebarMenuItem>
-                <BbSidebarMenuItem>
-                    <BbSidebarMenuButton Href="/settings" Tooltip="@Loc["Settings"]">
-                        <LucideIcon Name="settings" />
-                        <span>@Loc["Settings"]</span>
-                    </BbSidebarMenuButton>
-                </BbSidebarMenuItem>
-            </BbSidebarMenu>
-        </BbSidebarContent>
-    </BbSidebar>
-    <BbSidebarInset Class="space-y-4 p-4 pb-28 md:mx-auto md:w-full md:max-w-7xl md:pb-8">
-        @Body
-    </BbSidebarInset>
-</BbSidebarProvider>
+<div class="contents">
+    <BbSidebarProvider>
+        <BbSidebar style="view-transition-name: sidebar;">
+            <BbSidebarHeader>
+                <BbSidebarHeaderContent>
+                    <BbSidebarHeaderInfo>
+                        <span class="font-semibold">Smart Pantry</span>
+                    </BbSidebarHeaderInfo>
+                </BbSidebarHeaderContent>
+            </BbSidebarHeader>
+            <BbSidebarContent>
+                <BbSidebarMenu>
+                    <BbSidebarMenuItem>
+                        <BbSidebarMenuButton Href="/" Match="NavLinkMatch.All" Tooltip="@Loc["Pantry"]">
+                            <LucideIcon Name="package" />
+                            <span>@Loc["Pantry"]</span>
+                        </BbSidebarMenuButton>
+                    </BbSidebarMenuItem>
+                    <BbSidebarMenuItem>
+                        <BbSidebarMenuButton Href="/recipes" Tooltip="@Loc["Recipes"]">
+                            <LucideIcon Name="chef-hat" />
+                            <span>@Loc["Recipes"]</span>
+                        </BbSidebarMenuButton>
+                    </BbSidebarMenuItem>
+                    <BbSidebarMenuItem>
+                        <BbSidebarMenuButton Href="/settings" Tooltip="@Loc["Settings"]">
+                            <LucideIcon Name="settings" />
+                            <span>@Loc["Settings"]</span>
+                        </BbSidebarMenuButton>
+                    </BbSidebarMenuItem>
+                </BbSidebarMenu>
+            </BbSidebarContent>
+        </BbSidebar>
+        <BbSidebarInset Class="space-y-4 p-4 pb-28 md:mx-auto md:w-full md:max-w-7xl md:pb-8">
+            @Body
+        </BbSidebarInset>
+    </BbSidebarProvider>
+</div>
 
 <BottomBar />
 

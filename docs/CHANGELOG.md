@@ -1,3 +1,14 @@
+## [1.3.1] - 2026-10-14
+
+### 🐛 Bug Fixes
+
+- Sidebar scrolling with the page on desktop; it now stays pinned while only the main content scrolls
+- Sort filter rendering as an inline list instead of a proper select dropdown
+- Missing "Shortcuts" label string in the item form
+- Recipe results not repainting after a language switch
+- Realtime reconnect races leaking connections and ghost presence on rapid member switches
+- Unhandled shutdown noise on hub disconnect
+
 ## [1.3.0] - 2026-10-14
 
 ### 🚀 Features
@@ -8,7 +19,7 @@
 - Bottom sheet drag from the full handle row
 - Recipes page with page scroll and horizontal cards on mobile
 - BlazorBlueprint component chrome localized through a scoped localizer
-- Client.Tests suite covering expiry, members, realtime filter mirror, outbox and connectivity
+- Client.Tests suite covering expiry, members and realtime filter mirror
 - Transparent maskable PWA icon for the Android splash screen
 
 ### 🐛 Bug Fixes
