@@ -412,6 +412,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Couldn&apos;t delete the member. Try again..
+        /// </summary>
+        public static string CouldNotDeleteMember {
+            get {
+                return ResourceManager.GetString("CouldNotDeleteMember", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Couldn&apos;t enable push notifications. Check the browser site settings if they are blocked..
         /// </summary>
         public static string CouldNotEnable {
@@ -507,6 +516,24 @@ namespace Client.Resources {
         public static string DeleteItemMessage {
             get {
                 return ResourceManager.GetString("DeleteItemMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Delete {0}?.
+        /// </summary>
+        public static string DeleteMemberConfirm {
+            get {
+                return ResourceManager.GetString("DeleteMemberConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a They will be removed from the member list. Their items stay..
+        /// </summary>
+        public static string DeleteMemberMessage {
+            get {
+                return ResourceManager.GetString("DeleteMemberMessage", resourceCulture);
             }
         }
         
@@ -930,6 +957,15 @@ namespace Client.Resources {
         public static string MemberArchived {
             get {
                 return ResourceManager.GetString("MemberArchived", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a {0} deleted..
+        /// </summary>
+        public static string MemberDeleted {
+            get {
+                return ResourceManager.GetString("MemberDeleted", resourceCulture);
             }
         }
         

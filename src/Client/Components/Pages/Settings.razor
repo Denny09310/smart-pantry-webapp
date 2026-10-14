@@ -3,7 +3,9 @@
 @inject LocalizationService Loc
 @inject MemberService Members
 @inject BottomSheetService Sheet
+@inject DialogService Dialogs
 @inject ToastService Toasts
+@inject ILogger<Settings> Logger
 @implements IDisposable
 
 <div class="flex h-full flex-col">
@@ -121,7 +123,8 @@
 
     private async Task OpenMemberManagerAsync()
     {
-        await Sheet.OpenAsync<MemberSwitcher>();
+        var result = await Sheet.OpenAsync<MemberSwitcher>();
+        await MemberSheetActions.HandleAsync(result, Members, Dialogs, Toasts, Logger, Loc);
     }
 
     private static string GetFlagEmoji(string cultureName)

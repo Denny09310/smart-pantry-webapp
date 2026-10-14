@@ -267,6 +267,12 @@
   <data name="DeleteItemMessage" xml:space="preserve">
     <value>"{0}" will be permanently removed.</value>
   </data>
+  <data name="DeleteMemberConfirm" xml:space="preserve">
+    <value>Delete {0}?</value>
+  </data>
+  <data name="DeleteMemberMessage" xml:space="preserve">
+    <value>They will be removed from the member list. Their items stay.</value>
+  </data>
   <data name="PickADate" xml:space="preserve">
     <value>Pick a date</value>
   </data>
@@ -278,6 +284,9 @@
   </data>
   <data name="CouldNotDelete" xml:space="preserve">
     <value>Couldn't delete the item. Try again.</value>
+  </data>
+  <data name="CouldNotDeleteMember" xml:space="preserve">
+    <value>Couldn't delete the member. Try again.</value>
   </data>
   <data name="ItemAdded" xml:space="preserve">
     <value>Item added.</value>
@@ -386,6 +395,9 @@
   </data>
   <data name="MemberArchived" xml:space="preserve">
     <value>{0} archived.</value>
+  </data>
+  <data name="MemberDeleted" xml:space="preserve">
+    <value>{0} deleted.</value>
   </data>
   <data name="CouldNotArchive" xml:space="preserve">
     <value>Couldn't archive the member. Try again.</value>
