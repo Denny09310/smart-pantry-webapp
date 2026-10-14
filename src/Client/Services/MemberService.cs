@@ -1,4 +1,5 @@
 using Bit.Butil;
+
 using Shared.Models;
 
 namespace Client.Services;

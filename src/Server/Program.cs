@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Generated.Routing;
 using Microsoft.EntityFrameworkCore;
+
 using Server.Data;
 using Server.Hubs;
 using Server.Models;
 using Server.Services;
+
 using Shared.Validation;
 var builder = WebApplication.CreateBuilder(args);
 
