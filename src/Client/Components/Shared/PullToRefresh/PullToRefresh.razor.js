@@ -1,5 +1,6 @@
 export function attach(el, dotNet, threshold) {
     const indicator = el.querySelector(':scope > .ptr-indicator');
+    const spinner = el.querySelector(':scope > .ptr-indicator > .ptr-spinner');
     let startY = null;
     let lastDy = 0;
     let pulling = false;
@@ -11,6 +12,7 @@ export function attach(el, dotNet, threshold) {
         lastDy = 0;
         pulling = false;
         indicator.style.height = '0px';
+        spinner.style.transform = '';
         el.classList.remove('ptr-pulling');
     }
 
@@ -43,6 +45,7 @@ export function attach(el, dotNet, threshold) {
         event.preventDefault();
         const shown = Math.min(dy, threshold * 1.6);
         indicator.style.height = `${shown}px`;
+        spinner.style.transform = `rotate(${Math.round(dy * 2)}deg)`;
         el.classList.add('ptr-pulling');
     }, { signal, passive: false });
 

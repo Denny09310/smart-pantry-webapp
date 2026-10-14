@@ -28,9 +28,7 @@
         <InfiniteScrollList TItem="NotificationDto" @ref="_list" LoadPageAsync="LoadPageAsync"
                             KeySelector="@(x => x.Id)" PageSize="20">
             <ItemTemplate>
-                <div class="mb-2">
-                    <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
-                </div>
+                <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
             </ItemTemplate>
             <LoadingTemplate>
                 <div class="space-y-2" aria-hidden="true">

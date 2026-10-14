@@ -9,43 +9,43 @@
 @inject PantryRealtimeService Realtime
 @implements IDisposable
 
-<PullToRefresh OnRefresh="ReloadListAsync">
-    <header class="flex items-center justify-between gap-2">
-        <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
-        <div class="flex items-center gap-2">
-            @if (_state.Total > 0)
-            {
-                <span class="text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</span>
-            }
-            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]"
-                      @onclick="OpenAddAsync">
-                <LucideIcon Name="plus" Size="18" />
-            </BbButton>
-            <NotificationsBellButton />
-            <MemberAvatarButton />
-        </div>
-    </header>
-
-    <div class="flex gap-2">
-        <div class="flex-1">
-            <BbInputGroup>
-                <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
-                    <LucideIcon Name="search" Size="16" />
-                </BbInputGroupAddon>
-                <BbInputGroupInput @bind-Value="_state.Name" @bind-Value:after="OnSearchInput"
-                                   Placeholder="@Loc["SearchPlaceholder"]" />
-            </BbInputGroup>
-        </div>
-        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="@Loc["Filters"]"
-                  @onclick="OpenFiltersAsync">
-            <LucideIcon Name="sliders-horizontal" Size="16" />
-            @if (HasFilters)
-            {
-                <span class="h-2 w-2 rounded-full bg-primary"></span>
-            }
+<header class="flex items-center justify-between gap-2">
+    <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
+    <div class="flex items-center gap-2">
+        @if (_state.Total > 0)
+        {
+            <span class="text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</span>
+        }
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]"
+                  @onclick="OpenAddAsync">
+            <LucideIcon Name="plus" Size="18" />
         </BbButton>
+        <NotificationsBellButton />
+        <MemberAvatarButton />
     </div>
+</header>
 
+<div class="flex gap-2">
+    <div class="flex-1">
+        <BbInputGroup>
+            <BbInputGroupAddon Align="InputGroupAlign.InlineStart">
+                <LucideIcon Name="search" Size="16" />
+            </BbInputGroupAddon>
+            <BbInputGroupInput @bind-Value="_state.Name" @bind-Value:after="OnSearchInput"
+                               Placeholder="@Loc["SearchPlaceholder"]" />
+        </BbInputGroup>
+    </div>
+    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" AriaLabel="@Loc["Filters"]"
+              @onclick="OpenFiltersAsync">
+        <LucideIcon Name="sliders-horizontal" Size="16" />
+        @if (HasFilters)
+        {
+            <span class="h-2 w-2 rounded-full bg-primary"></span>
+        }
+    </BbButton>
+</div>
+
+<PullToRefresh OnRefresh="ReloadListAsync">
     <InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync"
                         KeySelector="@(x => x.Id)" TotalChanged="OnTotalChanged">
         <ItemTemplate>

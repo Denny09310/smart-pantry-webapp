@@ -6,15 +6,15 @@
 @inject LocalizationService Loc
 @implements IDisposable
 
-<PullToRefresh OnRefresh="RefreshRecipesAsync">
-    <div class="space-y-3">
-        <div>
-            <h1 class="text-xl font-semibold">@Loc["Recipes"]</h1>
-        </div>
+<div class="space-y-3">
+    <div>
+        <h1 class="text-xl font-semibold">@Loc["Recipes"]</h1>
+    </div>
 
-        <BbTagInput @bind-Tags="_tags" @bind-Tags:after="OnTagsChanged" Placeholder="@Loc["RecipeSearchPlaceholder"]"
-                    MaxTags="5" Clearable OnSearchSuggestions="SearchSuggestionsAsync" AriaLabel="@Loc["Recipes"]" />
+    <BbTagInput @bind-Tags="_tags" @bind-Tags:after="OnTagsChanged" Placeholder="@Loc["RecipeSearchPlaceholder"]"
+                MaxTags="5" Clearable OnSearchSuggestions="SearchSuggestionsAsync" AriaLabel="@Loc["Recipes"]" />
 
+    <PullToRefresh OnRefresh="RefreshRecipesAsync">
         @if (_loading)
         {
             <div class="space-y-2 md:grid md:grid-cols-3 md:gap-3 md:space-y-0" aria-hidden="true">
@@ -64,8 +64,8 @@
                 </Icon>
             </BbEmpty>
         }
-    </div>
-</PullToRefresh>
+    </PullToRefresh>
+</div>
 
 @code
 {

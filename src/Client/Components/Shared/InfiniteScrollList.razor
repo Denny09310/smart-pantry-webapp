@@ -15,7 +15,7 @@
 
 @foreach (var item in _state.Items)
 {
-    <div @key="@(KeySelector?.Invoke(item) ?? item)">
+    <div @key="@(KeySelector?.Invoke(item) ?? item)" class="mb-2">
         @ItemTemplate(item)
     </div>
 }
