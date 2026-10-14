@@ -116,7 +116,7 @@
     private async Task ChangeLanguageAsync(string cultureName)
     {
         await Loc.SetCultureAsync(cultureName);
-        Toasts.Success($"{GetCultureDisplayName(cultureName)} selected");
+        Toasts.Success(Loc["LanguageSelected", GetCultureDisplayName(cultureName)]);
     }
 
     private async Task OpenMemberManagerAsync()

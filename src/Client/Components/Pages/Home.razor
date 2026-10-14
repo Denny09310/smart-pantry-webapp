@@ -14,7 +14,7 @@
     <div class="flex items-center gap-2">
         @if (_state.Total > 0)
         {
-            <span class="text-sm text-muted-foreground">@_state.Total items</span>
+            <span class="text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</span>
         }
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]" @onclick="OpenAddAsync">
             <LucideIcon Name="plus" Size="18" />
@@ -97,7 +97,129 @@
         await Realtime.StartAsync();
     }
 
-    private Task OnRealtimeChanged(PantryChangedEvent _) => InvokeAsync(ReloadListAsync);
+    private Task OnRealtimeChanged(PantryChangedEvent change) => InvokeAsync(() => HandleChangeAsync(change));
+
+    /// <summary>
+    /// Patches the loaded rows instead of refetching the whole list: drops
+    /// removals, replaces visible updates, and inserts creates at their sorted
+    /// position. Anything uncertain falls back to a full reload.
+    /// </summary>
+    private async Task HandleChangeAsync(PantryChangedEvent change)
+    {
+        if (_state.List is null)
+            return;
+
+        try
+        {
+            switch (change.ChangeKind)
+            {
+                case PantryChangeKind.Removed:
+                    await _state.List.RemoveByKeyAsync(change.ItemId);
+                    break;
+                default:
+                    await UpsertItemAsync(change.ItemId);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            // A patch must never break the list: fall back to a full reload.
+            Logger.LogWarning(ex, "Granular pantry update failed; reloading.");
+            await ReloadListAsync();
+        }
+    }
+
+    private async Task UpsertItemAsync(string id)
+    {
+        var list = _state.List;
+        if (list is null)
+            return;
+
+        PantryItemDto item;
+        try
+        {
+            using var response = await Api.Pantry.GetByIdAsync(id);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                await list.RemoveByKeyAsync(id);
+                return;
+            }
+            if (!response.IsSuccessfulWithContent || response.Content is null)
+            {
+                await ReloadListAsync();
+                return;
+            }
+            item = response.Content;
+        }
+        catch
+        {
+            await ReloadListAsync();
+            return;
+        }
+
+        if (!MatchesFilters(item))
+        {
+            await list.RemoveByKeyAsync(id);
+            return;
+        }
+
+        if (await list.ReplaceAsync(item))
+            return;
+
+        if (list.IsFullyLoaded)
+            await list.InsertSortedAsync(item, CurrentComparer);
+        else
+            await ReloadListAsync();
+    }
+
+    /// <summary>Mirrors the server query: exact location, substring name, derived status.</summary>
+    private bool MatchesFilters(PantryItemDto item)
+    {
+        if (!string.IsNullOrWhiteSpace(_state.Location)
+            && _state.Location != PantryLocations.All
+            && !string.Equals(item.Location, _state.Location, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(_state.Name)
+            && !item.Name.Contains(_state.Name, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (_state.Status != PantryRules.StatusAll)
+        {
+            var status = ExpiryHelper.GetStatus(item.ExpirationDate, _state.Today);
+            var matches = _state.Status switch
+            {
+                var s when s == PantryRules.StatusExpired => status == ExpiryStatus.Expired,
+                var s when s == PantryRules.StatusSoon => status == ExpiryStatus.ExpiringSoon,
+                var s when s == PantryRules.StatusFresh => status == ExpiryStatus.Fresh,
+                _ => true
+            };
+            if (!matches)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>Mirrors the server ordering; any drift self-corrects on the next full reload.</summary>
+    private Comparison<PantryItemDto> CurrentComparer => _state.Sort switch
+    {
+        ItemSort.ExpiryDesc => (a, b) =>
+        {
+            var cmp = b.ExpirationDate.CompareTo(a.ExpirationDate);
+            return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
+        },
+        ItemSort.Name => (a, b) =>
+        {
+            var cmp = string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+            return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
+        },
+        _ => (a, b) =>
+        {
+            var cmp = a.ExpirationDate.CompareTo(b.ExpirationDate);
+            return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
+        }
+    };
 
     private async Task<Page<PantryItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
     {
@@ -142,7 +264,7 @@
         };
         
         var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
-        await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger);
+        await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger, Loc);
         if (!result.Cancelled)
             await ReloadListAsync();
     }

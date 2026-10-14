@@ -1,45 +1,46 @@
 @namespace Client.Components
 @using Client.Models
 @inject BottomSheetService Sheet
+@inject LocalizationService Loc
 
 <div class="flex h-full flex-col">
-    <h2 class="flex-none text-lg font-semibold">Filters</h2>
+    <h2 class="flex-none text-lg font-semibold">@Loc["Filters"]</h2>
 
     <div class="min-h-0 flex-1 touch-pan-y space-y-5 overflow-y-auto overscroll-contain py-1 pr-1">
         <div>
-            <span class="mb-1 block text-sm font-medium">Location</span>
+            <span class="mb-1 block text-sm font-medium">@Loc["Location"]</span>
             <BbChipSet @bind-Value="_state.Location" Class="scrollbar-none!" Wrap="false">
-                <BbChip Value="@(PantryLocations.All)">All locations</BbChip>
+                <BbChip Value="@(PantryLocations.All)">@Loc["AllLocations"]</BbChip>
                 @foreach (var location in PantryLocations.Values)
                 {
-                    <BbChip Value="@(location)">@location</BbChip>
+                    <BbChip Value="@(location)">@LocationLabel(location)</BbChip>
                 }
             </BbChipSet>
         </div>
 
         <div>
-            <span class="mb-1 block text-sm font-medium">Status</span>
+            <span class="mb-1 block text-sm font-medium">@Loc["Status"]</span>
             <BbChipSet @bind-Value="_state.Status" Class="scrollbar-none!" Wrap="false">
-                <BbChip Value="@PantryRules.StatusAll">All statuses</BbChip>
-                <BbChip Value="@PantryRules.StatusExpired">Expired</BbChip>
-                <BbChip Value="@PantryRules.StatusSoon">Expiring soon</BbChip>
-                <BbChip Value="@PantryRules.StatusFresh">Fresh</BbChip>
+                <BbChip Value="@PantryRules.StatusAll">@Loc["AllStatuses"]</BbChip>
+                <BbChip Value="@PantryRules.StatusExpired">@Loc["StatusExpired"]</BbChip>
+                <BbChip Value="@PantryRules.StatusSoon">@Loc["StatusExpiringSoon"]</BbChip>
+                <BbChip Value="@PantryRules.StatusFresh">@Loc["StatusFresh"]</BbChip>
             </BbChipSet>
         </div>
 
         <div>
-            <span class="mb-1 block text-sm font-medium">Sort by</span>
-            <BbNativeSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="Sort items">
-                <option value="@ItemSort.ExpiryAsc">Expiring first</option>
-                <option value="@ItemSort.ExpiryDesc">Expiring last</option>
-                <option value="@ItemSort.Name">Name A–Z</option>
+            <span class="mb-1 block text-sm font-medium">@Loc["SortBy"]</span>
+            <BbNativeSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="@Loc["SortBy"]">
+                <option value="@ItemSort.ExpiryAsc">@Loc["SortExpiryAsc"]</option>
+                <option value="@ItemSort.ExpiryDesc">@Loc["SortExpiryDesc"]</option>
+                <option value="@ItemSort.Name">@Loc["SortByNameAZ"]</option>
             </BbNativeSelect>
         </div>
     </div>
 
     <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
-        <BbButton Variant="ButtonVariant.Outline" Type="ButtonType.Button" @onclick="Reset">Reset</BbButton>
-        <BbButton Type="ButtonType.Button" @onclick="ApplyAsync">Apply filters</BbButton>
+        <BbButton Variant="ButtonVariant.Outline" Type="ButtonType.Button" @onclick="Reset">@Loc["Reset"]</BbButton>
+        <BbButton Type="ButtonType.Button" @onclick="ApplyAsync">@Loc["ApplyFilters"]</BbButton>
     </div>
 </div>
 
@@ -74,4 +75,12 @@
 
     private Task ApplyAsync()
         => Sheet.CloseAsync(new SelectedFilters(_state.Location, _state.Status, _state.Sort));
+
+    private string LocationLabel(string location) => location switch
+    {
+        "fridge" => Loc["Fridge"],
+        "freezer" => Loc["Freezer"],
+        "cabinet" => Loc["Cabinet"],
+        _ => Loc["Pantry"]
+    };
 }

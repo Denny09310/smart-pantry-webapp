@@ -15,7 +15,8 @@ internal static class ItemDeletion
         ServerApi api,
         DialogService dialogs,
         ToastService toasts,
-        ILogger logger)
+        ILogger logger,
+        LocalizationService loc)
     {
         if (result.Cancelled)
             return;
@@ -24,9 +25,9 @@ internal static class ItemDeletion
             return;
 
         var confirmed = await dialogs.ConfirmAsync(
-            "Delete item?",
-            $"“{item.Name}” will be permanently removed.",
-            new ConfirmDialogOptions { ConfirmText = "Delete", Destructive = true });
+            loc["DeleteItemConfirm"],
+            loc["DeleteItemMessage", item.Name],
+            new ConfirmDialogOptions { ConfirmText = loc["Delete"], Destructive = true });
 
         if (!confirmed.Confirmed)
             return;
@@ -37,16 +38,16 @@ internal static class ItemDeletion
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", item.Id, response.StatusCode);
-                toasts.Error("Couldn't delete the item. Try again.");
+                toasts.Error(loc["CouldNotDelete"]);
                 return;
             }
 
-            toasts.Success("Item deleted.");
+            toasts.Success(loc["ItemDeleted"]);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Item {ItemId} delete failed", item.Id);
-            toasts.Error("Couldn't delete the item. Try again.");
+            toasts.Error(loc["CouldNotDelete"]);
         }
     }
 }

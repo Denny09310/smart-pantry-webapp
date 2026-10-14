@@ -519,4 +519,127 @@
   <data name="LinkBarcode" xml:space="preserve">
     <value>Collega codice a barre</value>
   </data>
+  <data name="Status" xml:space="preserve">
+    <value>Stato</value>
+  </data>
+  <data name="SortBy" xml:space="preserve">
+    <value>Ordina per</value>
+  </data>
+  <data name="SortExpiryAsc" xml:space="preserve">
+    <value>Prime scadenze</value>
+  </data>
+  <data name="SortExpiryDesc" xml:space="preserve">
+    <value>Ultime scadenze</value>
+  </data>
+  <data name="SortByNameAZ" xml:space="preserve">
+    <value>Nome A–Z</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Reimposta</value>
+  </data>
+  <data name="ApplyFilters" xml:space="preserve">
+    <value>Applica filtri</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Chiudi</value>
+  </data>
+  <data name="ItemNotFound" xml:space="preserve">
+    <value>Elemento non trovato</value>
+  </data>
+  <data name="ItemGoneDescription" xml:space="preserve">
+    <value>Potrebbe essere stato eliminato</value>
+  </data>
+  <data name="EditMember" xml:space="preserve">
+    <value>Modifica membro</value>
+  </data>
+  <data name="AddMemberSubtitle" xml:space="preserve">
+    <value>Una nuova persona in casa.</value>
+  </data>
+  <data name="EditMemberSubtitle" xml:space="preserve">
+    <value>Aggiorna il profilo.</value>
+  </data>
+  <data name="UseColor" xml:space="preserve">
+    <value>Usa il colore {0}</value>
+  </data>
+  <data name="SaveMember" xml:space="preserve">
+    <value>Salva membro</value>
+  </data>
+  <data name="CouldNotSaveMember" xml:space="preserve">
+    <value>Impossibile salvare il membro. Riprova.</value>
+  </data>
+  <data name="RenameUser" xml:space="preserve">
+    <value>Rinomina {0}</value>
+  </data>
+  <data name="UnarchiveUser" xml:space="preserve">
+    <value>Ripristina {0}</value>
+  </data>
+  <data name="SwitchUser" xml:space="preserve">
+    <value>Cambia membro</value>
+  </data>
+  <data name="MembersLoadFailed" xml:space="preserve">
+    <value>Impossibile caricare i membri.</value>
+  </data>
+  <data name="AllCaughtUp" xml:space="preserve">
+    <value>Tutto a posto</value>
+  </data>
+  <data name="RemindersAppearHere" xml:space="preserve">
+    <value>I nuovi promemoria appariranno qui</value>
+  </data>
+  <data name="EnablePushDescription" xml:space="preserve">
+    <value>Attiva le notifiche push</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>Vedi</value>
+  </data>
+  <data name="MarkRead" xml:space="preserve">
+    <value>Leggi</value>
+  </data>
+  <data name="ExpiresAt" xml:space="preserve">
+    <value>Scade {0}</value>
+  </data>
+  <data name="JustNow" xml:space="preserve">
+    <value>adesso</value>
+  </data>
+  <data name="MinutesAgo" xml:space="preserve">
+    <value>{0} min fa</value>
+  </data>
+  <data name="HoursAgo" xml:space="preserve">
+    <value>{0} h fa</value>
+  </data>
+  <data name="DaysAgo" xml:space="preserve">
+    <value>{0} g fa</value>
+  </data>
+  <data name="UpdateDownloaded" xml:space="preserve">
+    <value>Una nuova versione è stata scaricata. Ricarica per usarla.</value>
+  </data>
+  <data name="NotFoundTitle" xml:space="preserve">
+    <value>Non trovato</value>
+  </data>
+  <data name="NotFoundDescription" xml:space="preserve">
+    <value>Spiacenti, il contenuto cercato non esiste.</value>
+  </data>
+  <data name="ItemsCount" xml:space="preserve">
+    <value>{0} elementi</value>
+  </data>
+  <data name="LanguageSelected" xml:space="preserve">
+    <value>{0} selezionata</value>
+  </data>
+  <data name="AddItemSubtitle" xml:space="preserve">
+    <value>Registra un nuovo lotto con la scadenza.</value>
+  </data>
+  <data name="EditItemSubtitle" xml:space="preserve">
+    <value>Aggiorna i dettagli del lotto.</value>
+  </data>
+  <data name="ScanBarcodeButton" xml:space="preserve">
+    <value>Scansiona codice</value>
+  </data>
+  <data name="LoadMoreFailed" xml:space="preserve">
+    <value>Impossibile caricare altri elementi. Riprova.</value>
+  </data>
+  <data name="LoadingState" xml:space="preserve">
+    <value>Caricamento…</value>
+  </data>
+  <data name="BottomSheetLabel" xml:space="preserve">
+    <value>Pannello</value>
+  </data>
 </root>

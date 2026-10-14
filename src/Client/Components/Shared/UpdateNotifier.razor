@@ -4,6 +4,7 @@
 @inject NavigationManager Nav
 @inject ToastService Toasts
 @inject ILogger<UpdateNotifier> Logger
+@inject LocalizationService Loc
 @implements IAsyncDisposable
 
 @code
@@ -112,11 +113,11 @@
 
         await InvokeAsync(() => Toasts.Show(new ToastData
         {
-            Title = "Update available",
-            Description = "A new version was downloaded. Reload to use it.",
+            Title = Loc["UpdateAvailable"],
+            Description = Loc["UpdateDownloaded"],
             Variant = ToastVariant.Info,
             Duration = 0,
-            ActionText = "Reload",
+            ActionText = Loc["Reload"],
             OnAction = () => _ = ActivateAsync(),
         }));
     }

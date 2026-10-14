@@ -2,12 +2,13 @@
 @inject BottomSheetService Sheet
 @inject IJSRuntime JS
 @inject ILogger<BottomSheetProvider> Logger
+@inject LocalizationService Loc
 @implements IAsyncDisposable
 
 @if (_state.Body is not null)
 {
     <div class="sheet-scrim" @onclick="OnScrimClick"></div>
-    <section class="sheet-panel" role="dialog" aria-modal="true" aria-label="Bottom sheet">
+    <section class="sheet-panel" role="dialog" aria-modal="true" aria-label="@Loc["BottomSheetLabel"]">
         <div class="sheet-inner sheet-pre bg-background border-t" @ref="_state.InnerRef">
             <div class="sheet-handle" @ref="_state.HandleRef">
                 <span class="sheet-grip bg-gray-400 dark:bg-gray-600"></span>

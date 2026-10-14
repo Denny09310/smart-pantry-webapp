@@ -79,6 +79,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Register a new batch with its expiry date..
+        /// </summary>
+        public static string AddItemSubtitle {
+            get {
+                return ResourceManager.GetString("AddItemSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Add item.
         /// </summary>
         public static string AddItemTitle {
@@ -97,6 +106,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Someone new in the household..
+        /// </summary>
+        public static string AddMemberSubtitle {
+            get {
+                return ResourceManager.GetString("AddMemberSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a All caught up.
+        /// </summary>
+        public static string AllCaughtUp {
+            get {
+                return ResourceManager.GetString("AllCaughtUp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a All locations.
         /// </summary>
         public static string AllLocations {
@@ -111,6 +138,15 @@ namespace Client.Resources {
         public static string AllStatuses {
             get {
                 return ResourceManager.GetString("AllStatuses", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Apply filters.
+        /// </summary>
+        public static string ApplyFilters {
+            get {
+                return ResourceManager.GetString("ApplyFilters", resourceCulture);
             }
         }
         
@@ -196,6 +232,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Bottom sheet.
+        /// </summary>
+        public static string BottomSheetLabel {
+            get {
+                return ResourceManager.GetString("BottomSheetLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Cabinet.
         /// </summary>
         public static string Cabinet {
@@ -219,6 +264,15 @@ namespace Client.Resources {
         public static string ClickToStartScanning {
             get {
                 return ResourceManager.GetString("ClickToStartScanning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Close.
+        /// </summary>
+        public static string Close {
+            get {
+                return ResourceManager.GetString("Close", resourceCulture);
             }
         }
         
@@ -277,6 +331,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Couldn&apos;t save the member. Try again..
+        /// </summary>
+        public static string CouldNotSaveMember {
+            get {
+                return ResourceManager.GetString("CouldNotSaveMember", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Current.
         /// </summary>
         public static string Current {
@@ -291,6 +354,15 @@ namespace Client.Resources {
         public static string CurrentUser {
             get {
                 return ResourceManager.GetString("CurrentUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a {0}d ago.
+        /// </summary>
+        public static string DaysAgo {
+            get {
+                return ResourceManager.GetString("DaysAgo", resourceCulture);
             }
         }
         
@@ -367,6 +439,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Update the batch details..
+        /// </summary>
+        public static string EditItemSubtitle {
+            get {
+                return ResourceManager.GetString("EditItemSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Edit item.
         /// </summary>
         public static string EditItemTitle {
@@ -376,11 +457,29 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Edit member.
+        /// </summary>
+        public static string EditMember {
+            get {
+                return ResourceManager.GetString("EditMember", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Enable notifications.
         /// </summary>
         public static string EnableNotifications {
             get {
                 return ResourceManager.GetString("EnableNotifications", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Enable push notifications.
+        /// </summary>
+        public static string EnablePushDescription {
+            get {
+                return ResourceManager.GetString("EnablePushDescription", resourceCulture);
             }
         }
         
@@ -408,6 +507,15 @@ namespace Client.Resources {
         public static string ExpiredYesterday {
             get {
                 return ResourceManager.GetString("ExpiredYesterday", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Expires {0}.
+        /// </summary>
+        public static string ExpiresAt {
+            get {
+                return ResourceManager.GetString("ExpiresAt", resourceCulture);
             }
         }
         
@@ -511,6 +619,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a {0}h ago.
+        /// </summary>
+        public static string HoursAgo {
+            get {
+                return ResourceManager.GetString("HoursAgo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Household members.
         /// </summary>
         public static string HouseholdMembers {
@@ -565,11 +682,29 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a It may have been deleted.
+        /// </summary>
+        public static string ItemGoneDescription {
+            get {
+                return ResourceManager.GetString("ItemGoneDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Item name.
         /// </summary>
         public static string ItemName {
             get {
                 return ResourceManager.GetString("ItemName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Item not found.
+        /// </summary>
+        public static string ItemNotFound {
+            get {
+                return ResourceManager.GetString("ItemNotFound", resourceCulture);
             }
         }
         
@@ -583,6 +718,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a {0} items.
+        /// </summary>
+        public static string ItemsCount {
+            get {
+                return ResourceManager.GetString("ItemsCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a just now.
+        /// </summary>
+        public static string JustNow {
+            get {
+                return ResourceManager.GetString("JustNow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Language.
         /// </summary>
         public static string Language {
@@ -592,11 +745,38 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a {0} selected.
+        /// </summary>
+        public static string LanguageSelected {
+            get {
+                return ResourceManager.GetString("LanguageSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Link barcode.
         /// </summary>
         public static string LinkBarcode {
             get {
                 return ResourceManager.GetString("LinkBarcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Couldn&apos;t load more items. Try again..
+        /// </summary>
+        public static string LoadMoreFailed {
+            get {
+                return ResourceManager.GetString("LoadMoreFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Loading….
+        /// </summary>
+        public static string LoadingState {
+            get {
+                return ResourceManager.GetString("LoadingState", resourceCulture);
             }
         }
         
@@ -637,6 +817,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Read.
+        /// </summary>
+        public static string MarkRead {
+            get {
+                return ResourceManager.GetString("MarkRead", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a {0} archived..
         /// </summary>
         public static string MemberArchived {
@@ -651,6 +840,24 @@ namespace Client.Resources {
         public static string MemberName {
             get {
                 return ResourceManager.GetString("MemberName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Couldn&apos;t load household members..
+        /// </summary>
+        public static string MembersLoadFailed {
+            get {
+                return ResourceManager.GetString("MembersLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a {0}m ago.
+        /// </summary>
+        public static string MinutesAgo {
+            get {
+                return ResourceManager.GetString("MinutesAgo", resourceCulture);
             }
         }
         
@@ -687,6 +894,24 @@ namespace Client.Resources {
         public static string NoRecipesFound {
             get {
                 return ResourceManager.GetString("NoRecipesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Sorry, the content you are looking for does not exist..
+        /// </summary>
+        public static string NotFoundDescription {
+            get {
+                return ResourceManager.GetString("NotFoundDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Not Found.
+        /// </summary>
+        public static string NotFoundTitle {
+            get {
+                return ResourceManager.GetString("NotFoundTitle", resourceCulture);
             }
         }
         
@@ -925,6 +1150,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a New expiry reminders will appear here.
+        /// </summary>
+        public static string RemindersAppearHere {
+            get {
+                return ResourceManager.GetString("RemindersAppearHere", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Rename.
         /// </summary>
         public static string Rename {
@@ -934,11 +1168,29 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Rename {0}.
+        /// </summary>
+        public static string RenameUser {
+            get {
+                return ResourceManager.GetString("RenameUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Required.
         /// </summary>
         public static string Required {
             get {
                 return ResourceManager.GetString("Required", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Reset.
+        /// </summary>
+        public static string Reset {
+            get {
+                return ResourceManager.GetString("Reset", resourceCulture);
             }
         }
         
@@ -979,11 +1231,29 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Save member.
+        /// </summary>
+        public static string SaveMember {
+            get {
+                return ResourceManager.GetString("SaveMember", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Scan barcode (optional).
         /// </summary>
         public static string ScanBarcode {
             get {
                 return ResourceManager.GetString("ScanBarcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Scan barcode.
+        /// </summary>
+        public static string ScanBarcodeButton {
+            get {
+                return ResourceManager.GetString("ScanBarcodeButton", resourceCulture);
             }
         }
         
@@ -1078,6 +1348,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Sort by.
+        /// </summary>
+        public static string SortBy {
+            get {
+                return ResourceManager.GetString("SortBy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Sort by expiry.
         /// </summary>
         public static string SortByExpiry {
@@ -1096,11 +1375,47 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Name A–Z.
+        /// </summary>
+        public static string SortByNameAZ {
+            get {
+                return ResourceManager.GetString("SortByNameAZ", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Expiring first.
+        /// </summary>
+        public static string SortExpiryAsc {
+            get {
+                return ResourceManager.GetString("SortExpiryAsc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Expiring last.
+        /// </summary>
+        public static string SortExpiryDesc {
+            get {
+                return ResourceManager.GetString("SortExpiryDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Start Camera.
         /// </summary>
         public static string StartCamera {
             get {
                 return ResourceManager.GetString("StartCamera", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Status.
+        /// </summary>
+        public static string Status {
+            get {
+                return ResourceManager.GetString("Status", resourceCulture);
             }
         }
         
@@ -1132,6 +1447,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Switch member.
+        /// </summary>
+        public static string SwitchUser {
+            get {
+                return ResourceManager.GetString("SwitchUser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Tap to switch.
         /// </summary>
         public static string TapToSwitch {
@@ -1146,6 +1470,15 @@ namespace Client.Resources {
         public static string Unarchive {
             get {
                 return ResourceManager.GetString("Unarchive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Unarchive {0}.
+        /// </summary>
+        public static string UnarchiveUser {
+            get {
+                return ResourceManager.GetString("UnarchiveUser", resourceCulture);
             }
         }
         
@@ -1213,6 +1546,24 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a A new version was downloaded. Reload to use it..
+        /// </summary>
+        public static string UpdateDownloaded {
+            get {
+                return ResourceManager.GetString("UpdateDownloaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Use color {0}.
+        /// </summary>
+        public static string UseColor {
+            get {
+                return ResourceManager.GetString("UseColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Use soon · {0} days left.
         /// </summary>
         public static string UseSoonDaysLeft {
@@ -1236,6 +1587,15 @@ namespace Client.Resources {
         public static string User {
             get {
                 return ResourceManager.GetString("User", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a View.
+        /// </summary>
+        public static string View {
+            get {
+                return ResourceManager.GetString("View", resourceCulture);
             }
         }
 
