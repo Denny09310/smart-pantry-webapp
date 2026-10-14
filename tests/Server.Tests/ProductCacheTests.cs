@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
 using Server.Data;
 using Server.Data.Entities;
 using Server.Endpoints;
 using Server.Services;
+
 using Shared.Models;
 
 namespace Server.Tests;

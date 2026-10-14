@@ -1,7 +1,7 @@
+using Client.Services;
+
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-
-using Client.Services;
 
 namespace Client.Components;
 

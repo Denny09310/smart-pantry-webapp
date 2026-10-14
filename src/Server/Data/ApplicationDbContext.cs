@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+
 using Server.Data.Entities;
 
 namespace Server.Data;

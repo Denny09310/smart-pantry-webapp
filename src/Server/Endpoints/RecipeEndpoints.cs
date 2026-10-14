@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Generated.Attributes;
 using Microsoft.AspNetCore.Http.HttpResults;
+
 using Server.Services;
+
 using Shared.Models;
 
 namespace Server.Endpoints;
