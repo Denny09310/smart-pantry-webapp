@@ -7,6 +7,7 @@
 @inject ILogger<Home> Logger
 @inject LocalizationService Loc
 @inject PantryRealtimeService Realtime
+@inject MemberService Members
 @implements IDisposable
 
 <header class="flex items-center justify-between gap-2">
@@ -55,15 +56,31 @@
             <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
                     class="bg-card block w-full rounded-md border p-3 text-left">
                 <span class="flex items-center justify-between gap-2">
-                    <span class="font-medium">@context.Name</span>
-                    <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
+                    <span class="font-medium truncate">@context.Name</span>
+                    <BbBadge Variant="@ExpiryHelper.Badge(status)" class="shrink-0">@ExpiryHelper.Label(status, Loc)</BbBadge>
                 </span>
                 <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                     <span>@context.Quantity @context.Unit</span>
-                    <BbBadge Variant="BadgeVariant.Outline">@context.Location</BbBadge>
-                    <span>@context.ExpirationDate.ToString("MMM d")</span>
+                    <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@context.Location</BbBadge>
+                    <span class="shrink-0">@context.ExpirationDate.ToString("MMM d")</span>
                 </span>
             </button>
+            @if (context.ConsumedAt is null)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                          AriaLabel="@Loc["MarkAsUsed", context.Name]"
+                          OnClick="@(async () => await ConsumeItemAsync(context.Id, context.Name))"
+                          class="mt-1 ml-auto">
+                    <LucideIcon Name="check-circle-2" Size="16" />
+                </BbButton>
+            }
+            else
+            {
+                <span class="mt-1 ml-auto text-xs text-muted-foreground flex items-center gap-1">
+                    <LucideIcon Name="check-circle-2" Size="12" />
+                    @Loc["Used"]
+                </span>
+            }
         </ItemTemplate>
         <LoadingTemplate>
             <div class="space-y-2" aria-hidden="true">
@@ -197,7 +214,8 @@
                 _ => PantryRules.SortExpiryAsc
             },
             Skip = skip,
-            Take = take
+            Take = take,
+            IncludeConsumed = _state.IncludeConsumed
         };
 
         using var response = await Api.Pantry.GetAsync(request, ct);
@@ -237,7 +255,8 @@
         {
             ["Location"] = _state.Location,
             ["Status"] = _state.Status,
-            ["Sort"] = _state.Sort
+            ["Sort"] = _state.Sort,
+            ["IncludeConsumed"] = _state.IncludeConsumed
         };
 
         var result = await Sheet.OpenAsync<FilterSheetBody>(parameters);
@@ -250,7 +269,7 @@
         if (data is not { } filters)
             return;
 
-        (_state.Location, _state.Status, _state.Sort) = (filters.Location, filters.Status, filters.Sort);
+        (_state.Location, _state.Status, _state.Sort, _state.IncludeConsumed) = (filters.Location, filters.Status, filters.Sort, filters.IncludeConsumed);
         await ReloadListAsync();
     }
 
@@ -276,6 +295,27 @@
         catch (OperationCanceledException)
         {
             // Superseded by newer input; nothing to do.
+        }
+    }
+
+    private async Task ConsumeItemAsync(string id, string name)
+    {
+        try
+        {
+            using var response = await Api.Pantry.ConsumeAsync(id, Members.CurrentMemberId);
+            if (response.IsSuccessfulWithContent)
+            {
+                Toasts.Success(Loc["ItemMarkedAsUsed", name]);
+            }
+            else
+            {
+                Toasts.Error(Loc["CouldNotMarkAsUsed"]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Item {ItemId} consume failed", id);
+            Toasts.Error(Loc["CouldNotMarkAsUsed"]);
         }
     }
 
