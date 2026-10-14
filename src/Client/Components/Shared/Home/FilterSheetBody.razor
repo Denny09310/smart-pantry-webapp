@@ -30,11 +30,11 @@
 
         <div>
             <span class="mb-1 block text-sm font-medium">@Loc["SortBy"]</span>
-            <BbNativeSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="@Loc["SortBy"]">
-                <option value="@ItemSort.ExpiryAsc">@Loc["SortExpiryAsc"]</option>
-                <option value="@ItemSort.ExpiryDesc">@Loc["SortExpiryDesc"]</option>
-                <option value="@ItemSort.Name">@Loc["SortByNameAZ"]</option>
-            </BbNativeSelect>
+            <BbSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="@Loc["SortBy"]">
+                <BbSelectItem Value="@ItemSort.ExpiryAsc">@Loc["SortExpiryAsc"]</BbSelectItem>
+                <BbSelectItem Value="@ItemSort.ExpiryDesc">@Loc["SortExpiryDesc"]</BbSelectItem>
+                <BbSelectItem Value="@ItemSort.Name">@Loc["SortByNameAZ"]</BbSelectItem>
+            </BbSelect>
         </div>
     </div>
 
