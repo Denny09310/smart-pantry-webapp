@@ -144,6 +144,63 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
     }
 
     [Fact]
+    public async Task Post_WithClientId_HonorsIt()
+    {
+        var name = $"test-id-{Guid.CreateVersion7()}";
+        var id = Guid.CreateVersion7().ToString();
+
+        var create = await _client.PostAsJsonAsync("/api/pantry", new CreatePantryItemRequest(
+            name, 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            Id: id));
+
+        try
+        {
+            Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+            var created = await create.Content.ReadFromJsonAsync<PantryItemDto>();
+            Assert.NotNull(created);
+            Assert.Equal(id, created.Id);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
+    }
+
+    [Fact]
+    public async Task Post_DuplicateClientId_ReturnsConflict()
+    {
+        var name = $"test-id-{Guid.CreateVersion7()}";
+        var id = Guid.CreateVersion7().ToString();
+        var request = new CreatePantryItemRequest(
+            name, 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            Id: id);
+
+        try
+        {
+            using var first = await _client.PostAsJsonAsync("/api/pantry", request);
+            Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+            // Idempotent replay: the first attempt succeeded, its response lost.
+            using var retry = await _client.PostAsJsonAsync("/api/pantry", request);
+            Assert.Equal(HttpStatusCode.Conflict, retry.StatusCode);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(name);
+        }
+    }
+
+    [Fact]
+    public async Task Post_InvalidClientId_ReturnsValidationProblem()
+    {
+        var response = await _client.PostAsJsonAsync("/api/pantry", new CreatePantryItemRequest(
+            "Milk", 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            Id: "not-a-guid"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Post_MalformedExpirationDate_ReturnsBadRequest()
     {
         using var content = new StringContent(

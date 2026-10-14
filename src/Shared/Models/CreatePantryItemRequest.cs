@@ -14,4 +14,9 @@ public record CreatePantryItemRequest(
     DateOnly ExpirationDate,
     [property: MaxLength(32)] string? Barcode = null,
     [property: MaxLength(2)] string? NutriScore = null,
-    NutritionFacts? Nutrition = null);
+    NutritionFacts? Nutrition = null,
+    // Optional client-provided id (GUID) for idempotent offline replay.
+    // When omitted the server generates one.
+    [property: RegularExpression(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+        ErrorMessage = "Invalid id format. Must be a GUID.")]
+    string? Id = null);

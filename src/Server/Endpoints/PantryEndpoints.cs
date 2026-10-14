@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
+using Npgsql;
+
 using Server.Data;
 using Server.Data.Entities;
 using Server.Hubs;
@@ -96,13 +98,16 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
     }
 
     [MapPost("/")]
-    public async Task<Results<Created<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
+    public async Task<Results<Created<PantryItemDto>, Conflict, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,
         [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
     {
         var entry = new PantryItem
         {
+            Id = string.IsNullOrWhiteSpace(request.Id)
+                ? Guid.CreateVersion7().ToString()
+                : request.Id,
             Name = request.Name,
             Quantity = request.Quantity,
             Unit = request.Unit,
@@ -116,7 +121,20 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         };
 
         db.Items.Add(entry);
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg
+            && pg.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            // Idempotent replay: a client-provided id that already exists means
+            // a previous attempt succeeded and its response was lost.
+            db.ChangeTracker.Clear();
+            return TypedResults.Conflict();
+        }
+
         await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Created), ct);
 
         return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
