@@ -3,7 +3,6 @@ using System.Globalization;
 using Client.Resources;
 
 using Microsoft.Extensions.Localization;
-using Microsoft.JSInterop;
 
 namespace Client.Services;
 
