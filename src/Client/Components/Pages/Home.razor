@@ -52,9 +52,10 @@
             @{
                 var status = ExpiryHelper.GetStatus(context.ExpirationDate, _state.Today);
             }
-            <div class="flex items-center gap-2">
-                <button type="button" @onclick="() => OpenDetailsAsync(context.Id)"
-                        class="bg-card block min-w-0 flex-1 rounded-md border p-3 text-left">
+            <div class="bg-card rounded-md border p-3">
+                <div role="button" tabindex="0" @onclick="() => OpenDetailsAsync(context.Id)"
+                     @onkeydown="@((KeyboardEventArgs e) => OpenDetailsKeyAsync(e, context.Id))"
+                     @onkeydown:preventDefault class="cursor-pointer">
                     <span class="flex items-center justify-between gap-2">
                         <span class="font-medium truncate">@context.Name</span>
                         <BbBadge Variant="@ExpiryHelper.Badge(status)" class="shrink-0">@ExpiryHelper.Label(status, Loc)</BbBadge>
@@ -64,13 +65,14 @@
                         <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@context.Location</BbBadge>
                         <span class="shrink-0">@context.ExpirationDate.ToString("MMM d")</span>
                     </span>
-                </button>
-                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                          AriaLabel="@Loc["DeleteItemMessage", context.Name]"
-                          OnClick="@(async () => await DeleteItemAsync(context.Id))"
-                          Class="shrink-0">
-                    <LucideIcon Name="trash-2" Size="16" />
-                </BbButton>
+                </div>
+                <div class="mt-2 flex justify-end">
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
+                              AriaLabel="@Loc["DeleteItemMessage", context.Name]"
+                              OnClick="@(async () => await DeleteItemAsync(context.Id))">
+                        <LucideIcon Name="trash-2" Size="16" />
+                    </BbButton>
+                </div>
             </div>
         </ItemTemplate>
         <LoadingTemplate>
@@ -225,6 +227,9 @@
         if (!result.Cancelled)
             await ReloadListAsync();
     }
+
+    private Task OpenDetailsKeyAsync(KeyboardEventArgs e, string id)
+        => e.Key is "Enter" or " " ? OpenDetailsAsync(id) : Task.CompletedTask;
 
     private async Task OpenDetailsAsync(string id)
     {
