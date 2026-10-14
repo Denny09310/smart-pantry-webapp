@@ -30,7 +30,8 @@
 
         <div>
             <span class="mb-1 block text-sm font-medium">@Loc["SortBy"]</span>
-            <BbSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="@Loc["SortBy"]">
+            <BbSelect TValue="ItemSort" @bind-Value="_state.Sort" AriaLabel="@Loc["SortBy"]"
+                      DisplayTextSelector="SortDisplayText">
                 <BbSelectTrigger>
                     <BbSelectValue />
                 </BbSelectTrigger>
@@ -77,6 +78,13 @@
         _state.Status = PantryRules.StatusAll;
         _state.Sort = ItemSort.ExpiryAsc;
     }
+
+    private string SortDisplayText(ItemSort sort) => sort switch
+    {
+        ItemSort.ExpiryDesc => Loc["SortExpiryDesc"],
+        ItemSort.Name => Loc["SortByNameAZ"],
+        _ => Loc["SortExpiryAsc"]
+    };
 
     private Task ApplyAsync()
         => Sheet.CloseAsync(new SelectedFilters(_state.Location, _state.Status, _state.Sort));
