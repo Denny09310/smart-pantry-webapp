@@ -26,7 +26,4 @@ public record GetPantryItemsRequest
     /// defaults to <c>expiry-asc</c> in the handler.
     /// </summary>
     public string? Sort { get; set; }
-
-    /// <summary>Include consumed items in the results (default: false).</summary>
-    public bool? IncludeConsumed { get; set; }
 }

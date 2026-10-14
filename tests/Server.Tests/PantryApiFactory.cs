@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 using Npgsql;
 
@@ -28,6 +32,15 @@ public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             {
                 ["ConnectionStrings:Default"] = ConnectionString
             });
+        });
+
+        // The reminder worker must not run here: its background CheckAsync
+        // races the tests' own worker calls on the same database and claims
+        // rows out from under exact-count assertions. Tests drive the worker
+        // explicitly instead.
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IHostedService>();
         });
     }
 

@@ -42,12 +42,6 @@
                 </BbSelectContent>
             </BbSelect>
         </div>
-
-        <div>
-            <BbSwitch @bind-Value="_state.IncludeConsumed" Class="flex items-center gap-2">
-                <span class="text-sm font-medium">@Loc["IncludeConsumedItems"]</span>
-            </BbSwitch>
-        </div>
     </div>
 
     <div class="grid flex-none grid-cols-2 gap-2 border-t pt-3">
@@ -58,26 +52,23 @@
 
 @code
 {
-    public sealed record SelectedFilters(string? Location, string Status, ItemSort Sort, bool IncludeConsumed);
+    public sealed record SelectedFilters(string? Location, string Status, ItemSort Sort);
 
     [Parameter] public string? Location { get; set; }
     [Parameter] public string Status { get; set; } = PantryRules.StatusAll;
     [Parameter] public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
-    [Parameter] public bool IncludeConsumed { get; set; }
 
     protected override void OnParametersSet()
     {
-        if (_state.SeenSort is null || Location != _state.SeenLocation || Status != _state.SeenStatus || Sort != _state.SeenSort || IncludeConsumed != _state.SeenIncludeConsumed)
+        if (_state.SeenSort is null || Location != _state.SeenLocation || Status != _state.SeenStatus || Sort != _state.SeenSort)
         {
             _state.SeenLocation = Location;
             _state.SeenStatus = Status;
             _state.SeenSort = Sort;
-            _state.SeenIncludeConsumed = IncludeConsumed;
 
             _state.Location = Location;
             _state.Status = Status;
             _state.Sort = Sort;
-            _state.IncludeConsumed = IncludeConsumed;
         }
     }
 
@@ -86,7 +77,6 @@
         _state.Location = PantryLocations.All;
         _state.Status = PantryRules.StatusAll;
         _state.Sort = ItemSort.ExpiryAsc;
-        _state.IncludeConsumed = false;
     }
 
     private string SortDisplayText(ItemSort sort) => sort switch
@@ -97,7 +87,7 @@
     };
 
     private Task ApplyAsync()
-        => Sheet.CloseAsync(new SelectedFilters(_state.Location, _state.Status, _state.Sort, _state.IncludeConsumed));
+        => Sheet.CloseAsync(new SelectedFilters(_state.Location, _state.Status, _state.Sort));
 
     private string LocationLabel(string location) => location switch
     {

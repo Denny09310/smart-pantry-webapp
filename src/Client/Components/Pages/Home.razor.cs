@@ -17,7 +17,6 @@ public partial class Home
         public string? Name { get; set; }
         public string Status { get; set; } = PantryRules.StatusAll;
         public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
-        public bool IncludeConsumed { get; set; }
 
         public DateOnly Today { get; } = DateOnly.FromDateTime(DateTime.Today);
     }

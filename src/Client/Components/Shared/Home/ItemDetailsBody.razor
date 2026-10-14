@@ -7,7 +7,7 @@
 
 <ItemDetailsHeader />
 <ItemDetailsContent Loading="_state.Loading"
-                    Error="_state.Error"
+                    Error="@_state.Error"
                     Item="_state.Item"
                     Product="_state.Product"
                     Today="_state.Today"
@@ -19,7 +19,7 @@
                     OnBarcodeScanned="OnBarcodeScannedAsync"
                     OnUnlinkBarcode="OnUnlinkBarcodeAsync" />
 <ItemDetailsActions Item="_state.Item"
-                    Error="_state.Error"
+                    Error="@_state.Error"
                     OnEdit="OpenEditAsync"
                     OnDelete="DeleteAsync" />
 
