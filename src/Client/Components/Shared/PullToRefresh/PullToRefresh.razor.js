@@ -1,4 +1,4 @@
-export function attach(el, dotNet, threshold) {
+export function attach(el, instance, threshold) {
     const indicator = el.querySelector(':scope > .ptr-indicator');
     const spinner = el.querySelector(':scope > .ptr-indicator > .ptr-spinner');
     let startY = null;
@@ -60,7 +60,7 @@ export function attach(el, dotNet, threshold) {
             el.classList.add('ptr-refreshing');
             indicator.style.height = `${threshold}px`;
             try {
-                await dotNet.invokeMethodAsync('OnPulled');
+                await instance.invokeMethodAsync('OnPulled');
             } catch {
                 // Circuit gone or component disposed; nothing to do.
             } finally {

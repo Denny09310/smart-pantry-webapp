@@ -20,12 +20,12 @@ public sealed class BottomSheetInterop(IJSRuntime js) : IAsyncDisposable
     public async ValueTask ShowAsync(
         ElementReference inner,
         ElementReference handle,
-        DotNetObjectReference<BottomSheetProvider> dotNet,
+        DotNetObjectReference<BottomSheetProvider> instance,
         double[] snapPoints,
         int initialSnapIndex)
     {
         var module = await GetModuleAsync();
-        await module.InvokeVoidAsync(ShowMethod, inner, handle, dotNet, snapPoints, initialSnapIndex);
+        await module.InvokeVoidAsync(ShowMethod, inner, handle, instance, snapPoints, initialSnapIndex);
     }
 
     public async ValueTask CloseAsync()

@@ -27,8 +27,8 @@
             return;
 
         _state.Interop = new PullToRefreshInterop(JS);
-        _state.DotNetRef ??= DotNetObjectReference.Create(this);
-        await _state.Interop.AttachAsync(_state.Ref, _state.DotNetRef, ThresholdPx);
+        _state.Instance ??= DotNetObjectReference.Create(this);
+        await _state.Interop.AttachAsync(_state.Ref, _state.Instance, ThresholdPx);
     }
 
     /// <summary>Called from JS when the pull passes the threshold.</summary>
@@ -59,7 +59,7 @@
             _state.Interop = null;
         }
 
-        _state.DotNetRef?.Dispose();
-        _state.DotNetRef = null;
+        _state.Instance?.Dispose();
+        _state.Instance = null;
     }
 }

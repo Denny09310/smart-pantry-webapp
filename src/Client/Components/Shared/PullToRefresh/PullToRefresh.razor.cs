@@ -10,7 +10,7 @@ public partial class PullToRefresh
     {
         public ElementReference Ref { get; set; }
         public PullToRefreshInterop? Interop { get; set; }
-        public DotNetObjectReference<PullToRefresh>? DotNetRef { get; set; }
+        public DotNetObjectReference<PullToRefresh>? Instance { get; set; }
         public bool Refreshing { get; set; }
         public bool Disposed { get; set; }
     }

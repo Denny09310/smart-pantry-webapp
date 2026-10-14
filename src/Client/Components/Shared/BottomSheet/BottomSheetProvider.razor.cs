@@ -16,7 +16,7 @@ public partial class BottomSheetProvider
         public ElementReference HandleRef { get; set; }
 
         public BottomSheetInterop? Interop { get; set; }
-        public DotNetObjectReference<BottomSheetProvider>? DotNetRef { get; set; }
+        public DotNetObjectReference<BottomSheetProvider>? Instance { get; set; }
         public bool PendingShow { get; set; }
         public bool Closing { get; set; }
         public bool GestureClosed { get; set; }
