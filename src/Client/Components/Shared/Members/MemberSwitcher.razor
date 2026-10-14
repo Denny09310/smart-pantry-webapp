@@ -55,6 +55,10 @@
                                       AriaLabel="@Loc["UnarchiveUser", member.DisplayName]" OnClick="@(() => UnarchiveAsync(member))">
                                 <LucideIcon Name="archive-restore" Size="16" />
                             </BbButton>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                      AriaLabel="@Loc["DeleteMemberConfirm", member.DisplayName]" OnClick="@(() => DeleteAsync(member))">
+                                <LucideIcon Name="trash-2" Size="16" />
+                            </BbButton>
                         </div>
                     }
                 </div>
@@ -116,6 +120,12 @@
         // Same rule as item deletion: the confirm renders beneath the
         // sheet, so close first and let the opener confirm and archive.
         await Sheet.CloseAsync(member);
+    }
+
+    private async Task DeleteAsync(HouseholdMemberDto member)
+    {
+        // Close first for the same reason; the opener confirms and deletes.
+        await Sheet.CloseAsync(new MemberSheetActions.DeleteRequest(member));
     }
 
     private async Task UnarchiveAsync(HouseholdMemberDto member)

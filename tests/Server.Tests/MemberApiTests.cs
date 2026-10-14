@@ -99,6 +99,70 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Delete_ArchivedMember_RemovesItAndNullsAttribution()
+    {
+        var created = await CreateMemberAsync($"test-member-{Guid.CreateVersion7()}");
+
+        var itemName = $"test-item-{Guid.CreateVersion7()}";
+        using var itemRequest = new HttpRequestMessage(HttpMethod.Post, "/api/pantry")
+        {
+            Content = JsonContent.Create(new CreatePantryItemRequest(
+                itemName, 1, "pcs", "pantry", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))))
+        };
+        itemRequest.Headers.Add("X-Member-Id", created.Id);
+        using var itemResponse = await _client.SendAsync(itemRequest);
+        itemResponse.EnsureSuccessStatusCode();
+
+        try
+        {
+            using var archive = await _client.PutAsJsonAsync($"/api/members/{created.Id}",
+                new UpdateHouseholdMemberRequest(created.DisplayName, created.Color, true));
+            archive.EnsureSuccessStatusCode();
+
+            using var delete = await _client.DeleteAsync($"/api/members/{created.Id}");
+            Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+            var list = await _client.GetFromJsonAsync<List<HouseholdMemberDto>>("/api/members");
+            Assert.NotNull(list);
+            Assert.DoesNotContain(list, m => m.Id == created.Id);
+
+            var items = await _client.GetFromJsonAsync<GetPantryItemsResponse>(
+                $"/api/pantry?name={Uri.EscapeDataString(itemName)}");
+            Assert.NotNull(items);
+            var item = Assert.Single(items.Items);
+            Assert.Null(item.HouseholdMemberId);
+        }
+        finally
+        {
+            await DeleteItemsByNameAsync(itemName);
+            await CleanupMemberByIdAsync(created.Id);
+        }
+    }
+
+    [Fact]
+    public async Task Delete_ActiveMember_ReturnsConflict()
+    {
+        var created = await CreateMemberAsync($"test-member-{Guid.CreateVersion7()}");
+
+        try
+        {
+            using var response = await _client.DeleteAsync($"/api/members/{created.Id}");
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        }
+        finally
+        {
+            await CleanupMemberByIdAsync(created.Id);
+        }
+    }
+
+    [Fact]
+    public async Task Delete_UnknownId_ReturnsNotFound()
+    {
+        using var response = await _client.DeleteAsync($"/api/members/{Guid.CreateVersion7()}");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
     private async Task<HouseholdMemberDto> CreateMemberAsync(string displayName)
     {
         var response = await _client.PostAsJsonAsync("/api/members",
@@ -121,5 +185,12 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
+    }
+
+    private async Task DeleteItemsByNameAsync(string name)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await db.Items.Where(x => x.Name == name).ExecuteDeleteAsync();
     }
 }

@@ -84,6 +84,26 @@ internal class MemberEndpoints(ApplicationDbContext db)
         return TypedResults.Ok(ToDto(entry));
     }
 
+    [MapDelete("/{id}")]
+    public async Task<Results<NoContent, ProblemHttpResult, Conflict>> DeleteMemberAsync(
+        string id,
+        CancellationToken ct)
+    {
+        var entry = await db.Members.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (entry is null)
+            return MemberNotFound(id);
+
+        // Only archived members can be deleted: items keep working, their
+        // attribution is nulled by the FK (SetNull), never cascade-deleted.
+        if (!entry.IsArchived)
+            return TypedResults.Conflict();
+
+        db.Members.Remove(entry);
+        await db.SaveChangesAsync(ct);
+
+        return TypedResults.NoContent();
+    }
+
     private static ProblemHttpResult MemberNotFound(string id)
         => TypedResults.Problem(
             statusCode: StatusCodes.Status404NotFound,
