@@ -21,7 +21,8 @@ public enum PantryChangeKind
 
 /// <summary>
 /// A pantry change broadcast: the item id plus what happened.
-/// Payloads stay tiny on purpose — clients re-query the endpoints.
+/// Payloads stay tiny on purpose — clients fetch the single item and patch
+/// their lists, falling back to a full re-query when anything is uncertain.
 /// </summary>
 public sealed record PantryChangedEvent(string ItemId, PantryChangeKind ChangeKind);
 
