@@ -178,54 +178,10 @@
 
     /// <summary>Mirrors the server query: exact location, substring name, derived status.</summary>
     private bool MatchesFilters(PantryItemDto item)
-    {
-        if (!string.IsNullOrWhiteSpace(_state.Location)
-            && _state.Location != PantryLocations.All
-            && !string.Equals(item.Location, _state.Location, StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        if (!string.IsNullOrWhiteSpace(_state.Name)
-            && !item.Name.Contains(_state.Name, StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        if (_state.Status != PantryRules.StatusAll)
-        {
-            var status = ExpiryHelper.GetStatus(item.ExpirationDate, _state.Today);
-            var matches = _state.Status switch
-            {
-                var s when s == PantryRules.StatusExpired => status == ExpiryStatus.Expired,
-                var s when s == PantryRules.StatusSoon => status == ExpiryStatus.ExpiringSoon,
-                var s when s == PantryRules.StatusFresh => status == ExpiryStatus.Fresh,
-                _ => true
-            };
-            if (!matches)
-                return false;
-        }
-
-        return true;
-    }
+        => PantryClientFilter.MatchesFilters(item, _state.Location, _state.Name, _state.Status, _state.Today);
 
     /// <summary>Mirrors the server ordering; any drift self-corrects on the next full reload.</summary>
-    private Comparison<PantryItemDto> CurrentComparer => _state.Sort switch
-    {
-        ItemSort.ExpiryDesc => (a, b) =>
-        {
-            var cmp = b.ExpirationDate.CompareTo(a.ExpirationDate);
-            return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
-        }
-        ,
-        ItemSort.Name => (a, b) =>
-        {
-            var cmp = string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
-            return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
-        }
-        ,
-        _ => (a, b) =>
-        {
-            var cmp = a.ExpirationDate.CompareTo(b.ExpirationDate);
-            return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
-        }
-    };
+    private Comparison<PantryItemDto> CurrentComparer => PantryClientFilter.GetComparer(_state.Sort);
 
     private async Task<Page<PantryItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
     {

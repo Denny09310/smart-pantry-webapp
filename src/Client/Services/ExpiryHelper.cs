@@ -60,8 +60,10 @@ public static class ExpiryHelper
                 "info",
                 BadgeVariant.SoftWarning);
 
+        // Note: days == 1 always lands in the "soon" branch above (SoonDays >= 1),
+        // so there is no singular fresh case.
         return new ExpiryBanner(
-            days == 1 ? loc["FreshOneDay"] : loc["FreshDaysLeft", days],
+            loc["FreshDaysLeft", days],
             "info",
             BadgeVariant.SoftSuccess);
     }
