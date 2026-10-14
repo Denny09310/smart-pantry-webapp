@@ -219,9 +219,6 @@
   <data name="UseSoonDaysLeft" xml:space="preserve">
     <value>Da consumare · {0} giorni rimasti</value>
   </data>
-  <data name="FreshOneDay" xml:space="preserve">
-    <value>Fresco · 1 giorno rimasto</value>
-  </data>
   <data name="FreshDaysLeft" xml:space="preserve">
     <value>Fresco · {0} giorni rimasti</value>
   </data>
@@ -641,5 +638,41 @@
   </data>
   <data name="BottomSheetLabel" xml:space="preserve">
     <value>Pannello</value>
+  </data>
+  <data name="BbTagRemove" xml:space="preserve">
+    <value>Rimuovi {0}</value>
+  </data>
+  <data name="BbTagClearAll" xml:space="preserve">
+    <value>Rimuovi tutti i tag</value>
+  </data>
+  <data name="BbTagSuggestions" xml:space="preserve">
+    <value>Suggerimenti tag</value>
+  </data>
+  <data name="BbDatePickerOpen" xml:space="preserve">
+    <value>Apri calendario</value>
+  </data>
+  <data name="BbCalPrevMonth" xml:space="preserve">
+    <value>Vai al mese precedente</value>
+  </data>
+  <data name="BbCalNextMonth" xml:space="preserve">
+    <value>Vai al mese successivo</value>
+  </data>
+  <data name="BbSidebarNav" xml:space="preserve">
+    <value>Navigazione primaria</value>
+  </data>
+  <data name="BbSidebarExpand" xml:space="preserve">
+    <value>Espandi navigazione</value>
+  </data>
+  <data name="BbSidebarToggle" xml:space="preserve">
+    <value>Commuta barra laterale</value>
+  </data>
+  <data name="BbNotifUnread" xml:space="preserve">
+    <value>Notifiche non lette</value>
+  </data>
+  <data name="BbNotifCount" xml:space="preserve">
+    <value>{0} notifiche</value>
+  </data>
+  <data name="BbSelectChoose" xml:space="preserve">
+    <value>Scegli un'opzione</value>
   </data>
 </root>

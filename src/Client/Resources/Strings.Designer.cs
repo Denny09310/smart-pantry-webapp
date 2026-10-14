@@ -223,6 +223,114 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Go to next month.
+        /// </summary>
+        public static string BbCalNextMonth {
+            get {
+                return ResourceManager.GetString("BbCalNextMonth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Go to previous month.
+        /// </summary>
+        public static string BbCalPrevMonth {
+            get {
+                return ResourceManager.GetString("BbCalPrevMonth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Open calendar.
+        /// </summary>
+        public static string BbDatePickerOpen {
+            get {
+                return ResourceManager.GetString("BbDatePickerOpen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a {0} notifications.
+        /// </summary>
+        public static string BbNotifCount {
+            get {
+                return ResourceManager.GetString("BbNotifCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Unread notifications.
+        /// </summary>
+        public static string BbNotifUnread {
+            get {
+                return ResourceManager.GetString("BbNotifUnread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Choose an option.
+        /// </summary>
+        public static string BbSelectChoose {
+            get {
+                return ResourceManager.GetString("BbSelectChoose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Expand navigation.
+        /// </summary>
+        public static string BbSidebarExpand {
+            get {
+                return ResourceManager.GetString("BbSidebarExpand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Primary navigation.
+        /// </summary>
+        public static string BbSidebarNav {
+            get {
+                return ResourceManager.GetString("BbSidebarNav", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Toggle Sidebar.
+        /// </summary>
+        public static string BbSidebarToggle {
+            get {
+                return ResourceManager.GetString("BbSidebarToggle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Clear all tags.
+        /// </summary>
+        public static string BbTagClearAll {
+            get {
+                return ResourceManager.GetString("BbTagClearAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Remove {0}.
+        /// </summary>
+        public static string BbTagRemove {
+            get {
+                return ResourceManager.GetString("BbTagRemove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Tag suggestions.
+        /// </summary>
+        public static string BbTagSuggestions {
+            get {
+                return ResourceManager.GetString("BbTagSuggestions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Batch notes.
         /// </summary>
         public static string BatchNotes {
@@ -588,15 +696,6 @@ namespace Client.Resources {
         public static string FreshDaysLeft {
             get {
                 return ResourceManager.GetString("FreshDaysLeft", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Fresh · 1 day left.
-        /// </summary>
-        public static string FreshOneDay {
-            get {
-                return ResourceManager.GetString("FreshOneDay", resourceCulture);
             }
         }
         
