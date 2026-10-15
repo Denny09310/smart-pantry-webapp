@@ -366,14 +366,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Click to start scanning.
-        /// </summary>
-        public static string ClickToStartScanning {
-            get {
-                return ResourceManager.GetString("ClickToStartScanning", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Close.
@@ -492,14 +484,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Delete.
-        /// </summary>
-        public static string DeleteConfirm {
-            get {
-                return ResourceManager.GetString("DeleteConfirm", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Delete item?.
@@ -537,14 +521,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Disable notifications.
-        /// </summary>
-        public static string DisableNotifications {
-            get {
-                return ResourceManager.GetString("DisableNotifications", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Duration and expiry.
@@ -564,14 +540,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Edit item.
-        /// </summary>
-        public static string EditItem {
-            get {
-                return ResourceManager.GetString("EditItem", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Update the batch details..
@@ -609,14 +577,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Enable notifications.
-        /// </summary>
-        public static string EnableNotifications {
-            get {
-                return ResourceManager.GetString("EnableNotifications", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Enable push notifications.
@@ -627,14 +587,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a English.
-        /// </summary>
-        public static string English {
-            get {
-                return ResourceManager.GetString("English", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Expired {0} days ago.
@@ -681,32 +633,8 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Expiry.
-        /// </summary>
-        public static string Expiry {
-            get {
-                return ResourceManager.GetString("Expiry", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Filter by location.
-        /// </summary>
-        public static string FilterByLocation {
-            get {
-                return ResourceManager.GetString("FilterByLocation", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Filter by status.
-        /// </summary>
-        public static string FilterByStatus {
-            get {
-                return ResourceManager.GetString("FilterByStatus", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Fiber.
@@ -780,14 +708,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Italian.
-        /// </summary>
-        public static string Italian {
-            get {
-                return ResourceManager.GetString("Italian", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Item added..
@@ -1113,23 +1033,7 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Notifications disabled.
-        /// </summary>
-        public static string NotificationsDisabled {
-            get {
-                return ResourceManager.GetString("NotificationsDisabled", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Notifications enabled.
-        /// </summary>
-        public static string NotificationsEnabled {
-            get {
-                return ResourceManager.GetString("NotificationsEnabled", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Nutri-Score.
@@ -1239,14 +1143,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Product found! Details pre-filled..
-        /// </summary>
-        public static string ProductFound {
-            get {
-                return ResourceManager.GetString("ProductFound", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Product not in database. You can add it manually..
@@ -1257,14 +1153,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Push notifications not configured.
-        /// </summary>
-        public static string PushNotConfigured {
-            get {
-                return ResourceManager.GetString("PushNotConfigured", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Quantity.
@@ -1356,14 +1244,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Rename.
-        /// </summary>
-        public static string Rename {
-            get {
-                return ResourceManager.GetString("Rename", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Rename {0}.
@@ -1401,14 +1281,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Save.
-        /// </summary>
-        public static string Save {
-            get {
-                return ResourceManager.GetString("Save", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Save changes.
@@ -1563,23 +1435,7 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Sort by expiry.
-        /// </summary>
-        public static string SortByExpiry {
-            get {
-                return ResourceManager.GetString("SortByExpiry", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Sort by name.
-        /// </summary>
-        public static string SortByName {
-            get {
-                return ResourceManager.GetString("SortByName", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Name A–Z.
@@ -1590,14 +1446,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Include consumed items.
-        /// </summary>
-        public static string IncludeConsumedItems {
-            get {
-                return ResourceManager.GetString("IncludeConsumedItems", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Expiring first.
@@ -1617,14 +1465,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Start Camera.
-        /// </summary>
-        public static string StartCamera {
-            get {
-                return ResourceManager.GetString("StartCamera", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Status.
@@ -1680,14 +1520,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a Unarchive.
-        /// </summary>
-        public static string Unarchive {
-            get {
-                return ResourceManager.GetString("Unarchive", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Unarchive {0}.
@@ -1698,41 +1530,9 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a g.
-        /// </summary>
-        public static string UnitsG {
-            get {
-                return ResourceManager.GetString("UnitsG", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a kg.
-        /// </summary>
-        public static string UnitsKg {
-            get {
-                return ResourceManager.GetString("UnitsKg", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a l.
-        /// </summary>
-        public static string UnitsL {
-            get {
-                return ResourceManager.GetString("UnitsL", resourceCulture);
-            }
-        }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a ml.
-        /// </summary>
-        public static string UnitsMl {
-            get {
-                return ResourceManager.GetString("UnitsMl", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Remove barcode.
@@ -1743,14 +1543,6 @@ namespace Client.Resources {
             }
         }
         
-        /// <summary>
-        ///   Cerca una stringa localizzata simile a pcs.
-        /// </summary>
-        public static string UnitsPcs {
-            get {
-                return ResourceManager.GetString("UnitsPcs", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Cerca una stringa localizzata simile a Update available.
