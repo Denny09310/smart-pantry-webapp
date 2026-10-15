@@ -173,6 +173,52 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         }
     }
 
+    [Fact]
+    public async Task SortExpiryDesc_ReturnsReverseChronological()
+    {
+        var prefix = $"test-desc-{Guid.CreateVersion7()}";
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var sooner = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-sooner", today.AddDays(1));
+        var later = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-later", today.AddDays(9));
+
+        try
+        {
+            var body = await _client.GetFromJsonAsync<GetPantryItemsResponse>(
+                $"/api/pantry?name={prefix}&sort=expiry-desc");
+
+            Assert.NotNull(body);
+            Assert.Equal(
+                new[] { $"{prefix}-later", $"{prefix}-sooner" },
+                body.Items.Select(x => x.Name));
+        }
+        finally
+        {
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, sooner.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, later.Id);
+        }
+    }
+
+    [Fact]
+    public async Task LocationAll_ReturnsUnfiltered()
+    {
+        var prefix = $"test-locall-{Guid.CreateVersion7()}";
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-fridge", today.AddDays(5));
+
+        try
+        {
+            var body = await _client.GetFromJsonAsync<GetPantryItemsResponse>(
+                $"/api/pantry?name={prefix}&location=all");
+
+            Assert.NotNull(body);
+            Assert.Contains(body.Items, x => x.Id == item.Id);
+        }
+        finally
+        {
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
+        }
+    }
+
     [Theory]
     [InlineData("status=bogus", "Status")]
     [InlineData("sort=bogus", "Sort")]

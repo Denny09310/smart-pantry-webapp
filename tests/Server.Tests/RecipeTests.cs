@@ -13,7 +13,7 @@ namespace Server.Tests;
 public class RecipeTests
 {
     private static HttpClient ClientFor(Func<HttpRequestMessage, HttpResponseMessage> respond)
-        => new(new FuncHandler(respond));
+        => new(new StubHandler(respond));
 
     private static HttpResponseMessage Json(string json, HttpStatusCode status = HttpStatusCode.OK)
         => new(status) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
@@ -231,14 +231,6 @@ public class RecipeTests
 
         Assert.NotNull(response.Value);
         Assert.Empty(response.Value.Meals);
-    }
-
-    private sealed class FuncHandler(Func<HttpRequestMessage, HttpResponseMessage> respond)
-        : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(respond(request));
     }
 
     private sealed class FakeRecipes(

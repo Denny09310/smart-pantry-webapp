@@ -56,6 +56,7 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
             Assert.Equal(HttpStatusCode.Created, first.StatusCode);
             var created = await first.Content.ReadFromJsonAsync<PushSubscriptionDto>();
             Assert.NotNull(created);
+            Assert.NotEqual(default, created.CreatedAt);
 
             var second = await _client.PostAsJsonAsync("/api/push/subscriptions",
                 new PushSubscriptionRequest(endpoint, "p256dh-2", "auth-2"));

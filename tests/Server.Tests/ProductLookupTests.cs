@@ -10,7 +10,7 @@ public class ProductLookupTests
     private const string Barcode = "8003590780284";
 
     private static OpenFoodFactsProductLookupService LookupWithJson(string json, HttpStatusCode status = HttpStatusCode.OK)
-        => new(new HttpClient(new StubHandler(new HttpResponseMessage(status)
+        => new(new HttpClient(new StubHandler(_ => new HttpResponseMessage(status)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         })));
@@ -228,10 +228,4 @@ public class ProductLookupTests
         Assert.Null(await service.LookupAsync(Barcode, CancellationToken.None));
     }
 
-    private sealed class StubHandler(HttpResponseMessage response) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(response);
-    }
 }
