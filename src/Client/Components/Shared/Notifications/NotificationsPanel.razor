@@ -26,7 +26,7 @@
 
     <div class="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain py-1 pr-1">
         <InfiniteScrollList TItem="NotificationDto" @ref="_list" LoadPageAsync="LoadPageAsync"
-                            KeySelector="@(x => x.Id)" PageSize="20">
+                            KeySelector="NotificationKey" PageSize="20">
             <ItemTemplate>
                 <NotificationRow Item="context" OnView="ViewItemAsync" OnMarkRead="MarkReadAsync" />
             </ItemTemplate>
@@ -51,6 +51,8 @@
 {
     private InfiniteScrollList<NotificationDto>? _list;
     private int _unread;
+
+    private static object? NotificationKey(NotificationDto item) => item.Id;
 
     protected override void OnInitialized()
     {

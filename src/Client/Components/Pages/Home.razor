@@ -47,11 +47,11 @@
 
 <PullToRefresh OnRefresh="ReloadListAsync">
     <InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync"
-                        KeySelector="@(x => x.Id)" TotalChanged="OnTotalChanged">
+                        KeySelector="PantryKey" TotalChanged="OnTotalChanged">
         <ItemTemplate>
             <PantryItemRow Item="context" Today="_state.Today"
-                           OnOpen="@(item => OpenDetailsAsync(item.Id))"
-                           OnChanged="@(id => UpsertItemAsync(id))" />
+                           OnOpen="OpenDetailsForItem"
+                           OnChanged="UpsertItemAsync" />
         </ItemTemplate>
         <LoadingTemplate>
             <div class="space-y-2" aria-hidden="true">
@@ -82,6 +82,10 @@
         _state.Location != PantryLocations.All || _state.Status != PantryRules.StatusAll || _state.Sort != ItemSort.ExpiryAsc;
 
     private void OnTotalChanged(int total) => _state.Total = total;
+
+    private static object? PantryKey(PantryItemDto item) => item.Id;
+
+    private Task OpenDetailsForItem(PantryItemDto item) => OpenDetailsAsync(item.Id);
 
     protected override async Task OnInitializedAsync()
     {
@@ -196,7 +200,11 @@
             throw new HttpRequestException($"Pantry list load failed with {response.StatusCode}.");
         }
 
-        return new Page<PantryItemDto>(response.Content.Items.ToList(), response.Content.TotalItems);
+        // An empty-but-successful body is an empty page, not a crash.
+        var content = response.Content;
+        return content is null
+            ? new Page<PantryItemDto>([], 0)
+            : new Page<PantryItemDto>(content.Items.ToList(), content.TotalItems);
     }
 
     private async Task OpenAddAsync()

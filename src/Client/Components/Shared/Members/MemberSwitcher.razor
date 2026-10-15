@@ -12,7 +12,11 @@
         </div>
 
         <div class="min-h-0 flex-1 touch-pan-y space-y-1 overflow-y-auto overscroll-contain py-1 pr-1">
-            @foreach (var member in Members.ActiveMembers)
+            @{
+                var activeMembers = Members.ActiveMembers.ToList();
+                var archivedMembers = Members.Members.Where(m => m.IsArchived).ToList();
+            }
+            @foreach (var member in activeMembers)
             {
                 <div @key="member.Id"
                      class="flex items-center gap-3 rounded-lg p-2 @(member.Id == Members.CurrentMemberId ? "bg-secondary" : "")">
@@ -27,7 +31,7 @@
                               AriaLabel="@Loc["RenameUser", member.DisplayName]" OnClick="@(() => RenameAsync(member))">
                         <LucideIcon Name="pencil" Size="16" />
                     </BbButton>
-                    @if (Members.ActiveMembers.Count() > 1)
+                    @if (activeMembers.Count > 1)
                     {
                         <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
                                   AriaLabel="@Loc["ArchiveMemberConfirm", member.DisplayName]" OnClick="@(() => ArchiveAsync(member))">
@@ -37,11 +41,11 @@
                 </div>
             }
 
-            @if (Members.Members.Any(m => m.IsArchived))
+            @if (archivedMembers.Count > 0)
             {
                 <div class="space-y-1 pt-2">
                     <p class="text-xs font-medium uppercase text-muted-foreground">@Loc["Archived"]</p>
-                    @foreach (var member in Members.Members.Where(m => m.IsArchived))
+                    @foreach (var member in archivedMembers)
                     {
                         <div @key="member.Id" class="flex items-center gap-3 rounded-lg p-2 opacity-60">
                             <BbAvatar>
