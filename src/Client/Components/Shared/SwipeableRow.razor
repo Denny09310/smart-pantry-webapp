@@ -71,6 +71,18 @@
 
     private string _offsetPx => _offset.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "px";
 
+    protected override void OnParametersSet()
+    {
+        // The action set can shrink under a preserved row (same @key with new
+        // params after a reload, e.g. mark-read dropping a button): any offset
+        // outside the new range is stale, so snap fully shut.
+        if (_offset < -ActionsWidth || _offset > 0)
+        {
+            _offset = 0;
+            _open = false;
+        }
+    }
+
     private void HandleMove(SwipeMoveEventArgs e)
     {
         _dragging = true;
