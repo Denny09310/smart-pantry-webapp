@@ -109,9 +109,7 @@ internal class MemberEndpoints(ApplicationDbContext db)
     }
 
     private static ProblemHttpResult MemberNotFound(string id)
-        => TypedResults.Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            detail: $"Household member '{id}' was not found.");
+        => EndpointProblems.NotFound("Household member", id);
 
     private static HouseholdMemberDto ToDto(HouseholdMember member) => new(
         member.Id,

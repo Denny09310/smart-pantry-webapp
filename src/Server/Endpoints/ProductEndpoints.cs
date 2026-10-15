@@ -54,7 +54,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
                 x.Quantity > 0 ? x.Quantity : null,
                 x.Unit,
                 x.NutriScore,
-                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null,
+                NutritionFactsExtensions.FromJson(x.NutritionJson),
                 null))
             .FirstOrDefaultAsync(ct);
 
@@ -104,7 +104,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         cached.Quantity,
         cached.Unit,
         cached.NutriScore,
-        cached.NutritionJson != null ? NutritionFactsExtensions.Parse(cached.NutritionJson) : null,
+        NutritionFactsExtensions.FromJson(cached.NutritionJson),
         cached.ImageUrl,
         cached.IngredientsText);
 

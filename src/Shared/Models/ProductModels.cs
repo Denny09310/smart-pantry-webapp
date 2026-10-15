@@ -29,6 +29,10 @@ public static class NutritionFactsExtensions
 
     public static NutritionFacts? Parse(string json) =>
         string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<NutritionFacts>(json);
+
+    /// <summary>Null/blank-safe parse for optional stored snapshots.</summary>
+    public static NutritionFacts? FromJson(string? json) =>
+        string.IsNullOrWhiteSpace(json) ? null : Parse(json);
 }
 
 public record ProductLookupDto(

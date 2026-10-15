@@ -90,7 +90,7 @@ internal class PantryEndpoints(
                 x.HouseholdMemberId,
                 x.Barcode,
                 x.NutriScore,
-                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null))
+                NutritionFactsExtensions.FromJson(x.NutritionJson)))
             .ToListAsync(ct);
 
         return TypedResults.Ok(new GetPantryItemsResponse(
@@ -181,9 +181,7 @@ internal class PantryEndpoints(
     }
 
     private static ProblemHttpResult ItemNotFound(string id)
-        => TypedResults.Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            detail: $"Pantry item '{id}' was not found.");
+        => EndpointProblems.NotFound("Pantry item", id);
 
     /// <summary>Escapes ILIKE wildcards so user input matches literally.</summary>
     private static string EscapeLike(string value) => value
@@ -231,5 +229,5 @@ internal class PantryEndpoints(
         item.HouseholdMemberId,
         item.Barcode,
         item.NutriScore,
-        item.NutritionJson != null ? NutritionFactsExtensions.Parse(item.NutritionJson) : null);
+        NutritionFactsExtensions.FromJson(item.NutritionJson));
 }

@@ -85,7 +85,5 @@ internal class NotificationEndpoints(ApplicationDbContext db)
     }
 
     private static ProblemHttpResult NotificationNotFound(string id)
-        => TypedResults.Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            detail: $"Notification '{id}' was not found.");
+        => EndpointProblems.NotFound("Notification", id);
 }
