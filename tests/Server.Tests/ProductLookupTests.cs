@@ -192,6 +192,34 @@ public class ProductLookupTests
         Assert.Equal("Acme, FreshFarm", result.Brand);
     }
 
+    [Theory]
+    [InlineData("500 g", 500, "g")]
+    [InlineData("1 kg", 1, "kg")]
+    [InlineData("250 mg", 250, "mg")]
+    [InlineData("1 l", 1, "l")]
+    [InlineData("500 ml", 500, "ml")]
+    [InlineData("25 cl", 25, "cl")]
+    [InlineData("16 oz", 16, "oz")]
+    [InlineData("1 lb", 1, "lb")]
+    public async Task Lookup_Parses_Units_Longest_First(string quantity, double value, string unit)
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Item",
+                "quantity": "QUANTITY"
+              }
+            }
+            """.Replace("QUANTITY", quantity));
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal(value, result.Quantity);
+        Assert.Equal(unit, result.Unit);
+    }
+
     [Fact]
     public async Task Lookup_Http_Failure_Returns_Null()
     {
