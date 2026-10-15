@@ -1,3 +1,32 @@
+## [1.5.0] - 2026-10-15
+
+### ✨ Features
+
+- Swipeable pantry and notification rows with edit/used/delete actions (custom 60fps gesture engine, pointer-adaptive static rows on desktop)
+- In-app changelog page linked from settings (single-sourced from this file, Markdig + Tailwind prose)
+- Delete archived members (confirmation dialog; their items keep working with nulled attribution)
+
+### 🐛 Bug Fixes
+
+- Row taps not opening details on desktop; swipe actions stuck open after mark-as-read
+- Keyboard trap in swipe rows (activation on keypress, Tab/arrows/Escape unaffected)
+- Realtime double-subscribe and member double-init races; unread badge drift
+- Stale list dates, loading skeletons never painting, recipe detail not reloading
+- Item form losing external updates; barcode scanner start/stop failures
+- Product units misparsed (`cl`/`lb` read as liters); malformed nutrition snapshots 500ing lists
+- Reminder worker dying on transient DB errors; unbounded dedup scan; dead subscriptions deleted N times
+- Hub broadcasts turning committed writes into 500s; `ILike` wildcard over-matching
+- Member delete race and bodyless 409; mark-read mutating before 404ing; push upsert always 200
+- Blank unsubscribe endpoint and blank barcode silently accepted
+- Migrations crashing boot when Postgres isn't ready yet
+
+### 🧹 Refactoring & Chores
+
+- Shared expiry badge, sheet header, member avatars, sheet scroll class, product lookup, not-found problems
+- Test seed/cleanup helpers unified; coverage for validation, nutrition, hub updates, sorting, push dedup
+- 26 unused localized strings removed; doc drift, manifest metadata and PWA config corrected
+- Lookup indexes on item barcodes and notification dates; translation quota capped per search
+
 ## [1.4.1] - 2026-10-14
 
 ### 🐛 Bug Fixes
