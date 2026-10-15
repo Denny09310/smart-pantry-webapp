@@ -10,12 +10,14 @@
 @implements IDisposable
 
 <header class="flex items-center justify-between gap-2">
-    <h1 class="text-xl font-semibold">@Loc["AppTitle"]</h1>
-    <div class="flex items-center gap-2">
+    <div class="min-w-0">
+        <h1 class="truncate text-xl font-semibold">@Loc["AppTitle"]</h1>
         @if (_state.Total > 0)
         {
-            <span class="text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</span>
+            <p class="truncate text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</p>
         }
+    </div>
+    <div class="flex flex-none items-center gap-2">
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.IconSmall" AriaLabel="@Loc["AddItem"]"
                   @onclick="OpenAddAsync">
             <LucideIcon Name="plus" Size="18" />
