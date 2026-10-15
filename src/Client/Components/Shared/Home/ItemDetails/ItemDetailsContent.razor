@@ -149,14 +149,31 @@
         _ => BadgeVariant.Outline,
     };
 
+    private NutritionFacts? _rowsFor;
+    private string? _rowsCulture;
+    private IReadOnlyList<(string Label, string Value)>? _rowsCache;
+
+    /// <summary>Memoized per nutrition payload + culture (labels localize).</summary>
     private IReadOnlyList<(string Label, string Value)> NutritionRows
     {
         get
         {
-            List<(string Label, string Value)> rows = [];
+            var culture = Loc.CurrentCulture.Name;
+            if (_rowsCache is not null && Equals(_rowsFor, Item?.Nutrition) && _rowsCulture == culture)
+                return _rowsCache;
 
-            if (Item?.Nutrition is not { } nutrition)
-                return rows;
+            _rowsFor = Item?.Nutrition;
+            _rowsCulture = culture;
+            return _rowsCache = BuildNutritionRows(_rowsFor);
+        }
+    }
+
+    private List<(string Label, string Value)> BuildNutritionRows(NutritionFacts? nutrition)
+    {
+        List<(string Label, string Value)> rows = [];
+
+        if (nutrition is not { })
+            return rows;
 
             if (nutrition.EnergyKcal is { } energy)
                 rows.Add((Loc["NutritionEnergy"], $"{energy:0} kcal"));

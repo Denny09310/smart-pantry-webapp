@@ -169,8 +169,15 @@
 
     protected override void OnParametersSet()
     {
-        if (Item is { } item && _state.EditingId != item.Id)
+        if (Item is { } item)
         {
+            // Resync when a different item arrives or the same item changed
+            // underneath (realtime edit elsewhere). In-progress typing never
+            // triggers this: typing mutates Input, not the Item parameter.
+            if (Equals(_state.SyncedItem, item))
+                return;
+
+            _state.SyncedItem = item;
             _state.EditingId = item.Id;
             _state.ScannedBarcode = item.Barcode;
             _state.ScannedNutriScore = item.NutriScore;
@@ -185,8 +192,9 @@
                 ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue)
             };
         }
-        else if (Item is null && _state.EditingId is not null)
+        else if (_state.SyncedItem is not null)
         {
+            _state.SyncedItem = null;
             _state.EditingId = null;
             _state.ScannedBarcode = null;
             _state.ScannedNutriScore = null;
@@ -267,6 +275,7 @@
             return;
 
         _state.Saving = true;
+        StateHasChanged();
         try
         {
             if (Item is null)
