@@ -49,30 +49,9 @@
     <InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync"
                         KeySelector="@(x => x.Id)" TotalChanged="OnTotalChanged">
         <ItemTemplate>
-            @{
-                var status = ExpiryHelper.GetStatus(context.ExpirationDate, _state.Today);
-            }
-            <div class="bg-card rounded-md border p-3">
-                <div class="flex items-center gap-2">
-                    <div @onclick="() => OpenDetailsAsync(context.Id)" class="min-w-0 flex-1 cursor-pointer">
-                        <span class="flex items-center justify-between gap-2">
-                            <span class="font-medium truncate">@context.Name</span>
-                            <BbBadge Variant="@ExpiryHelper.Badge(status)" class="shrink-0">@ExpiryHelper.Label(status, Loc)</BbBadge>
-                        </span>
-                        <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>@context.Quantity @context.Unit</span>
-                            <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@context.Location</BbBadge>
-                            <span class="shrink-0">@context.ExpirationDate.ToString("MMM d")</span>
-                        </span>
-                    </div>
-                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" Type="ButtonType.Button"
-                              AriaLabel="@Loc["DeleteItemMessage", context.Name]"
-                              OnClick="@(async () => await DeleteItemAsync(context.Id))"
-                              Class="shrink-0">
-                        <LucideIcon Name="trash-2" Size="16" />
-                    </BbButton>
-                </div>
-            </div>
+            <PantryItemRow Item="context" Today="_state.Today"
+                           OnOpen="@(item => OpenDetailsAsync(item.Id))"
+                           OnChanged="ReloadListAsync" />
         </ItemTemplate>
         <LoadingTemplate>
             <div class="space-y-2" aria-hidden="true">
@@ -285,28 +264,6 @@
         catch (OperationCanceledException)
         {
             // Superseded by newer input; nothing to do.
-        }
-    }
-
-    private async Task DeleteItemAsync(string id)
-    {
-        try
-        {
-            using var response = await Api.Pantry.DeleteAsync(id);
-            if (!response.IsSuccessStatusCode)
-            {
-                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", id, response.StatusCode);
-                Toasts.Error(Loc["CouldNotDelete"]);
-                return;
-            }
-
-            Toasts.Success(Loc["ItemDeleted"]);
-            await ReloadListAsync();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Item {ItemId} delete failed", id);
-            Toasts.Error(Loc["CouldNotDelete"]);
         }
     }
 

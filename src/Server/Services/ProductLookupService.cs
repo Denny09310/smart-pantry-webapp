@@ -42,7 +42,7 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
             return new ProductLookupDto(
                 Barcode: barcode,
                 Name: Truncate(product.ProductName ?? product.ProductNameEn ?? "Unknown Product", 200),
-                Brand: product.Brands,
+                Brand: NormalizeBrands(product.Brands),
                 Quantity: ParseQuantity(product.Quantity),
                 Unit: ParseUnit(product.Quantity),
                 NutriScore: NormalizeNutriScore(product.NutriscoreGrade),
@@ -93,6 +93,25 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
 
     private static string Truncate(string value, int maxLength)
         => value.Length <= maxLength ? value : value[..maxLength];
+
+    /// <summary>
+    /// Open Food Facts returns brands as a free-form comma list that often
+    /// repeats entries ("Acme, acme, ACME"). Split, trim, drop empties and
+    /// dedupe case-insensitively so downstream notes don't accumulate junk.
+    /// </summary>
+    internal static string? NormalizeBrands(string? brands)
+    {
+        if (string.IsNullOrWhiteSpace(brands))
+            return null;
+
+        var distinct = brands
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(b => !string.IsNullOrWhiteSpace(b))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return distinct.Count == 0 ? null : string.Join(", ", distinct);
+    }
 
     private static string? ParseUnit(string? quantityStr)
     {

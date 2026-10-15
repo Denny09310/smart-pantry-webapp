@@ -212,10 +212,7 @@
                 if (!string.IsNullOrWhiteSpace(product.Name))
                     _state.Input.Name = product.Name;
 
-                if (!string.IsNullOrWhiteSpace(product.Brand))
-                    _state.Input.Notes = string.IsNullOrWhiteSpace(_state.Input.Notes)
-                        ? product.Brand
-                        : $"{_state.Input.Notes}, {product.Brand}";
+                _state.Input.Notes = ProductNoteMerger.Merge(_state.Input.Notes, product.Brand);
 
                 if (product.Quantity.HasValue && product.Quantity.Value > 0)
                     _state.Input.Quantity = product.Quantity.Value;

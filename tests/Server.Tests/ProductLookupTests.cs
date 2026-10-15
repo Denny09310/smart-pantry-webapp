@@ -174,6 +174,25 @@ public class ProductLookupTests
     }
 
     [Fact]
+    public async Task Lookup_Dedupes_Repeated_Brands()
+    {
+        var service = LookupWithJson("""
+            {
+              "status": 1,
+              "product": {
+                "product_name": "Test Milk",
+                "brands": "Acme, acme, ACME , , FreshFarm"
+              }
+            }
+            """);
+
+        var result = await service.LookupAsync(Barcode, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Acme, FreshFarm", result.Brand);
+    }
+
+    [Fact]
     public async Task Lookup_Http_Failure_Returns_Null()
     {
         var service = LookupWithJson("{}", HttpStatusCode.InternalServerError);
