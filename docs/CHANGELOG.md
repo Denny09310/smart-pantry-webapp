@@ -1,3 +1,10 @@
+## [1.5.1] - 2026-10-15
+
+### 🐛 Bug Fixes
+
+- Fresh installs now follow the browser language instead of starting English with mismatched labels
+- Items count moved under the title so it can't overlap header actions on mobile
+
 ## [1.5.0] - 2026-10-15
 
 ### ✨ Features
