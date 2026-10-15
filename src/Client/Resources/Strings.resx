@@ -126,20 +126,23 @@
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Changelog" xml:space="preserve">
+    <value>Changelog</value>
+  </data>
   <data name="Language" xml:space="preserve">
     <value>Language</value>
   </data>
   <data name="SelectLanguage" xml:space="preserve">
     <value>Select language</value>
   </data>
-  <data name="English" xml:space="preserve">
-    <value>English</value>
-  </data>
   <data name="Ingredients" xml:space="preserve">
     <value>Ingredients</value>
-  </data>
-  <data name="Italian" xml:space="preserve">
-    <value>Italian</value>
   </data>
   <data name="User" xml:space="preserve">
     <value>User</value>
@@ -171,9 +174,6 @@
   <data name="Location" xml:space="preserve">
     <value>Location</value>
   </data>
-  <data name="Expiry" xml:space="preserve">
-    <value>Expiry</value>
-  </data>
   <data name="DurationAndExpiry" xml:space="preserve">
     <value>Duration and expiry</value>
   </data>
@@ -191,9 +191,6 @@
   </data>
   <data name="AddItemButton" xml:space="preserve">
     <value>Create</value>
-  </data>
-  <data name="EditItem" xml:space="preserve">
-    <value>Edit item</value>
   </data>
   <data name="AddItemTitle" xml:space="preserve">
     <value>Add item</value>
@@ -282,9 +279,6 @@
   <data name="PickADate" xml:space="preserve">
     <value>Pick a date</value>
   </data>
-  <data name="DeleteConfirm" xml:space="preserve">
-    <value>Delete</value>
-  </data>
   <data name="ItemDeleted" xml:space="preserve">
     <value>Item deleted.</value>
   </data>
@@ -336,38 +330,14 @@
   <data name="Cabinet" xml:space="preserve">
     <value>Cabinet</value>
   </data>
-  <data name="UnitsPcs" xml:space="preserve">
-    <value>pcs</value>
-  </data>
-  <data name="UnitsKg" xml:space="preserve">
-    <value>kg</value>
-  </data>
-  <data name="UnitsG" xml:space="preserve">
-    <value>g</value>
-  </data>
-  <data name="UnitsL" xml:space="preserve">
-    <value>l</value>
-  </data>
-  <data name="UnitsMl" xml:space="preserve">
-    <value>ml</value>
-  </data>
   <data name="ScanBarcode" xml:space="preserve">
     <value>Scan barcode (optional)</value>
-  </data>
-  <data name="ClickToStartScanning" xml:space="preserve">
-    <value>Click to start scanning</value>
-  </data>
-  <data name="StartCamera" xml:space="preserve">
-    <value>Start Camera</value>
   </data>
   <data name="ScannerUnsupported" xml:space="preserve">
     <value>Camera scanning isn't supported on this device.</value>
   </data>
   <data name="ScannerDenied" xml:space="preserve">
     <value>Camera access was denied.</value>
-  </data>
-  <data name="ProductFound" xml:space="preserve">
-    <value>Product found! Details pre-filled.</value>
   </data>
   <data name="ProductNotInDatabase" xml:space="preserve">
     <value>Product not in database. You can add it manually.</value>
@@ -383,21 +353,6 @@
   </data>
   <data name="MarkAllRead" xml:space="preserve">
     <value>Mark all read</value>
-  </data>
-  <data name="EnableNotifications" xml:space="preserve">
-    <value>Enable notifications</value>
-  </data>
-  <data name="DisableNotifications" xml:space="preserve">
-    <value>Disable notifications</value>
-  </data>
-  <data name="NotificationsEnabled" xml:space="preserve">
-    <value>Notifications enabled</value>
-  </data>
-  <data name="NotificationsDisabled" xml:space="preserve">
-    <value>Notifications disabled</value>
-  </data>
-  <data name="PushNotConfigured" xml:space="preserve">
-    <value>Push notifications not configured</value>
   </data>
   <data name="CouldNotEnable" xml:space="preserve">
     <value>Couldn't enable push notifications. Check the browser site settings if they are blocked.</value>
@@ -438,15 +393,6 @@
   <data name="Color" xml:space="preserve">
     <value>Color</value>
   </data>
-  <data name="Save" xml:space="preserve">
-    <value>Save</value>
-  </data>
-  <data name="Rename" xml:space="preserve">
-    <value>Rename</value>
-  </data>
-  <data name="Unarchive" xml:space="preserve">
-    <value>Unarchive</value>
-  </data>
   <data name="Archived" xml:space="preserve">
     <value>Archived</value>
   </data>
@@ -461,18 +407,6 @@
   </data>
   <data name="StatusFresh" xml:space="preserve">
     <value>Fresh</value>
-  </data>
-  <data name="SortByExpiry" xml:space="preserve">
-    <value>Sort by expiry</value>
-  </data>
-  <data name="SortByName" xml:space="preserve">
-    <value>Sort by name</value>
-  </data>
-  <data name="FilterByLocation" xml:space="preserve">
-    <value>Filter by location</value>
-  </data>
-  <data name="FilterByStatus" xml:space="preserve">
-    <value>Filter by status</value>
   </data>
   <data name="AllLocations" xml:space="preserve">
     <value>All locations</value>
@@ -560,9 +494,6 @@
   </data>
   <data name="SortByNameAZ" xml:space="preserve">
     <value>Name A–Z</value>
-  </data>
-  <data name="IncludeConsumedItems" xml:space="preserve">
-    <value>Include consumed items</value>
   </data>
   <data name="Reset" xml:space="preserve">
     <value>Reset</value>

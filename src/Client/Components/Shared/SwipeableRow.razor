@@ -1,0 +1,143 @@
+@namespace Client.Components
+@inject IJSRuntime JS
+@inject ILogger<SwipeableRow> Logger
+@implements IAsyncDisposable
+
+@* Swipe-to-reveal row with a tap-to-open body. Gesture tracking and transforms
+   run entirely in the colocated module: taps are never intercepted (capture
+   starts only past the drag slop), so mouse and touch share this one surface. *@
+<div class="relative overflow-hidden rounded-md border bg-card">
+    <div class="absolute inset-y-0 right-0 flex items-stretch">
+        <CascadingValue Value="this" IsFixed="true">
+            @Actions
+        </CascadingValue>
+    </div>
+    <div @ref="_contentRef" @onclick="HandleTap" @onkeypress="HandleKeyPress" @onkeypress:preventDefault="true"
+         tabindex="0" role="button" aria-label="@AriaLabel"
+         class="@($"swipe-content relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")">
+        @ChildContent
+    </div>
+</div>
+
+@code
+{
+    /// <summary>Row body content.</summary>
+    [Parameter, EditorRequired]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Revealed action buttons (use <see cref="SwipeActionButton"/>).</summary>
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+
+    /// <summary>Tap on the row body.</summary>
+    [Parameter]
+    public EventCallback OnTap { get; set; }
+
+    /// <summary>Accessible name of the row body.</summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    /// <summary>Extra layout classes for the row body (e.g. "block", "flex items-center gap-3").</summary>
+    [Parameter]
+    public string? InnerClass { get; set; } = "block";
+
+    /// <summary>Total revealed width in px; must equal the sum of the action widths.</summary>
+    [Parameter, EditorRequired]
+    public double ActionsWidth { get; set; }
+
+    /// <summary>
+    /// Identity of the data shown. When it changes (same row recycled for a
+    /// different item), any revealed actions snap shut.
+    /// </summary>
+    [Parameter]
+    public object? ResetKey { get; set; }
+
+    private ElementReference _contentRef;
+    private SwipeRowInterop? _interop;
+    private bool _attached;
+    private object? _seenKey;
+    private double _seenWidth = double.NaN;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _attached)
+            return;
+
+        try
+        {
+            _interop ??= new SwipeRowInterop(JS);
+            await _interop.AttachAsync(_contentRef, ActionsWidth);
+            _attached = true;
+            _seenKey = ResetKey;
+            _seenWidth = ActionsWidth;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Swipe gesture attach failed; taps still work.");
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _seenKey ??= ResetKey;
+        _seenWidth = double.IsNaN(_seenWidth) ? ActionsWidth : _seenWidth;
+
+        if (!_attached)
+            return;
+
+        try
+        {
+            if (ResetKey is not null && !Equals(_seenKey, ResetKey))
+            {
+                _seenKey = ResetKey;
+                _seenWidth = ActionsWidth;
+                await _interop!.ResetAsync(_contentRef);
+            }
+            else if (ActionsWidth != _seenWidth)
+            {
+                _seenWidth = ActionsWidth;
+                await _interop!.UpdateAsync(_contentRef, ActionsWidth);
+            }
+        }
+        catch (JSDisconnectedException) { }
+    }
+
+    /// <summary>Closes revealed actions, if any.</summary>
+    public async Task CloseActionsAsync()
+    {
+        if (!_attached)
+            return;
+
+        try
+        {
+            await _interop!.ResetAsync(_contentRef);
+        }
+        catch (JSDisconnectedException) { }
+    }
+
+    private Task HandleTap() => OnTap.InvokeAsync();
+
+    /// <summary>
+    /// Activation keys only. keypress (unlike keydown) never fires for Tab,
+    /// arrows or Escape, so keyboard navigation past rows keeps working.
+    /// </summary>
+    private Task HandleKeyPress(KeyboardEventArgs e)
+        => e.Key is "Enter" or " " ? OnTap.InvokeAsync() : Task.CompletedTask;
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (_attached)
+        {
+            _attached = false;
+            try
+            {
+                if (_interop is not null)
+                    await _interop.DetachAsync(_contentRef);
+            }
+            catch (JSDisconnectedException) { }
+        }
+
+        if (_interop is not null)
+            await _interop.DisposeAsync();
+    }
+}

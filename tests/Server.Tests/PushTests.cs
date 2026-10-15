@@ -53,9 +53,10 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
         {
             var first = await _client.PostAsJsonAsync("/api/push/subscriptions",
                 new PushSubscriptionRequest(endpoint, "p256dh-1", "auth-1"));
-            Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+            Assert.Equal(HttpStatusCode.Created, first.StatusCode);
             var created = await first.Content.ReadFromJsonAsync<PushSubscriptionDto>();
             Assert.NotNull(created);
+            Assert.NotEqual(default, created.CreatedAt);
 
             var second = await _client.PostAsJsonAsync("/api/push/subscriptions",
                 new PushSubscriptionRequest(endpoint, "p256dh-2", "auth-2"));
@@ -71,7 +72,7 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await DeleteSubscriptionAsync(endpoint);
+            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
@@ -88,6 +89,14 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
     }
 
     [Fact]
+    public async Task Unsubscribe_BlankEndpoint_ReturnsValidationProblem()
+    {
+        var response = await _client.DeleteAsync("/api/push/subscriptions?endpoint=%20");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Unsubscribe_Removes_AndIsIdempotent()
     {
         var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
@@ -101,12 +110,6 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
         Assert.Equal(HttpStatusCode.NoContent, second.StatusCode);
     }
 
-    private async Task DeleteSubscriptionAsync(string endpoint)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.PushSubscriptions.Where(x => x.Endpoint == endpoint).ExecuteDeleteAsync();
-    }
 }
 
 public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
@@ -114,9 +117,9 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
     [Fact]
     public async Task CheckAsync_SendsPushForNewReminders()
     {
-        var item = await SeedItemAsync($"test-push-{Guid.CreateVersion7()}");
+        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
         var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
-        await SeedSubscriptionAsync(endpoint);
+        await PantryTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
 
         try
         {
@@ -133,17 +136,17 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await DeleteItemAsync(item.Id);
-            await DeleteSubscriptionAsync(endpoint);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
+            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
     [Fact]
     public async Task CheckAsync_RemovesInvalidSubscriptions()
     {
-        var item = await SeedItemAsync($"test-push-{Guid.CreateVersion7()}");
+        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
         var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
-        await SeedSubscriptionAsync(endpoint);
+        await PantryTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
 
         try
         {
@@ -161,8 +164,39 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await DeleteItemAsync(item.Id);
-            await DeleteSubscriptionAsync(endpoint);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
+            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+        }
+    }
+
+    [Fact]
+    public async Task CheckAsync_CountsDeadSubscriptionOnceAcrossItems()
+    {
+        var first = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
+        var second = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
+        var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
+        await PantryTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
+
+        try
+        {
+            var sender = new RecordingSender(PushSendOutcome.InvalidSubscription);
+            var worker = CreateWorker(sender);
+
+            var result = await worker.CheckAsync(CancellationToken.None);
+
+            Assert.Equal(2, result.Created);
+            Assert.Equal(1, result.PushInvalid);
+            Assert.Single(sender.Sent);
+
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Assert.False(await db.PushSubscriptions.AnyAsync(x => x.Endpoint == endpoint));
+        }
+        finally
+        {
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, first.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, second.Id);
+            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
@@ -199,47 +233,4 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
     }
 
-    private async Task<PantryItem> SeedItemAsync(string name)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var item = new PantryItem
-        {
-            Name = name,
-            Quantity = 1,
-            Unit = "pcs",
-            Location = "pantry",
-            ExpirationDate = DateOnly.FromDateTime(DateTime.Today.AddDays(2))
-        };
-        db.Items.Add(item);
-        await db.SaveChangesAsync();
-        return item;
-    }
-
-    private async Task SeedSubscriptionAsync(string endpoint)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.PushSubscriptions.Add(new Server.Data.Entities.PushSubscription
-        {
-            Endpoint = endpoint,
-            P256dh = "p256dh",
-            Auth = "auth"
-        });
-        await db.SaveChangesAsync();
-    }
-
-    private async Task DeleteItemAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
-
-    private async Task DeleteSubscriptionAsync(string endpoint)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.PushSubscriptions.Where(x => x.Endpoint == endpoint).ExecuteDeleteAsync();
-    }
 }

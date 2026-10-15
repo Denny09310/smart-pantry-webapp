@@ -126,20 +126,23 @@
   <data name="Settings" xml:space="preserve">
     <value>Impostazioni</value>
   </data>
+  <data name="About" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Indietro</value>
+  </data>
+  <data name="Changelog" xml:space="preserve">
+    <value>Changelog</value>
+  </data>
   <data name="Language" xml:space="preserve">
     <value>Lingua</value>
   </data>
   <data name="SelectLanguage" xml:space="preserve">
     <value>Seleziona lingua</value>
   </data>
-  <data name="English" xml:space="preserve">
-    <value>Inglese</value>
-  </data>
   <data name="Ingredients" xml:space="preserve">
     <value>Ingredienti</value>
-  </data>
-  <data name="Italian" xml:space="preserve">
-    <value>Italiano</value>
   </data>
   <data name="User" xml:space="preserve">
     <value>Utente</value>
@@ -171,9 +174,6 @@
   <data name="Location" xml:space="preserve">
     <value>Posizione</value>
   </data>
-  <data name="Expiry" xml:space="preserve">
-    <value>Scadenza</value>
-  </data>
   <data name="DurationAndExpiry" xml:space="preserve">
     <value>Durata e scadenza</value>
   </data>
@@ -191,9 +191,6 @@
   </data>
   <data name="AddItemButton" xml:space="preserve">
     <value>Crea</value>
-  </data>
-  <data name="EditItem" xml:space="preserve">
-    <value>Modifica articolo</value>
   </data>
   <data name="AddItemTitle" xml:space="preserve">
     <value>Aggiungi articolo</value>
@@ -282,9 +279,6 @@
   <data name="PickADate" xml:space="preserve">
     <value>Scegli una data</value>
   </data>
-  <data name="DeleteConfirm" xml:space="preserve">
-    <value>Elimina</value>
-  </data>
   <data name="ItemDeleted" xml:space="preserve">
     <value>Articolo eliminato.</value>
   </data>
@@ -335,38 +329,14 @@
   <data name="Cabinet" xml:space="preserve">
     <value>Mobiletto</value>
   </data>
-  <data name="UnitsPcs" xml:space="preserve">
-    <value>pz</value>
-  </data>
-  <data name="UnitsKg" xml:space="preserve">
-    <value>kg</value>
-  </data>
-  <data name="UnitsG" xml:space="preserve">
-    <value>g</value>
-  </data>
-  <data name="UnitsL" xml:space="preserve">
-    <value>l</value>
-  </data>
-  <data name="UnitsMl" xml:space="preserve">
-    <value>ml</value>
-  </data>
   <data name="ScanBarcode" xml:space="preserve">
     <value>Scansiona codice a barre (opzionale)</value>
-  </data>
-  <data name="ClickToStartScanning" xml:space="preserve">
-    <value>Clicca per iniziare la scansione</value>
-  </data>
-  <data name="StartCamera" xml:space="preserve">
-    <value>Avvia fotocamera</value>
   </data>
   <data name="ScannerUnsupported" xml:space="preserve">
     <value>La scansione con fotocamera non è supportata su questo dispositivo.</value>
   </data>
   <data name="ScannerDenied" xml:space="preserve">
     <value>Accesso alla fotocamera negato.</value>
-  </data>
-  <data name="ProductFound" xml:space="preserve">
-    <value>Prodotto trovato! Dettagli pre-compilati.</value>
   </data>
   <data name="ProductNotInDatabase" xml:space="preserve">
     <value>Prodotto non nel database. Puoi aggiungerlo manualmente.</value>
@@ -382,21 +352,6 @@
   </data>
   <data name="MarkAllRead" xml:space="preserve">
     <value>Segna tutto come letto</value>
-  </data>
-  <data name="EnableNotifications" xml:space="preserve">
-    <value>Attiva notifiche</value>
-  </data>
-  <data name="DisableNotifications" xml:space="preserve">
-    <value>Disattiva notifiche</value>
-  </data>
-  <data name="NotificationsEnabled" xml:space="preserve">
-    <value>Notifiche attivate</value>
-  </data>
-  <data name="NotificationsDisabled" xml:space="preserve">
-    <value>Notifiche disattivate</value>
-  </data>
-  <data name="PushNotConfigured" xml:space="preserve">
-    <value>Notifiche push non configurate</value>
   </data>
   <data name="CouldNotEnable" xml:space="preserve">
     <value>Impossibile attivare le notifiche push. Controlla le impostazioni del sito nel browser se sono bloccate.</value>
@@ -436,15 +391,6 @@
   <data name="Color" xml:space="preserve">
     <value>Colore</value>
   </data>
-  <data name="Save" xml:space="preserve">
-    <value>Salva</value>
-  </data>
-  <data name="Rename" xml:space="preserve">
-    <value>Rinomina</value>
-  </data>
-  <data name="Unarchive" xml:space="preserve">
-    <value>Ripristina</value>
-  </data>
   <data name="Archived" xml:space="preserve">
     <value>Archiviati</value>
   </data>
@@ -459,18 +405,6 @@
   </data>
   <data name="StatusFresh" xml:space="preserve">
     <value>Fresco</value>
-  </data>
-  <data name="SortByExpiry" xml:space="preserve">
-    <value>Ordina per scadenza</value>
-  </data>
-  <data name="SortByName" xml:space="preserve">
-    <value>Ordina per nome</value>
-  </data>
-  <data name="FilterByLocation" xml:space="preserve">
-    <value>Filtra per posizione</value>
-  </data>
-  <data name="FilterByStatus" xml:space="preserve">
-    <value>Filtra per stato</value>
   </data>
   <data name="AllLocations" xml:space="preserve">
     <value>Tutte le posizioni</value>
@@ -558,9 +492,6 @@
   </data>
   <data name="SortByNameAZ" xml:space="preserve">
     <value>Nome A–Z</value>
-  </data>
-  <data name="IncludeConsumedItems" xml:space="preserve">
-    <value>Includi articoli usati</value>
   </data>
   <data name="Reset" xml:space="preserve">
     <value>Reimposta</value>

@@ -3,7 +3,7 @@
 @inject BottomSheetService Sheet
 @inject ToastService Toasts
 
-<div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+<div class="sheet-scroll space-y-4">
     @if (Loading)
     {
         <div class="space-y-2" aria-hidden="true">
@@ -29,11 +29,10 @@
     }
     else
     {
-        var status = ExpiryHelper.GetStatus(Item.ExpirationDate, Today);
         <header class="space-y-2">
             <h3 class="text-xl font-semibold">@Item.Name</h3>
             <div class="flex flex-wrap gap-2">
-                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
+                <ExpiryBadge ExpirationDate="Item.ExpirationDate" Today="Today" />
                 <BbBadge Variant="BadgeVariant.Outline">@Item.Location</BbBadge>
             </div>
         </header>
@@ -60,9 +59,8 @@
                     <dt class="text-muted-foreground">@Loc["Barcode"]</dt>
                     <dd class="flex items-center gap-1">
                         <span class="font-mono">@Item.Barcode</span>
-                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
-                                  AriaLabel="@Loc["UnlinkBarcode"]" Loading="Unlinking"
-                                  OnClick="OnUnlinkBarcode">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["UnlinkBarcode"]"
+                                  Loading="Unlinking" OnClick="OnUnlinkBarcode">
                             <LucideIcon Name="unlink" Size="14" />
                         </BbButton>
                     </dd>
@@ -106,8 +104,7 @@
         @* Barcode backfill for items added before scanning existed *@
         @if (string.IsNullOrWhiteSpace(Item.Barcode) && !LinkingBarcode)
         {
-            <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button"
-                      OnClick="OnLinkBarcode">
+            <BbButton Variant="ButtonVariant.Outline" Class="w-full" Type="ButtonType.Button" OnClick="OnLinkBarcode">
                 <LucideIcon Name="scan-barcode" Size="16" />
                 @Loc["LinkBarcode"]
             </BbButton>
@@ -116,8 +113,7 @@
         {
             <div class="space-y-2 rounded-md border p-3">
                 <BarcodeScanner OnBarcodeScanned="OnBarcodeScanned" AutoStart="true" />
-                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button"
-                          OnClick="OnCancelLinkBarcode">
+                <BbButton Variant="ButtonVariant.Ghost" Class="w-full" Type="ButtonType.Button" OnClick="OnCancelLinkBarcode">
                     @Loc["Cancel"]
                 </BbButton>
             </div>
@@ -149,33 +145,49 @@
         _ => BadgeVariant.Outline,
     };
 
+    private NutritionFacts? _rowsFor;
+    private string? _rowsCulture;
+    private IReadOnlyList<(string Label, string Value)>? _rowsCache;
+
+    /// <summary>Memoized per nutrition payload + culture (labels localize).</summary>
     private IReadOnlyList<(string Label, string Value)> NutritionRows
     {
         get
         {
-            List<(string Label, string Value)> rows = [];
+            var culture = Loc.CurrentCulture.Name;
+            if (_rowsCache is not null && Equals(_rowsFor, Item?.Nutrition) && _rowsCulture == culture)
+                return _rowsCache;
 
-            if (Item?.Nutrition is not { } nutrition)
-                return rows;
-
-            if (nutrition.EnergyKcal is { } energy)
-                rows.Add((Loc["NutritionEnergy"], $"{energy:0} kcal"));
-            if (nutrition.Fat is { } fat)
-                rows.Add((Loc["NutritionFat"], $"{fat:0.#} g"));
-            if (nutrition.SaturatedFat is { } satFat)
-                rows.Add((Loc["NutritionSaturatedFat"], $"{satFat:0.#} g"));
-            if (nutrition.Carbohydrates is { } carbs)
-                rows.Add((Loc["NutritionCarbs"], $"{carbs:0.#} g"));
-            if (nutrition.Sugars is { } sugars)
-                rows.Add((Loc["NutritionSugars"], $"{sugars:0.#} g"));
-            if (nutrition.Fiber is { } fiber)
-                rows.Add((Loc["Fiber"], $"{fiber:0.#} g"));
-            if (nutrition.Proteins is { } protein)
-                rows.Add((Loc["NutritionProtein"], $"{protein:0.#} g"));
-            if (nutrition.Salt is { } salt)
-                rows.Add((Loc["NutritionSalt"], $"{salt:0.##} g"));
-
-            return rows;
+            _rowsFor = Item?.Nutrition;
+            _rowsCulture = culture;
+            return _rowsCache = BuildNutritionRows(_rowsFor);
         }
+    }
+
+    private List<(string Label, string Value)> BuildNutritionRows(NutritionFacts? nutrition)
+    {
+        List<(string Label, string Value)> rows = [];
+
+        if (nutrition is not { })
+            return rows;
+
+        if (nutrition.EnergyKcal is { } energy)
+            rows.Add((Loc["NutritionEnergy"], $"{energy:0} kcal"));
+        if (nutrition.Fat is { } fat)
+            rows.Add((Loc["NutritionFat"], $"{fat:0.#} g"));
+        if (nutrition.SaturatedFat is { } satFat)
+            rows.Add((Loc["NutritionSaturatedFat"], $"{satFat:0.#} g"));
+        if (nutrition.Carbohydrates is { } carbs)
+            rows.Add((Loc["NutritionCarbs"], $"{carbs:0.#} g"));
+        if (nutrition.Sugars is { } sugars)
+            rows.Add((Loc["NutritionSugars"], $"{sugars:0.#} g"));
+        if (nutrition.Fiber is { } fiber)
+            rows.Add((Loc["Fiber"], $"{fiber:0.#} g"));
+        if (nutrition.Proteins is { } protein)
+            rows.Add((Loc["NutritionProtein"], $"{protein:0.#} g"));
+        if (nutrition.Salt is { } salt)
+            rows.Add((Loc["NutritionSalt"], $"{salt:0.##} g"));
+
+        return rows;
     }
 }

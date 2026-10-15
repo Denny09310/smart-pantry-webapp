@@ -85,29 +85,31 @@ internal class MemberEndpoints(ApplicationDbContext db)
     }
 
     [MapDelete("/{id}")]
-    public async Task<Results<NoContent, ProblemHttpResult, Conflict>> DeleteMemberAsync(
+    public async Task<Results<NoContent, ProblemHttpResult>> DeleteMemberAsync(
         string id,
         CancellationToken ct)
     {
-        var entry = await db.Members.FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (entry is null)
-            return MemberNotFound(id);
+        // Atomic: only archived members are deleted (items keep working, their
+        // attribution is nulled by the FK SetNull, never cascade-deleted).
+        // Zero rows means unknown id or active member — disambiguate below.
+        var deleted = await db.Members
+            .Where(x => x.Id == id && x.IsArchived)
+            .ExecuteDeleteAsync(ct);
 
-        // Only archived members can be deleted: items keep working, their
-        // attribution is nulled by the FK (SetNull), never cascade-deleted.
-        if (!entry.IsArchived)
-            return TypedResults.Conflict();
+        if (deleted > 0)
+            return TypedResults.NoContent();
 
-        db.Members.Remove(entry);
-        await db.SaveChangesAsync(ct);
+        var exists = await db.Members.AsNoTracking().AnyAsync(x => x.Id == id, ct);
 
-        return TypedResults.NoContent();
+        return exists
+            ? TypedResults.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                detail: $"Household member '{id}' must be archived before deleting it.")
+            : MemberNotFound(id);
     }
 
     private static ProblemHttpResult MemberNotFound(string id)
-        => TypedResults.Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            detail: $"Household member '{id}' was not found.");
+        => EndpointProblems.NotFound("Household member", id);
 
     private static HouseholdMemberDto ToDto(HouseholdMember member) => new(
         member.Id,

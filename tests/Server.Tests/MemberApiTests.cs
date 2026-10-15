@@ -34,7 +34,7 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await CleanupMemberByNameAsync(name);
+            await PantryTestHelpers.DeleteMembersByNameAsync(factory.Services, name);
         }
     }
 
@@ -86,7 +86,7 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await CleanupMemberByIdAsync(created.Id);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
         }
     }
 
@@ -135,8 +135,8 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(itemName);
-            await CleanupMemberByIdAsync(created.Id);
+            await PantryTestHelpers.DeleteItemsByNameAsync(factory.Services, itemName);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
         }
     }
 
@@ -152,7 +152,7 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await CleanupMemberByIdAsync(created.Id);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
         }
     }
 
@@ -173,24 +173,4 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         return created;
     }
 
-    private async Task CleanupMemberByNameAsync(string name)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Members.Where(x => x.DisplayName == name).ExecuteDeleteAsync();
-    }
-
-    private async Task CleanupMemberByIdAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
-
-    private async Task DeleteItemsByNameAsync(string name)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Name == name).ExecuteDeleteAsync();
-    }
 }

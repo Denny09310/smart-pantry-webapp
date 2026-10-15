@@ -73,6 +73,19 @@ h1:focus {
     content: var(--blazor-load-percentage-text, "Loading");
 }
 
+/* Shared scrollable sheet/page body region (item spacing stays per use).
+   Plain CSS (not a Tailwind component): app.css is served as-is. */
+.sheet-scroll {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    padding-right: 0.25rem;
+}
+
 /* The sheet handle row starts a drag anywhere along its width.
    This must live in global CSS: Blazor scopes component stylesheets to their
    own component's markup. Interactive children are excluded in JS, so buttons

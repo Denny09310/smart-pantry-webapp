@@ -153,6 +153,9 @@ internal sealed class NotificationService(
         Changed?.Invoke();
     }
 
+    /// <summary>Adopts a count already fetched elsewhere (panel loads).</summary>
+    public void SyncUnreadCount(int count) => SetCount(count);
+
     private void SetCount(int count)
     {
         if (Unread == count)

@@ -54,11 +54,25 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 var app = builder.Build();
 
-// Migrations
+// Migrations (retried: Postgres may not be up yet when the app boots,
+// e.g. compose restart ordering).
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await db.Database.MigrateAsync();
+    const int attempts = 5;
+    for (var attempt = 1; ; attempt++)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            break;
+        }
+        catch (Exception ex) when (attempt < attempts)
+        {
+            app.Logger.LogWarning(ex, "Database migration attempt {Attempt} failed; retrying.", attempt);
+            await Task.Delay(TimeSpan.FromSeconds(2 * attempt));
+        }
+    }
 }
 
 // Pipeline

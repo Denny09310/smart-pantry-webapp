@@ -4,6 +4,7 @@
 @inject BarcodeDetector BarcodeDetector
 @inject ToastService Toasts
 @inject LocalizationService Loc
+@inject ILogger<BarcodeScanner> Logger
 @implements IAsyncDisposable
 
 <div class="relative" @ref="_containerRef">
@@ -84,14 +85,17 @@
                 return;
             }
 
+            // Unhide the video first: some browsers refuse to play a
+            // hidden element. Yield so the render commits before attaching.
+            _isScanning = true;
+            StateHasChanged();
+            await Task.Yield();
+
             // Attach stream to video element
             await _stream.AttachTo(_videoRef);
 
             // Play the video
             await _videoRef.Play();
-
-            _isScanning = true;
-            StateHasChanged();
 
             // Formats match the server rule: 8, 12, or 13 digits only.
             _scanSubscription = await BarcodeDetector.StartScan(
@@ -100,9 +104,12 @@
                 formats: ["ean_13", "ean_8", "upc_a", "upc_e"],
                 intervalMs: 250);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogWarning(ex, "Barcode scanner failed to start.");
+            _isScanning = false;
             await ReleaseAsync();
+            StateHasChanged();
         }
     }
 
@@ -136,15 +143,22 @@
     private void OnBarcodesDetected(DetectedBarcode[] barcodes)
         => _ = InvokeAsync(async () =>
         {
-            if (_disposed || !_isScanning || barcodes.Length == 0) return;
-
-            var barcode = barcodes[0].RawValue;
-
-            // Validate barcode format
-            if (IsValidBarcode(barcode))
+            try
             {
-                await OnBarcodeScanned.InvokeAsync(barcode);
-                await StopScanningAsync();
+                if (_disposed || !_isScanning || barcodes.Length == 0) return;
+
+                var barcode = barcodes[0].RawValue;
+
+                // Validate barcode format
+                if (IsValidBarcode(barcode))
+                {
+                    await OnBarcodeScanned.InvokeAsync(barcode);
+                    await StopScanningAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Barcode detection handling failed.");
             }
         });
 

@@ -31,7 +31,7 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
     [Fact]
     public async Task MarkRead_SetsReadAt_AndDecrementsUnread()
     {
-        var item = await SeedItemAsync($"test-item-{Guid.CreateVersion7()}");
+        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-item-{Guid.CreateVersion7()}");
         var notification = await SeedNotificationAsync(item.Id, item.ExpirationDate);
 
         try
@@ -50,7 +50,7 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
         }
         finally
         {
-            await DeleteItemAsync(item.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
         }
     }
 
@@ -65,8 +65,8 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
     [Fact]
     public async Task MarkAllRead_MarksEverything()
     {
-        var first = await SeedItemAsync($"test-item-a-{Guid.CreateVersion7()}");
-        var second = await SeedItemAsync($"test-item-b-{Guid.CreateVersion7()}");
+        var first = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-item-a-{Guid.CreateVersion7()}");
+        var second = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-item-b-{Guid.CreateVersion7()}");
         await SeedNotificationAsync(first.Id, first.ExpirationDate);
         await SeedNotificationAsync(second.Id, second.ExpirationDate);
 
@@ -84,26 +84,9 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
         }
         finally
         {
-            await DeleteItemAsync(first.Id);
-            await DeleteItemAsync(second.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, first.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, second.Id);
         }
-    }
-
-    private async Task<PantryItem> SeedItemAsync(string name)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var item = new PantryItem
-        {
-            Name = name,
-            Quantity = 1,
-            Unit = "pcs",
-            Location = "pantry",
-            ExpirationDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3))
-        };
-        db.Items.Add(item);
-        await db.SaveChangesAsync();
-        return item;
     }
 
     private async Task<Notification> SeedNotificationAsync(string itemId, DateOnly expiration)
@@ -121,12 +104,7 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
         return notification;
     }
 
-    private async Task DeleteItemAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
+
 }
 
 public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
@@ -148,11 +126,11 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
     public async Task CheckAsync_CreatesRemindersOnlyInsideWindow_AndDeduplicates()
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var soon = await SeedItemAsync($"test-soon-{Guid.CreateVersion7()}", today.AddDays(3));
-        var todayItem = await SeedItemAsync($"test-today-{Guid.CreateVersion7()}", today);
-        var edge = await SeedItemAsync($"test-edge-{Guid.CreateVersion7()}", today.AddDays(7));
-        var expired = await SeedItemAsync($"test-expired-{Guid.CreateVersion7()}", today.AddDays(-1));
-        var future = await SeedItemAsync($"test-future-{Guid.CreateVersion7()}", today.AddDays(8));
+        var soon = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-soon-{Guid.CreateVersion7()}", today.AddDays(3));
+        var todayItem = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-today-{Guid.CreateVersion7()}", today);
+        var edge = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-edge-{Guid.CreateVersion7()}", today.AddDays(7));
+        var expired = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-expired-{Guid.CreateVersion7()}", today.AddDays(-1));
+        var future = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-future-{Guid.CreateVersion7()}", today.AddDays(8));
 
         try
         {
@@ -196,11 +174,11 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
         }
         finally
         {
-            await DeleteItemAsync(soon.Id);
-            await DeleteItemAsync(todayItem.Id);
-            await DeleteItemAsync(edge.Id);
-            await DeleteItemAsync(expired.Id);
-            await DeleteItemAsync(future.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, soon.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, todayItem.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, edge.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, expired.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, future.Id);
         }
     }
 
@@ -213,27 +191,5 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
             NullLogger<ReminderWorker>.Instance);
     }
 
-    private async Task<PantryItem> SeedItemAsync(string name, DateOnly expiration)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var item = new PantryItem
-        {
-            Name = name,
-            Quantity = 1,
-            Unit = "pcs",
-            Location = "pantry",
-            ExpirationDate = expiration
-        };
-        db.Items.Add(item);
-        await db.SaveChangesAsync();
-        return item;
-    }
 
-    private async Task DeleteItemAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
 }

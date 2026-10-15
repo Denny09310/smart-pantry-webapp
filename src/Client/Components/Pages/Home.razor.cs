@@ -18,7 +18,9 @@ public partial class Home
         public string Status { get; set; } = PantryRules.StatusAll;
         public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
 
-        public DateOnly Today { get; } = DateOnly.FromDateTime(DateTime.Today);
+        // Evaluated per render: a frozen date drifts expiry badges past midnight
+        // on long-lived sessions.
+        public DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
     }
 
     private readonly State _state = new();

@@ -22,7 +22,7 @@ These instructions apply across the Smart Pantry repository.
 - `Server`: ASP.NET Core Minimal APIs, application behavior, EF Core persistence, and background work.
 - `Client`: Blazor WebAssembly Standalone UI.
 - `Shared`: transport contracts shared between client and server.
-- Use `AppDbContext` directly where appropriate. Keep data access explicit and easy to follow.
+- Use `ApplicationDbContext` directly where appropriate. Keep data access explicit and easy to follow.
 - Do not introduce CQRS, DDD aggregate layers, use-case/handler classes, repository interfaces, MediatR, event buses, extra projects, or similar abstractions unless a specific demonstrated requirement justifies them.
 - Keep `Shared` focused on transport contracts; do not put server implementation or persistence concerns there.
 - Minimize dependencies and prefer capabilities already in the stack.
@@ -64,7 +64,7 @@ These instructions apply across the Smart Pantry repository.
 - Follow local naming, formatting, API, component, and error-handling conventions.
 - Razor style: `@code` opening brace on its own line.
 - Keep changes focused; avoid unrelated refactoring.
-- Add or update tests for changed behavior, especially authorization, household isolation, invitations, expiry boundaries, and reminder deduplication.
+- Add or update tests for changed behavior, especially member archive/delete, expiry boundaries, and reminder deduplication.
 - Run relevant tests first, then build/test the solution when practical. Report only commands actually run and their real results.
 - For UI changes, consider responsive layouts, keyboard accessibility, loading/empty/error states, and existing styles.
 - Never fix a failing test by weakening a security check or removing meaningful assertions.
@@ -83,7 +83,7 @@ Do not claim deployment, external actions, or successful verification unless the
 
 ## Stack
 
-- .NET 10 solution (`smart-pantry-webapp.slnx`): `src/Client` (Blazor WebAssembly) + `src/Server` (ASP.NET Core) + `src/Shared` (transport contracts) + `tests/Server.Tests` (xUnit). No CI.
+- .NET 10 solution (`smart-pantry-webapp.slnx`): `src/Client` (Blazor WebAssembly) + `src/Server` (ASP.NET Core) + `src/Shared` (transport contracts) + `tests/Server.Tests` + `tests/Client.Tests` (xUnit). No CI.
 - Routing: Bit.Brouter 10.6.2 replaces `<Router>` in `App.razor` (view transitions on, scroll-to-top, focus `h1`); pages are discovered via `@page` + `AppAssembly` scan. Do not add the built-in `<Router>` back.
 - Build: `dotnet build smart-pantry-webapp.slnx`. Run/debug via the **Server** project (`http://localhost:5125`, `https://localhost:7139`); it serves the Client (`MapStaticAssets` + `MapFallbackToFile("index.html")` in `src/Server/Program.cs`). Run with `ASPNETCORE_ENVIRONMENT=Development` (or a launch profile) — `appsettings.json` has no connection string, so Production startup fails at `MigrateAsync`.
 - Tests: `dotnet test smart-pantry-webapp.slnx` (single test: `dotnet test tests/Server.Tests --filter <Name>`). `PantryApiTests` boot the real host via `WebApplicationFactory` and need local Postgres; each test class gets its own auto-created database, dropped afterwards (base connection override via `SMARTPANTRY_TEST_CONNECTION`).
@@ -97,14 +97,14 @@ Do not claim deployment, external actions, or successful verification unless the
 - Full pantry CRUD in `src/Server/Endpoints/PantryEndpoints.cs`: `GET /api/pantry` (filters: `Location` — `"all"` means unfiltered — `Name` via `ILike`, `Status` (`expired`/`soon`/`fresh`), `Sort` (`expiry-asc`/`expiry-desc`/`name`, default `expiry-asc` with deterministic ordering); paging `Skip`/`Take` are nullable, defaulting to `0`/`20` in the handler, max `Take` 100), `POST /api/pantry`, `GET /api/pantry/{id}`, `PUT /api/pantry/{id}`, `DELETE /api/pantry/{id}` (204). Missing items return 404 ProblemDetails. Shared literals and the 7-day window live in `Shared.Models.PantryRules` — both tiers reference it.
 - Member profiles in `src/Server/Endpoints/MemberEndpoints.cs`: `GET /api/members`, `POST /api/members` (201), `PUT /api/members/{id}` (rename/color/archive), `DELETE /api/members/{id}` (archived only, 409 otherwise; items keep working with nulled attribution). Attribution flows via the `X-Member-Id` request header, stamped at item creation only; unknown/missing members resolve to null, never 400.
 - Notifications in `src/Server/Endpoints/NotificationEndpoints.cs`: `GET /api/notifications` (newest first + unread count + total; `Skip`/`Take` paging), `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`.
-- Push in `src/Server/Endpoints/PushEndpoints.cs`: `GET /api/push/public-key` (404 when unconfigured), `POST /api/push/subscriptions` (upsert by endpoint), `DELETE /api/push/subscriptions?endpoint=`. The reminder worker sends one push per new reminder to every subscription (best-effort; rejected subscriptions are deleted). VAPID keys live in `VapidOptions` (`PublicKey` may be in source; `PrivateKey` only via user-secrets/env — validated on startup, never logged).
+- Push in `src/Server/Endpoints/PushEndpoints.cs`: `GET /api/push/public-key` (404 when unconfigured), `POST /api/push/subscriptions` (upsert by endpoint: 201 on create, 200 on update), `DELETE /api/push/subscriptions?endpoint=` (400 on blank endpoint). The reminder worker sends one push per new reminder to every subscription (best-effort; rejected subscriptions are deleted). VAPID keys live in `VapidOptions` (`PublicKey` may be in source; `PrivateKey` only via user-secrets/env — validated on startup, never logged).
 - Realtime in `src/Server/Hubs/PantryHub.cs` (typed `Hub<IPantryHubClient>`, mapped at `/hubs/pantry`): pantry create/update/delete broadcast `PantryChangedEvent` (item id + created/updated/removed). Client `PantryRealtimeService` connects with automatic reconnect; pages patch their loaded rows from a single-item fetch (insert/drop/replace, full reload as fallback) and treat a dead connection as silent fallback to manual reload. Contract in `Shared.Models` (`PantryHubModels.cs`).
-- Paged lists use the generic `InfiniteScrollList<T>` (`Shared/`, Bit.Butil IntersectionObserver sentinel with bottom pre-load margin; `ReloadAsync()` after filter changes; dispose the subscription). It needs the `bit-butil.js` script tag in `index.html` — without it browser reads silently return defaults.
+- Paged lists use the generic `InfiniteScrollList<T>` (`Client/Components/Shared/`, Bit.Butil IntersectionObserver sentinel with bottom pre-load margin; `ReloadAsync()` after filter changes; dispose the subscription). It needs the `bit-butil.js` script tag in `index.html` — without it browser reads silently return defaults.
 - Validation is framework-driven: DataAnnotations on Shared DTOs (use `[property: ...]` targets on positional records — bare attributes land on the ctor parameter and are ignored), enforced automatically via `AddValidation()` + `AddSharedValidation()` (source-gen metadata is per-assembly, so Shared registers itself and marks roots `[ValidatableType]`). Invalid requests get a 400 ProblemDetails before the handler runs — no manual validation in endpoints. Keep `[AsParameters]` query properties nullable (non-nullable value types bind as required and break optional paging).
 
 ## Database
 
-- PostgreSQL via Npgsql with snake_case naming (`UseSnakeCaseNamingConvention`). `AppDbContext` has `DbSet<PantryItem> Items`.
+- PostgreSQL via Npgsql with snake_case naming (`UseSnakeCaseNamingConvention`). `ApplicationDbContext` has `DbSet<PantryItem> Items`.
 - `Program.cs` runs `MigrateAsync()` at startup. Connection string `Default` exists **only** in `Server/appsettings.Development.json` (local Postgres); `appsettings.json` has none — configure per-environment, keep secrets out of source.
 - Migrations: `dotnet ef migrations add <Name> --project Server` (EF Design package is on Server). Review `Server/Data/Migrations` conventions first; avoid destructive changes.
 
@@ -119,4 +119,4 @@ Do not claim deployment, external actions, or successful verification unless the
 - Mobile-first: phone UI is the current target (custom floating `BottomBar` + bottom-sheet forms, native date/select inputs for OS pickers). Desktop gets a `BbSidebar` + `BbSidebarInset` layout (`_Layout.razor`); the bar and bottom padding are mobile-only. Never create a `Client.Components.Shared` namespace — it hijacks `@using Shared.Models` resolution; shared components live in `Client.Components` via `@namespace`.
 - Bottom sheets are custom, not `BbSheet`: global `BottomSheetService` + `BottomSheetProvider` under `Shared/BottomSheet/` (handle, snap points, pan-to-close, colocated JS, isolated CSS; the body region scrolls, the sheet itself never does). A sheet body never opens a dialog (it renders beneath the sheet) — close with a request object and let the opener confirm and execute. Page-only components go in `Shared/<Page>/`, cross-page ones at `Shared/` root. Files under `Shared/` subfolders must still declare `@namespace Client.Components` — a `Client.Components.Shared.*` namespace hijacks `@using Shared.Models` resolution.
 - PWA shell (manifest, icons, service worker) already exists in `Client/wwwroot`; offline sync stays out of scope per roadmap.
-- App updates: `UpdateNotifier` (Bit.Butil `ServiceWorker`) toasts a reload action when a new worker is waiting. Shared worker logic lives in `service-worker.shared.js`, imported by both worker files — keep the two in sync.
+- App updates: `UpdateNotifier` (Bit.Butil `ServiceWorker`) toasts a reload action when a new worker is waiting. Shared worker logic lives in `service-worker.shared.js`, imported by both worker files — edit the shared file only. Keep `<BitButilTrimScripts>false</BitButilTrimScripts>` on the Client project: trimming breaks the Butil script hash match.

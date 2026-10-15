@@ -6,7 +6,7 @@
 <div class="flex h-full flex-col">
     <h2 class="flex-none text-lg font-semibold">@Loc["Filters"]</h2>
 
-    <div class="min-h-0 flex-1 touch-pan-y space-y-5 overflow-y-auto overscroll-contain py-1 pr-1">
+    <div class="sheet-scroll space-y-5">
         <div>
             <span class="mb-1 block text-sm font-medium">@Loc["Location"]</span>
             <BbChipSet @bind-Value="_state.Location" Class="scrollbar-none!" Wrap="false">

@@ -29,7 +29,7 @@ public sealed class ReminderWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await CheckAsync(stoppingToken);
+        await RunCheckAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -42,7 +42,27 @@ public sealed class ReminderWorker(
                 break;
             }
 
+            await RunCheckAsync(stoppingToken);
+        }
+    }
+
+    /// <summary>
+    /// One guarded run: a DB outage or transient failure must never kill the
+    /// worker — the next daily run simply tries again.
+    /// </summary>
+    private async Task RunCheckAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
             await CheckAsync(stoppingToken);
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Reminder check failed; will retry on the next run.");
         }
     }
 
@@ -69,8 +89,12 @@ public sealed class ReminderWorker(
             .Select(x => new { x.Id, x.Name, x.ExpirationDate })
             .ToListAsync(ct);
 
+        // Only reminders for items in the current window matter: the table
+        // grows forever, but each check reads just this slice.
+        var candidateIds = candidates.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
+
         var seen = (await db.Notifications.AsNoTracking()
-            .Where(x => x.Type == ExpiryWarningType)
+            .Where(x => x.Type == ExpiryWarningType && candidateIds.Contains(x.PantryItemId))
             .Select(x => new { x.PantryItemId, x.ExpirationDate })
             .ToListAsync(ct))
             .Select(x => (x.PantryItemId, x.ExpirationDate))
@@ -140,7 +164,7 @@ public sealed class ReminderWorker(
             return (0, 0);
 
         var sent = 0;
-        var invalid = 0;
+        var invalidIds = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var item in reminded)
         {
@@ -149,6 +173,10 @@ public sealed class ReminderWorker(
 
             foreach (var subscription in subscriptions)
             {
+                // Already known dead this run: skip without recounting.
+                if (invalidIds.Contains(subscription.Id))
+                    continue;
+
                 PushSendOutcome outcome;
                 try
                 {
@@ -168,16 +196,28 @@ public sealed class ReminderWorker(
                 }
                 else if (outcome == PushSendOutcome.InvalidSubscription)
                 {
-                    invalid++;
+                    invalidIds.Add(subscription.Id);
                     log.LogInformation("Removing invalid push subscription {Id}.", subscription.Id);
-                    await db.PushSubscriptions
-                        .Where(x => x.Id == subscription.Id)
-                        .ExecuteDeleteAsync(ct);
                 }
             }
         }
 
-        return (sent, invalid);
+        // One delete for all dead endpoints, after every delivery attempt.
+        if (invalidIds.Count > 0)
+        {
+            try
+            {
+                await db.PushSubscriptions
+                    .Where(x => invalidIds.Contains(x.Id))
+                    .ExecuteDeleteAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "Removing invalid push subscriptions failed.");
+            }
+        }
+
+        return (sent, invalidIds.Count);
     }
 
     public sealed record ReminderResult(int Candidates, int Created, int Failed, int PushSent, int PushInvalid);

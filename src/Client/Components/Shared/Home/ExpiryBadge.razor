@@ -1,0 +1,18 @@
+@namespace Client.Components
+@inject LocalizationService Loc
+
+<BbBadge Variant="@ExpiryHelper.Badge(Status)" class="@Class">@ExpiryHelper.Label(Status, Loc)</BbBadge>
+
+@code
+{
+    [Parameter, EditorRequired]
+    public DateOnly ExpirationDate { get; set; }
+
+    [Parameter]
+    public DateOnly Today { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    [Parameter]
+    public string? Class { get; set; } = "shrink-0";
+
+    private ExpiryStatus Status => ExpiryHelper.GetStatus(ExpirationDate, Today);
+}
