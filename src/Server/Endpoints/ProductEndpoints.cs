@@ -20,7 +20,12 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Barcode))
-            return TypedResults.NotFound();
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Barcode)] = ["Barcode must be 8, 12, or 13 digits."]
+            });
+        }
 
         // Local cache first: repeat scans never touch the network.
         var cached = await db.CachedProducts.AsNoTracking()

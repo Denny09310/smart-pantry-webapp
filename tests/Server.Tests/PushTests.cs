@@ -53,7 +53,7 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
         {
             var first = await _client.PostAsJsonAsync("/api/push/subscriptions",
                 new PushSubscriptionRequest(endpoint, "p256dh-1", "auth-1"));
-            Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+            Assert.Equal(HttpStatusCode.Created, first.StatusCode);
             var created = await first.Content.ReadFromJsonAsync<PushSubscriptionDto>();
             Assert.NotNull(created);
 
@@ -85,6 +85,14 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
         using var doc = await response.Content.ReadFromJsonAsync<JsonDocument>();
         Assert.NotNull(doc);
         Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("Endpoint", out _));
+    }
+
+    [Fact]
+    public async Task Unsubscribe_BlankEndpoint_ReturnsValidationProblem()
+    {
+        var response = await _client.DeleteAsync("/api/push/subscriptions?endpoint=%20");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

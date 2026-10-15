@@ -144,6 +144,10 @@ namespace Server.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_notifications");
 
+                    b.HasIndex("CreatedAt")
+                        .IsDescending()
+                        .HasDatabaseName("ix_notifications_created_at");
+
                     b.HasIndex("PantryItemId", "ExpirationDate", "Type")
                         .IsUnique()
                         .HasDatabaseName("ix_notifications_pantry_item_id_expiration_date_type");
@@ -216,6 +220,9 @@ namespace Server.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_items");
+
+                    b.HasIndex("Barcode")
+                        .HasDatabaseName("ix_items_barcode");
 
                     b.HasIndex("ExpirationDate")
                         .HasDatabaseName("ix_items_expiration_date");

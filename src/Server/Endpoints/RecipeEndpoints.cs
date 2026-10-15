@@ -113,17 +113,30 @@ internal class RecipeEndpoints(IRecipeService recipes, ITranslationService trans
         return translated.ToList();
     }
 
+    /// <summary>Translation quota guard: only the head is translated eagerly.</summary>
+    private const int MaxTranslatedNames = 20;
+
     private async Task<List<RecipeSummaryDto>> TranslateNamesAsync(
         IReadOnlyList<ThemealDbMeal> meals, string lang, CancellationToken ct)
     {
+        var head = meals.Take(MaxTranslatedNames).ToList();
         var translated = await Task.WhenAll(
-            meals.Select(m => translations.TranslateAsync(m.Name, "en", lang, ct)));
+            head.Select(m => translations.TranslateAsync(m.Name, "en", lang, ct)));
 
-        return meals.Zip(translated, (meal, name) => new RecipeSummaryDto(
-            meal.Id,
-            meal.Name,
-            name == meal.Name ? null : name,
-            meal.Thumbnail,
-            meal.Area)).ToList();
+        // The rest keep a null TranslatedName; clients fall back to Name.
+        return head
+            .Zip(translated, (meal, name) => new RecipeSummaryDto(
+                meal.Id,
+                meal.Name,
+                name == meal.Name ? null : name,
+                meal.Thumbnail,
+                meal.Area))
+            .Concat(meals.Skip(MaxTranslatedNames).Select(m => new RecipeSummaryDto(
+                m.Id,
+                m.Name,
+                null,
+                m.Thumbnail,
+                m.Area)))
+            .ToList();
     }
 }
