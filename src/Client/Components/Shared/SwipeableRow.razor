@@ -1,24 +1,43 @@
 @namespace Client.Components
 @using BlazorBlueprint.Primitives.SwipeArea
 
-@* Shared swipe-to-reveal-actions row. The tap surface is a plain div (never a
-   button): action badges render divs, which must not nest inside a button. *@
-<BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY" OnSwipe="HandleSwipe"
-             OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
-    <div class="relative overflow-hidden rounded-md border bg-card">
-        <div class="absolute inset-y-0 right-0 flex items-stretch">
-            <CascadingValue Value="this" IsFixed="true">
-                @Actions
-            </CascadingValue>
+<div class="pointer-fine:hidden">
+    <BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY" OnSwipe="HandleSwipe"
+                 OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
+        <div class="relative overflow-hidden rounded-md border bg-card">
+            <div class="absolute inset-y-0 right-0 flex items-stretch">
+                <CascadingValue Value="this" IsFixed="true">
+                    <CascadingValue Value="false" Name="CompactActions" IsFixed="true">
+                        @Actions
+                    </CascadingValue>
+                </CascadingValue>
+            </div>
+            <div @onclick="HandleTap" @onkeydown="HandleKeyDown" @onkeydown:preventDefault="true"
+                 tabindex="0" role="button" aria-label="@AriaLabel"
+                 class="@($"relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")"
+                 style="transform: translateX(@_offsetPx); transition: @(_dragging ? "none" : "transform 150ms");">
+                @ChildContent
+            </div>
         </div>
-        <div @onclick="HandleTap" @onkeydown="HandleKeyDown" @onkeydown:preventDefault="true"
-             tabindex="0" role="button" aria-label="@AriaLabel"
-             class="@($"relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")"
-             style="transform: translateX(@_offsetPx); transition: @(_dragging ? "none" : "transform 150ms");">
-            @ChildContent
+    </BbSwipeArea>
+</div>
+
+<div class="hidden pointer-fine:block">
+    <div class="rounded-md border bg-card p-3">
+        <div class="flex items-center gap-2">
+            <div @onclick="HandleTapStatic" @onkeydown="HandleKeyDownStatic" @onkeydown:preventDefault="true"
+                 tabindex="0" role="button" aria-label="@AriaLabel"
+                 class="min-w-0 flex-1 cursor-pointer focus-visible:outline-2">
+                @ChildContent
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+                <CascadingValue Value="true" Name="CompactActions" IsFixed="true">
+                    @Actions
+                </CascadingValue>
+            </div>
         </div>
     </div>
-</BbSwipeArea>
+</div>
 
 @code
 {
@@ -38,7 +57,7 @@
     [Parameter]
     public string? AriaLabel { get; set; }
 
-    /// <summary>Extra layout classes for the row body (e.g. "block", "flex items-center gap-3").</summary>
+    /// <summary>Extra layout classes for the swipe-mode row body (e.g. "block", "flex items-center gap-3").</summary>
     [Parameter]
     public string? InnerClass { get; set; } = "block";
 
@@ -99,9 +118,18 @@
         await OnTap.InvokeAsync();
     }
 
+    private Task HandleTapStatic()
+        => OnTap.InvokeAsync();
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key is "Enter" or " ")
             await HandleTap();
+    }
+
+    private async Task HandleKeyDownStatic(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " ")
+            await OnTap.InvokeAsync();
     }
 }
