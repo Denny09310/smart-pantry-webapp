@@ -10,20 +10,20 @@
              OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
     <div class="relative overflow-hidden rounded-md border bg-card">
         <div class="absolute inset-y-0 right-0 flex items-stretch">
-            <button type="button" @onclick="EditAsync"
+            <button type="button" @onclick="EditAsync" aria-label="@Loc["Edit"]"
                     class="flex w-[60px] flex-col items-center justify-center gap-1 bg-secondary text-secondary-foreground">
                 <LucideIcon Name="pencil" Size="18" />
-                <span class="text-xs">@Loc["Edit"]</span>
+                <span class="text-center text-xs leading-tight">@Loc["Edit"]</span>
             </button>
-            <button type="button" @onclick="CompleteAsync"
+            <button type="button" @onclick="CompleteAsync" aria-label="@Loc["MarkAsUsed"]"
                     class="flex w-[60px] flex-col items-center justify-center gap-1 bg-primary text-primary-foreground">
                 <LucideIcon Name="check" Size="18" />
-                <span class="text-xs">@Loc["MarkAsUsed"]</span>
+                <span class="text-center text-xs leading-tight">@Loc["Used"]</span>
             </button>
-            <button type="button" @onclick="DeleteAsync"
+            <button type="button" @onclick="DeleteAsync" aria-label="@Loc["Delete"]"
                     class="flex w-[60px] flex-col items-center justify-center gap-1 bg-destructive text-destructive-foreground">
                 <LucideIcon Name="trash-2" Size="18" />
-                <span class="text-xs">@Loc["Delete"]</span>
+                <span class="text-center text-xs leading-tight">@Loc["Delete"]</span>
             </button>
         </div>
         <button type="button" @onclick="TapAsync"
@@ -59,9 +59,9 @@
     [Parameter]
     public EventCallback<PantryItemDto> OnOpen { get; set; }
 
-    /// <summary>Raised after an action changed the item (reload the list).</summary>
+    /// <summary>Raised with the item id after an action changed it.</summary>
     [Parameter]
-    public EventCallback OnChanged { get; set; }
+    public EventCallback<string> OnChanged { get; set; }
 
     private double _offset;
     private bool _dragging;
@@ -121,7 +121,7 @@
             new Dictionary<string, object?> { ["Item"] = Item });
 
         if (!result.Cancelled)
-            await OnChanged.InvokeAsync();
+            await OnChanged.InvokeAsync(Item.Id);
     }
 
     private async Task DeleteAsync()
@@ -153,7 +153,7 @@
             }
 
             Toasts.Success(successMessage);
-            await OnChanged.InvokeAsync();
+            await OnChanged.InvokeAsync(Item.Id);
         }
         catch (Exception ex)
         {

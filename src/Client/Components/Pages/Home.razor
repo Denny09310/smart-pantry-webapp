@@ -51,7 +51,7 @@
         <ItemTemplate>
             <PantryItemRow Item="context" Today="_state.Today"
                            OnOpen="@(item => OpenDetailsAsync(item.Id))"
-                           OnChanged="ReloadListAsync" />
+                           OnChanged="@(id => UpsertItemAsync(id))" />
         </ItemTemplate>
         <LoadingTemplate>
             <div class="space-y-2" aria-hidden="true">
