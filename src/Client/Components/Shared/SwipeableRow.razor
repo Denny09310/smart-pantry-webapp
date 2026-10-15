@@ -12,7 +12,7 @@
                     </CascadingValue>
                 </CascadingValue>
             </div>
-            <div @onclick="HandleTap" @onkeydown="HandleKeyDown" @onkeydown:preventDefault="true"
+            <div @onclick="HandleTap" @onkeypress="HandleKeyPress" @onkeypress:preventDefault="true"
                  tabindex="0" role="button" aria-label="@AriaLabel"
                  class="@($"relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")"
                  style="transform: translateX(@_offsetPx); transition: @(_dragging ? "none" : "transform 150ms");">
@@ -25,7 +25,7 @@
 <div class="hidden pointer-fine:block">
     <div class="rounded-md border bg-card p-3">
         <div class="flex items-center gap-2">
-            <div @onclick="HandleTapStatic" @onkeydown="HandleKeyDownStatic" @onkeydown:preventDefault="true"
+            <div @onclick="HandleTapStatic" @onkeypress="HandleKeyPressStatic" @onkeypress:preventDefault="true"
                  tabindex="0" role="button" aria-label="@AriaLabel"
                  class="min-w-0 flex-1 cursor-pointer focus-visible:outline-2">
                 @ChildContent
@@ -133,13 +133,17 @@
     private Task HandleTapStatic()
         => OnTap.InvokeAsync();
 
-    private async Task HandleKeyDown(KeyboardEventArgs e)
+    /// <summary>
+    /// Activation keys only. keypress (unlike keydown) never fires for Tab,
+    /// arrows or Escape, so keyboard navigation past rows keeps working.
+    /// </summary>
+    private async Task HandleKeyPress(KeyboardEventArgs e)
     {
         if (e.Key is "Enter" or " ")
             await HandleTap();
     }
 
-    private async Task HandleKeyDownStatic(KeyboardEventArgs e)
+    private async Task HandleKeyPressStatic(KeyboardEventArgs e)
     {
         if (e.Key is "Enter" or " ")
             await OnTap.InvokeAsync();
