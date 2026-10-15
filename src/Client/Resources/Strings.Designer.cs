@@ -601,6 +601,15 @@ namespace Client.Resources {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Update the profile..
+        /// </summary>
+        public static string EditMemberSubtitle {
+            get {
+                return ResourceManager.GetString("EditMemberSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Enable notifications.
         /// </summary>
         public static string EnableNotifications {
