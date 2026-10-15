@@ -36,7 +36,7 @@
             <div class="space-y-2 md:grid md:grid-cols-3 md:gap-3 md:space-y-0">
                 @foreach (var meal in _meals)
                 {
-                    <button type="button" @onclick="() => OpenDetailsAsync(meal.Id)"
+                    <button type="button" @key="meal.Id" @onclick="() => OpenDetailsAsync(meal.Id)"
                             class="bg-card flex w-full gap-3 overflow-hidden rounded-xl border p-2.5 text-left transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring md:block md:p-0">
                         @if (!string.IsNullOrWhiteSpace(meal.Thumbnail))
                         {
@@ -73,6 +73,7 @@
     private List<RecipeSummaryDto> _meals = [];
     private bool _loading;
     private bool _searched;
+    private CancellationTokenSource? _suggestCts;
 
     private string Lang => Loc.CurrentCulture.TwoLetterISOLanguageName;
 
@@ -84,6 +85,8 @@
     public void Dispose()
     {
         Loc.CultureChanged -= OnCultureChanged;
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
     }
 
     private async void OnCultureChanged()
@@ -107,15 +110,30 @@
     /// <summary>Pull-to-refresh re-runs the current search; with no tags there is nothing to refresh.</summary>
     private Task RefreshRecipesAsync() => _tags is { Count: > 0 } ? SearchAsync() : Task.CompletedTask;
 
+    /// <summary>Debounced suggestions: one lookup per pause in typing.</summary>
     private async Task<IEnumerable<string>> SearchSuggestionsAsync(string query, CancellationToken ct)
     {
         if (query.Length < 2)
             return [];
 
-        var response = await Api.Recipes.SuggestIngredientsAsync(query, Lang, ct);
-        return response.IsSuccessfulWithContent && response.Content is { } content
-            ? content.Ingredients
-            : [];
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _suggestCts = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, _suggestCts.Token);
+
+        try
+        {
+            await Task.Delay(250, linked.Token);
+            var response = await Api.Recipes.SuggestIngredientsAsync(query, Lang, linked.Token);
+            return response.IsSuccessfulWithContent && response.Content is { } content
+                ? content.Ingredients
+                : [];
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by newer input or disposed; nothing to show.
+            return [];
+        }
     }
 
     private async Task SearchAsync()
@@ -128,6 +146,7 @@
         }
 
         _loading = true;
+        StateHasChanged();
         try
         {
             var response = await Api.Recipes.SearchAsync(string.Join(",", _tags), Lang);
