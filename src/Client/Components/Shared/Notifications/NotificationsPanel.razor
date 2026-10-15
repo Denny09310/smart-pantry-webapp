@@ -87,6 +87,7 @@
         }
 
         _unread = response.Content.UnreadCount;
+        Notifications.SyncUnreadCount(response.Content.UnreadCount);
         return new Page<NotificationDto>(response.Content.Items.ToList(), response.Content.TotalCount);
     }
 
