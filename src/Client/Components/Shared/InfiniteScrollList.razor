@@ -152,7 +152,11 @@ else if (_state.Error is null && _state.Items.Count == 0)
         else
             _state.Items.Insert(index, item);
 
-        _state.Total++;
+        // Total starts at int.MaxValue until the first page lands; bumping it
+        // there would overflow and stall the list forever.
+        if (_state.Total != int.MaxValue)
+            _state.Total++;
+
         await TotalChanged.InvokeAsync(_state.Total);
         StateHasChanged();
     }

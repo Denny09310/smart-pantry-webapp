@@ -1,0 +1,87 @@
+@namespace Client.Components
+@inject BottomSheetService Sheet
+@inject ServerApi Api
+@inject ToastService Toasts
+@inject ILogger<PantryItemRow> Logger
+@inject LocalizationService Loc
+
+<SwipeableRow ActionsWidth="180" InnerClass="block" AriaLabel="@Item.Name" ResetKey="@Item.Id"
+              OnTap="@(() => OnOpen.InvokeAsync(Item))">
+    <Actions>
+        <SwipeActionButton Icon="pencil" Label="@Loc["Edit"]"
+                           Variant="SwipeActionVariant.Secondary" OnClick="EditAsync" />
+        <SwipeActionButton Icon="check" Label="@Loc["Used"]" AriaLabel="@Loc["MarkAsUsed"]"
+                           Variant="SwipeActionVariant.Primary" OnClick="CompleteAsync" />
+        <SwipeActionButton Icon="trash-2" Label="@Loc["Delete"]"
+                           Variant="SwipeActionVariant.Danger" OnClick="DeleteAsync" />
+    </Actions>
+    <ChildContent>
+        <span class="flex items-center justify-between gap-2">
+            <span class="font-medium line-clamp-1">@Item.Name</span>
+            <ExpiryBadge ExpirationDate="Item.ExpirationDate" Today="Today" />
+        </span>
+        <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+            <span>@Item.Quantity @Item.Unit</span>
+            <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@Item.Location</BbBadge>
+            <span class="shrink-0">@Item.ExpirationDate.ToString("MMM d")</span>
+        </span>
+    </ChildContent>
+</SwipeableRow>
+
+@code
+{
+    [Parameter, EditorRequired]
+    public PantryItemDto Item { get; set; } = default!;
+
+    [Parameter]
+    public DateOnly Today { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    /// <summary>Tap on the row body (open details).</summary>
+    [Parameter]
+    public EventCallback<PantryItemDto> OnOpen { get; set; }
+
+    /// <summary>Raised with the item id after an action changed it.</summary>
+    [Parameter]
+    public EventCallback<string> OnChanged { get; set; }
+
+    private async Task EditAsync()
+    {
+        var result = await Sheet.OpenAsync<ItemForm>(
+            new Dictionary<string, object?> { ["Item"] = Item });
+
+        if (!result.Cancelled)
+            await OnChanged.InvokeAsync(Item.Id);
+    }
+
+    private async Task DeleteAsync()
+        => await RemoveAsync(Loc["ItemDeleted"], Loc["CouldNotDelete"]);
+
+    private async Task CompleteAsync()
+        => await RemoveAsync(Loc["ItemMarkedAsUsed", Item.Name], Loc["CouldNotMarkAsUsed"]);
+
+    /// <summary>
+    /// Completed items are deleted outright (v1.4.1 semantics): no consumed
+    /// state exists server-side, so both delete and complete remove the row.
+    /// </summary>
+    private async Task RemoveAsync(string successMessage, string errorMessage)
+    {
+        try
+        {
+            using var response = await Api.Pantry.DeleteAsync(Item.Id);
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", Item.Id, response.StatusCode);
+                Toasts.Error(errorMessage);
+                return;
+            }
+
+            Toasts.Success(successMessage);
+            await OnChanged.InvokeAsync(Item.Id);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Item {ItemId} delete failed", Item.Id);
+            Toasts.Error(errorMessage);
+        }
+    }
+}

@@ -14,7 +14,10 @@ namespace Server.Endpoints;
 
 [Tags("Pantry")]
 [MapGroup("/api/pantry")]
-internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, IPantryHubClient> hub)
+internal class PantryEndpoints(
+    ApplicationDbContext db,
+    IHubContext<PantryHub, IPantryHubClient> hub,
+    ILogger<PantryEndpoints> log)
 {
     [MapGet("/")]
     public async Task<Results<Ok<GetPantryItemsResponse>, ValidationProblem>> GetPantryItemsAsync(
@@ -51,10 +54,10 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
 
         // Closed location set: exact match, case-insensitive like Name.
         if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not PantryRules.LocationAll)
-            query = query.Where(x => EF.Functions.ILike(x.Location, request.Location));
+            query = query.Where(x => EF.Functions.ILike(x.Location, EscapeLike(request.Location), @"\"));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
-            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{request.Name}%"));
+            query = query.Where(x => EF.Functions.ILike(x.Name, $"%{EscapeLike(request.Name)}%", @"\"));
 
         query = status switch
         {
@@ -87,7 +90,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
                 x.HouseholdMemberId,
                 x.Barcode,
                 x.NutriScore,
-                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null))
+                NutritionFactsExtensions.FromJson(x.NutritionJson)))
             .ToListAsync(ct);
 
         return TypedResults.Ok(new GetPantryItemsResponse(
@@ -117,7 +120,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Created), ct);
+        await BroadcastAsync(new PantryChangedEvent(entry.Id, PantryChangeKind.Created), ct);
 
         return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
     }
@@ -158,7 +161,7 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(entry.Id, PantryChangeKind.Updated), ct);
+        await BroadcastAsync(new PantryChangedEvent(entry.Id, PantryChangeKind.Updated), ct);
 
         return TypedResults.Ok(ToDto(entry));
     }
@@ -173,14 +176,34 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         if (deleted == 0)
             return ItemNotFound(id);
 
-        await hub.Clients.All.PantryChanged(new PantryChangedEvent(id, PantryChangeKind.Removed), ct);
+        await BroadcastAsync(new PantryChangedEvent(id, PantryChangeKind.Removed), ct);
         return TypedResults.NoContent();
     }
 
     private static ProblemHttpResult ItemNotFound(string id)
-        => TypedResults.Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            detail: $"Pantry item '{id}' was not found.");
+        => EndpointProblems.NotFound("Pantry item", id);
+
+    /// <summary>Escapes ILIKE wildcards so user input matches literally.</summary>
+    private static string EscapeLike(string value) => value
+        .Replace(@"\", @"\\")
+        .Replace("%", @"\%")
+        .Replace("_", @"\_");
+
+    /// <summary>
+    /// Realtime is a hint, never the write: a dead hub connection must not
+    /// turn a committed change into a 500.
+    /// </summary>
+    private async Task BroadcastAsync(PantryChangedEvent change, CancellationToken ct)
+    {
+        try
+        {
+            await hub.Clients.All.PantryChanged(change, ct);
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Pantry realtime broadcast for {ItemId} failed.", change.ItemId);
+        }
+    }
 
     /// <summary>
     /// Attribution is a label, never access control: unknown or missing
@@ -206,5 +229,5 @@ internal class PantryEndpoints(ApplicationDbContext db, IHubContext<PantryHub, I
         item.HouseholdMemberId,
         item.Barcode,
         item.NutriScore,
-        item.NutritionJson != null ? NutritionFactsExtensions.Parse(item.NutritionJson) : null);
+        NutritionFactsExtensions.FromJson(item.NutritionJson));
 }

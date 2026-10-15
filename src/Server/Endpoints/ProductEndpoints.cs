@@ -20,7 +20,12 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Barcode))
-            return TypedResults.NotFound();
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Barcode)] = ["Barcode must be 8, 12, or 13 digits."]
+            });
+        }
 
         // Local cache first: repeat scans never touch the network.
         var cached = await db.CachedProducts.AsNoTracking()
@@ -49,7 +54,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
                 x.Quantity > 0 ? x.Quantity : null,
                 x.Unit,
                 x.NutriScore,
-                x.NutritionJson != null ? NutritionFactsExtensions.Parse(x.NutritionJson) : null,
+                NutritionFactsExtensions.FromJson(x.NutritionJson),
                 null))
             .FirstOrDefaultAsync(ct);
 
@@ -99,7 +104,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         cached.Quantity,
         cached.Unit,
         cached.NutriScore,
-        cached.NutritionJson != null ? NutritionFactsExtensions.Parse(cached.NutritionJson) : null,
+        NutritionFactsExtensions.FromJson(cached.NutritionJson),
         cached.ImageUrl,
         cached.IngredientsText);
 

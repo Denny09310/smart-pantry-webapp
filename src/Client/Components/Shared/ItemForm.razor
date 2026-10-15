@@ -21,7 +21,7 @@
         <DataAnnotationsValidator />
         <CustomValidator @ref="_state.CustomValidator" />
 
-        <div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+        <div class="sheet-scroll space-y-4">
             @* Barcode Scanner *@
             <div class="space-y-2">
                 <BarcodeScanner OnBarcodeScanned="OnBarcodeScannedAsync" AutoStart="false"
@@ -169,8 +169,15 @@
 
     protected override void OnParametersSet()
     {
-        if (Item is { } item && _state.EditingId != item.Id)
+        if (Item is { } item)
         {
+            // Resync when a different item arrives or the same item changed
+            // underneath (realtime edit elsewhere). In-progress typing never
+            // triggers this: typing mutates Input, not the Item parameter.
+            if (Equals(_state.SyncedItem, item))
+                return;
+
+            _state.SyncedItem = item;
             _state.EditingId = item.Id;
             _state.ScannedBarcode = item.Barcode;
             _state.ScannedNutriScore = item.NutriScore;
@@ -185,8 +192,9 @@
                 ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue)
             };
         }
-        else if (Item is null && _state.EditingId is not null)
+        else if (_state.SyncedItem is not null)
         {
+            _state.SyncedItem = null;
             _state.EditingId = null;
             _state.ScannedBarcode = null;
             _state.ScannedNutriScore = null;
@@ -205,40 +213,28 @@
 
         try
         {
-            using var response = await Api.Products.LookupAsync(barcode);
-            if (response.IsSuccessfulWithContent && response.Content is ProductLookupDto product)
-            {
-                // Pre-fill form with product data
-                if (!string.IsNullOrWhiteSpace(product.Name))
-                    _state.Input.Name = product.Name;
+            var product = await ProductLinking.LookupAsync(Api, Toasts, Logger, Loc, barcode);
+            if (product is null)
+                return;
 
-                if (!string.IsNullOrWhiteSpace(product.Brand))
-                    _state.Input.Notes = string.IsNullOrWhiteSpace(_state.Input.Notes)
-                        ? product.Brand
-                        : $"{_state.Input.Notes}, {product.Brand}";
+            // Pre-fill form with product data
+            if (!string.IsNullOrWhiteSpace(product.Name))
+                _state.Input.Name = product.Name;
 
-                if (product.Quantity.HasValue && product.Quantity.Value > 0)
-                    _state.Input.Quantity = product.Quantity.Value;
+            _state.Input.Notes = ProductNoteMerger.Merge(_state.Input.Notes, product.Brand);
 
-                if (!string.IsNullOrWhiteSpace(product.Unit))
-                    _state.Input.Unit = product.Unit;
+            if (product.Quantity.HasValue && product.Quantity.Value > 0)
+                _state.Input.Quantity = product.Quantity.Value;
 
-                // Store barcode and nutrition info for saving
-                _state.ScannedBarcode = product.Barcode;
-                _state.ScannedNutriScore = product.NutriScore;
-                _state.ScannedNutrition = product.Nutrition;
+            if (!string.IsNullOrWhiteSpace(product.Unit))
+                _state.Input.Unit = product.Unit;
 
-                StateHasChanged();
-            }
-            else
-            {
-                Toasts.Info(Loc["ProductNotInDatabase"]);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Barcode lookup failed for {Barcode}", barcode);
-            Toasts.Error(Loc["LookupFailed"]);
+            // Store barcode and nutrition info for saving
+            _state.ScannedBarcode = product.Barcode;
+            _state.ScannedNutriScore = product.NutriScore;
+            _state.ScannedNutrition = product.Nutrition;
+
+            StateHasChanged();
         }
         finally
         {
@@ -270,6 +266,7 @@
             return;
 
         _state.Saving = true;
+        StateHasChanged();
         try
         {
             if (Item is null)

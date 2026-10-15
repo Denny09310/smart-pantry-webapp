@@ -5,7 +5,7 @@
 @inject ToastService Toasts
 @inject LocalizationService Loc
 
-<ItemDetailsHeader />
+<SheetHeader Title="@Loc["ItemDetails"]" />
 <ItemDetailsContent Loading="_state.Loading"
                     Error="@_state.Error"
                     Item="_state.Item"
@@ -107,12 +107,9 @@
 
         try
         {
-            using var lookup = await Api.Products.LookupAsync(barcode);
-            if (!lookup.IsSuccessfulWithContent || lookup.Content is not ProductLookupDto product)
-            {
-                Toasts.Info(Loc["ProductNotInDatabase"]);
+            var product = await ProductLinking.LookupAsync(Api, Toasts, Logger, Loc, barcode);
+            if (product is null)
                 return;
-            }
 
             var item = _state.Item;
             using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(

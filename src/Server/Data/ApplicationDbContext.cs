@@ -28,6 +28,7 @@ public class ApplicationDbContext(
             entity.Property(x => x.NutriScore).HasMaxLength(2);
 
             entity.HasIndex(x => x.ExpirationDate);
+            entity.HasIndex(x => x.Barcode);
 
             entity.HasOne(x => x.HouseholdMember)
                 .WithMany()
@@ -55,6 +56,8 @@ public class ApplicationDbContext(
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.Property(x => x.Type).HasMaxLength(64);
+
+            entity.HasIndex(x => x.CreatedAt).IsDescending();
 
             entity.HasOne(x => x.PantryItem)
                 .WithMany()

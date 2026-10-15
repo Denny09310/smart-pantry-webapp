@@ -42,7 +42,7 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
             return new ProductLookupDto(
                 Barcode: barcode,
                 Name: Truncate(product.ProductName ?? product.ProductNameEn ?? "Unknown Product", 200),
-                Brand: product.Brands,
+                Brand: NormalizeBrands(product.Brands),
                 Quantity: ParseQuantity(product.Quantity),
                 Unit: ParseUnit(product.Quantity),
                 NutriScore: NormalizeNutriScore(product.NutriscoreGrade),
@@ -94,6 +94,29 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
     private static string Truncate(string value, int maxLength)
         => value.Length <= maxLength ? value : value[..maxLength];
 
+    /// <summary>
+    /// Open Food Facts returns brands as a free-form comma list that often
+    /// repeats entries ("Acme, acme, ACME"). Split, trim, drop empties and
+    /// dedupe case-insensitively so downstream notes don't accumulate junk.
+    /// </summary>
+    internal static string? NormalizeBrands(string? brands)
+    {
+        if (string.IsNullOrWhiteSpace(brands))
+            return null;
+
+        var distinct = brands
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(b => !string.IsNullOrWhiteSpace(b))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return distinct.Count == 0 ? null : string.Join(", ", distinct);
+    }
+
+    /// <summary>
+    /// Longer units first: "CL"/"ML"/"LB" all contain "L" and "MG" contains
+    /// "G", so the short checks would shadow them ("33CL" parsed as liters).
+    /// </summary>
     private static string? ParseUnit(string? quantityStr)
     {
         if (string.IsNullOrWhiteSpace(quantityStr))
@@ -101,13 +124,13 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
 
         var upper = quantityStr.ToUpperInvariant();
         if (upper.Contains("KG")) return "kg";
-        if (upper.Contains("G") && !upper.Contains("MG")) return "g";
         if (upper.Contains("MG")) return "mg";
-        if (upper.Contains("L") && !upper.Contains("ML")) return "l";
         if (upper.Contains("ML")) return "ml";
         if (upper.Contains("CL")) return "cl";
+        if (upper.Contains("LB")) return "lb";
         if (upper.Contains("OZ")) return "oz";
-        if (upper.Contains("LB") || upper.Contains("LBS")) return "lb";
+        if (upper.Contains("G")) return "g";
+        if (upper.Contains("L")) return "l";
 
         return null;
     }

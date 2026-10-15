@@ -32,12 +32,21 @@ internal sealed class PantryRealtimeService(
     public bool IsMemberOnline(string? memberId) =>
         memberId is not null && _onlineIds.Contains(memberId);
 
+    private bool _subscribed;
+
     public async Task StartAsync()
     {
         if (_connection is not null || _disposed)
             return;
 
-        members.Changed += OnMembersChanged;
+        // Subscribe once: a failed first connect leaves _connection null and
+        // the next StartAsync would otherwise add a duplicate handler.
+        if (!_subscribed)
+        {
+            members.Changed += OnMembersChanged;
+            _subscribed = true;
+        }
+
         _connection = await ConnectAsync();
     }
 

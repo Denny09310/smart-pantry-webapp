@@ -80,12 +80,12 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
             }
             finally
             {
-                await DeleteItemsByNameAsync(name);
+                await PantryTestHelpers.DeleteItemsByNameAsync(_factory.Services, name);
             }
         }
         finally
         {
-            await DeleteMemberAsync(member.Id);
+            await PantryTestHelpers.DeleteMemberAsync(_factory.Services, member.Id);
         }
     }
 
@@ -112,7 +112,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(_factory.Services, name);
         }
     }
 
@@ -139,7 +139,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(_factory.Services, name);
         }
     }
 
@@ -184,7 +184,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(_factory.Services, name);
         }
     }
 
@@ -215,7 +215,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(_factory.Services, name);
         }
     }
 
@@ -244,7 +244,7 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(_factory.Services, name);
         }
     }
 
@@ -289,17 +289,4 @@ public class PantryApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         return created;
     }
 
-    private async Task DeleteMemberAsync(string id)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
-
-    private async Task DeleteItemsByNameAsync(string name)
-    {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Name == name).ExecuteDeleteAsync();
-    }
 }

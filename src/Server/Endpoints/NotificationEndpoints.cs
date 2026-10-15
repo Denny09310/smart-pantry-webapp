@@ -47,12 +47,9 @@ internal class NotificationEndpoints(ApplicationDbContext db)
         string id,
         CancellationToken ct)
     {
-        var entry = await db.Notifications.FindAsync([id], ct);
+        var entry = await db.Notifications.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entry is null)
             return NotificationNotFound(id);
-
-        entry.ReadAt ??= DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(ct);
 
         var item = await db.Items.AsNoTracking()
             .Where(x => x.Id == entry.PantryItemId)
@@ -60,7 +57,12 @@ internal class NotificationEndpoints(ApplicationDbContext db)
             .FirstOrDefaultAsync(ct);
 
         if (item is null)
-            return NotificationNotFound(entry.PantryItemId);
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: $"Pantry item '{entry.PantryItemId}' for notification '{id}' was not found.");
+
+        entry.ReadAt ??= DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
 
         return TypedResults.Ok(new NotificationDto(
             entry.Id,
@@ -83,7 +85,5 @@ internal class NotificationEndpoints(ApplicationDbContext db)
     }
 
     private static ProblemHttpResult NotificationNotFound(string id)
-        => TypedResults.Problem(
-            statusCode: StatusCodes.Status404NotFound,
-            detail: $"Notification '{id}' was not found.");
+        => EndpointProblems.NotFound("Notification", id);
 }

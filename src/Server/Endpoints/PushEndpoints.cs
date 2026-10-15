@@ -29,7 +29,7 @@ internal static class PushEndpoints
     }
 
     [MapPost("/subscriptions")]
-    public static async Task<Results<Ok<PushSubscriptionDto>, ValidationProblem>> SubscribeAsync(
+    public static async Task<Results<Created<PushSubscriptionDto>, Ok<PushSubscriptionDto>, ValidationProblem>> SubscribeAsync(
         PushSubscriptionRequest request,
         ApplicationDbContext db,
         CancellationToken ct)
@@ -46,25 +46,35 @@ internal static class PushEndpoints
                 Auth = request.Auth
             };
             db.PushSubscriptions.Add(entry);
-        }
-        else
-        {
-            entry.P256dh = request.P256dh;
-            entry.Auth = request.Auth;
-            entry.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+
+            return TypedResults.Created(
+                $"/api/push/subscriptions/{entry.Id}",
+                new PushSubscriptionDto(entry.Id, entry.Endpoint, entry.CreatedAt));
         }
 
+        entry.P256dh = request.P256dh;
+        entry.Auth = request.Auth;
+        entry.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
         return TypedResults.Ok(new PushSubscriptionDto(entry.Id, entry.Endpoint, entry.CreatedAt));
     }
 
     [MapDelete("/subscriptions")]
-    public static async Task<NoContent> UnsubscribeAsync(
-        string endpoint,
+    public static async Task<Results<NoContent, ValidationProblem>> UnsubscribeAsync(
+        string? endpoint,
         ApplicationDbContext db,
         CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(endpoint)] = ["Endpoint must not be blank."]
+            });
+        }
+
         await db.PushSubscriptions
             .Where(x => x.Endpoint == endpoint)
             .ExecuteDeleteAsync(ct);

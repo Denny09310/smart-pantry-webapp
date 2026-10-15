@@ -3,7 +3,7 @@
 @inject ToastService Toasts
 @inject LocalizationService Loc
 
-<RecipeDetailHeader />
+<SheetHeader Title="@Loc["Recipes"]" />
 <RecipeDetailContent Loading="_loading"
                      Meal="_meal"
                      OnRetry="LoadAsync" />
@@ -15,10 +15,18 @@
 
     private RecipeDetailDto? _meal;
     private bool _loading = true;
+    private string _loadedId = "";
 
     private string Lang => Loc.CurrentCulture.TwoLetterISOLanguageName;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (MealId == _loadedId)
+            return;
+
+        _loadedId = MealId;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

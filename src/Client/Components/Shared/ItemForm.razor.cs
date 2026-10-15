@@ -9,6 +9,9 @@ public partial class ItemForm
     {
         public InputModel Input { get; set; } = new();
         public string? EditingId { get; set; }
+
+        /// <summary>Last item the form was synced from (record equality).</summary>
+        public PantryItemDto? SyncedItem { get; set; }
         public CustomValidator? CustomValidator { get; set; }
         public bool Saving { get; set; }
 

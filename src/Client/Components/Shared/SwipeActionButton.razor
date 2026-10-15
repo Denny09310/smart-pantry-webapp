@@ -1,0 +1,45 @@
+@namespace Client.Components
+
+@* One revealed action inside a <see cref="SwipeableRow"/>. Closes the actions
+   automatically before running its own click handler. *@
+<button type="button" @onclick="HandleClickAsync" aria-label="@(AriaLabel ?? Label)"
+        class="@($"flex w-[60px] flex-col items-center justify-center gap-1 {VariantClass}")">
+    <LucideIcon Name="@Icon" Size="18" />
+    <span class="text-center text-xs leading-tight">@Label</span>
+</button>
+
+@code
+{
+    [Parameter, EditorRequired]
+    public string Icon { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    [Parameter]
+    public SwipeActionVariant Variant { get; set; } = SwipeActionVariant.Secondary;
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [CascadingParameter]
+    public SwipeableRow? Row { get; set; }
+
+    private string VariantClass => Variant switch
+    {
+        SwipeActionVariant.Primary => "bg-primary text-primary-foreground",
+        SwipeActionVariant.Danger => "bg-destructive text-destructive-foreground",
+        _ => "bg-secondary text-secondary-foreground",
+    };
+
+    private async Task HandleClickAsync()
+    {
+        if (Row is not null)
+            await Row.CloseActionsAsync();
+
+        await OnClick.InvokeAsync();
+    }
+}

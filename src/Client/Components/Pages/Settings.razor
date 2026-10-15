@@ -13,7 +13,7 @@
         <h1 class="text-xl font-semibold">@Loc["Settings"]</h1>
     </div>
 
-    <div class="min-h-0 flex-1 touch-pan-y space-y-6 overflow-y-auto overscroll-contain py-1 pr-1">
+    <div class="sheet-scroll space-y-6">
         @* Language Section *@
         <section class="space-y-3">
             <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["Language"]</h2>
@@ -41,12 +41,7 @@
                     @if (Members.CurrentMember is { } current)
                     {
                         <div class="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
-                            <BbAvatar>
-                                <BbAvatarFallback
-                                    style="@($"background-color: {current.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(current.Color)}")">
-                                    @MemberDisplay.Initials(current.DisplayName)
-                                </BbAvatarFallback>
-                            </BbAvatar>
+                            <MemberAvatar Member="current" />
                             <div class="min-w-0 flex-1">
                                 <p class="font-medium">@current.DisplayName</p>
                                 <p class="text-xs text-muted-foreground">@Loc["Current"]</p>
@@ -72,6 +67,15 @@
             <BbButton Variant="ButtonVariant.Outline" Class="w-full" OnClick="OpenMemberManagerAsync">
                 <LucideIcon Name="users" Size="18" class="mr-2" />
                 @Loc["HouseholdMembers"]
+            </BbButton>
+        </section>
+
+        @* About Section *@
+        <section class="space-y-3">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["About"]</h2>
+            <BbButton Variant="ButtonVariant.Outline" Class="w-full" Href="/changelog">
+                <LucideIcon Name="scroll-text" Size="18" class="mr-2" />
+                @Loc["Changelog"]
             </BbButton>
         </section>
     </div>

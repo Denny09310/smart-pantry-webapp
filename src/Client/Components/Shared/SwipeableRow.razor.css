@@ -1,0 +1,7 @@
+/* Gesture surface: the browser keeps vertical panning (page scrolls as
+   usual) while this module owns horizontal drags. The resting transition
+   lives here; JavaScript disables it mid-drag via the inline style. */
+.swipe-content {
+    touch-action: pan-y;
+    transition: transform 150ms ease;
+}

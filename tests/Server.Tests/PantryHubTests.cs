@@ -65,6 +65,47 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         Assert.Equal(id, change.ItemId);
     }
 
+    [Fact]
+    public async Task Update_Broadcasts_PantryUpdated()
+    {
+        var name = $"test-hub-{Guid.CreateVersion7()}";
+        string id;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var item = new PantryItem
+            {
+                Name = name,
+                Quantity = 1,
+                Unit = "pcs",
+                Location = "pantry",
+                ExpirationDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3))
+            };
+            db.Items.Add(item);
+            await db.SaveChangesAsync();
+            id = item.Id;
+        }
+
+        try
+        {
+            var change = await ActAndCaptureAsync(async () =>
+            {
+                using var put = await factory.CreateClient().PutAsJsonAsync($"/api/pantry/{id}",
+                    new UpdatePantryItemRequest(
+                        name, 2, "pcs", "fridge", null,
+                        DateOnly.FromDateTime(DateTime.Today.AddDays(4))));
+                put.EnsureSuccessStatusCode();
+            }, name);
+
+            Assert.Equal(PantryChangeKind.Updated, change.ChangeKind);
+            Assert.Equal(id, change.ItemId);
+        }
+        finally
+        {
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, id);
+        }
+    }
+
     private async Task<PantryChangedEvent> ActAndCaptureAsync(Func<Task> act, string name)
     {
         var tcs = new TaskCompletionSource<PantryChangedEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -96,7 +137,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(factory.Services, name);
             await connection.StopAsync();
         }
     }
@@ -113,7 +154,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteMemberAsync(memberId);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, memberId);
         }
     }
 
@@ -165,7 +206,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteMemberAsync(memberId);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, memberId);
         }
     }
 
@@ -237,24 +278,12 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         return member.Id;
     }
 
-    private async Task DeleteMemberAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
+
 
     private async Task<PantryItem?> FindByNameAsync(string name)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         return await db.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Name == name);
-    }
-
-    private async Task DeleteItemsByNameAsync(string name)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Name == name).ExecuteDeleteAsync();
     }
 }
