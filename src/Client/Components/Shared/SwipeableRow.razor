@@ -1,25 +1,27 @@
 @namespace Client.Components
-@using BlazorBlueprint.Primitives.SwipeArea
+@inject IJSRuntime JS
+@inject ILogger<SwipeableRow> Logger
+@implements IAsyncDisposable
 
+@* Pointer-adaptive row. Touch (coarse pointers) gets swipe-to-reveal actions
+   driven entirely by the colocated gesture module (no per-move interop, so no
+   lag); fine pointers (mouse/trackpad) get a static row with inline compact
+   actions. Both presentations render from the same fragments. *@
 <div class="pointer-fine:hidden">
-    <BbSwipeArea Axis="SwipeAxis.Horizontal" TouchAction="SwipeTouchAction.PanY" OnSwipe="HandleSwipe"
-                 OnSwipeMove="HandleMove" OnSwipeCancel="HandleCancel">
-        <div class="relative overflow-hidden rounded-md border bg-card">
-            <div class="absolute inset-y-0 right-0 flex items-stretch">
-                <CascadingValue Value="this" IsFixed="true">
-                    <CascadingValue Value="false" Name="CompactActions" IsFixed="true">
-                        @Actions
-                    </CascadingValue>
+    <div class="relative overflow-hidden rounded-md border bg-card">
+        <div class="absolute inset-y-0 right-0 flex items-stretch">
+            <CascadingValue Value="this" IsFixed="true">
+                <CascadingValue Value="false" Name="CompactActions" IsFixed="true">
+                    @Actions
                 </CascadingValue>
-            </div>
-            <div @onclick="HandleTap" @onkeypress="HandleKeyPress" @onkeypress:preventDefault="true"
-                 tabindex="0" role="button" aria-label="@AriaLabel"
-                 class="@($"relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")"
-                 style="transform: translateX(@_offsetPx); transition: @(_dragging ? "none" : "transform 150ms");">
-                @ChildContent
-            </div>
+            </CascadingValue>
         </div>
-    </BbSwipeArea>
+        <div @ref="_contentRef" @onclick="HandleTap" @onkeypress="HandleKeyPress" @onkeypress:preventDefault="true"
+             tabindex="0" role="button" aria-label="@AriaLabel"
+             class="@($"swipe-content relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")">
+            @ChildContent
+        </div>
+    </div>
 </div>
 
 <div class="hidden pointer-fine:block">
@@ -65,87 +67,104 @@
     [Parameter, EditorRequired]
     public double ActionsWidth { get; set; }
 
-    private double _offset;
-    private bool _dragging;
-    private bool _open;
+    /// <summary>
+    /// Identity of the data shown. When it changes (same row recycled for a
+    /// different item), any revealed actions snap shut.
+    /// </summary>
+    [Parameter]
+    public object? ResetKey { get; set; }
 
-    private string _offsetPx => _offset.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "px";
+    private ElementReference _contentRef;
+    private SwipeRowInterop? _interop;
+    private bool _attached;
+    private object? _seenKey;
+    private double _seenWidth = double.NaN;
 
-    protected override void OnParametersSet()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // The action set can shrink under a preserved row (same @key with new
-        // params after a reload, e.g. mark-read dropping a button): any offset
-        // outside the new range is stale, so snap fully shut.
-        if (_offset < -ActionsWidth || _offset > 0)
+        if (!firstRender || _attached)
+            return;
+
+        try
         {
-            _offset = 0;
-            _open = false;
+            _interop ??= new SwipeRowInterop(JS);
+            await _interop.AttachAsync(_contentRef, ActionsWidth);
+            _attached = true;
+            _seenKey = ResetKey;
+            _seenWidth = ActionsWidth;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Swipe gesture attach failed; taps still work.");
         }
     }
 
-    private void HandleMove(SwipeMoveEventArgs e)
+    protected override async Task OnParametersSetAsync()
     {
-        _dragging = true;
-        _offset = Math.Clamp(e.DeltaX, -ActionsWidth, 0);
-    }
+        _seenKey ??= ResetKey;
+        _seenWidth = double.IsNaN(_seenWidth) ? ActionsWidth : _seenWidth;
 
-    private void HandleSwipe(SwipeEventArgs e)
-    {
-        _dragging = false;
+        if (!_attached)
+            return;
 
-        if (e.Direction == SwipeDirection.Left)
+        try
         {
-            _open = true;
-            _offset = -ActionsWidth;
+            if (ResetKey is not null && !Equals(_seenKey, ResetKey))
+            {
+                _seenKey = ResetKey;
+                _seenWidth = ActionsWidth;
+                await _interop!.ResetAsync(_contentRef);
+            }
+            else if (ActionsWidth != _seenWidth)
+            {
+                _seenWidth = ActionsWidth;
+                await _interop!.UpdateAsync(_contentRef, ActionsWidth);
+            }
         }
-        else
-        {
-            _open = false;
-            _offset = 0;
-        }
-    }
-
-    private void HandleCancel()
-    {
-        _dragging = false;
-        _offset = _open ? -ActionsWidth : 0;
+        catch (JSDisconnectedException) { }
     }
 
     /// <summary>Closes revealed actions, if any.</summary>
-    public void CloseActions()
+    public async Task CloseActionsAsync()
     {
-        _open = false;
-        _offset = 0;
-        StateHasChanged();
-    }
-
-    private async Task HandleTap()
-    {
-        if (_open)
-        {
-            CloseActions();
+        if (!_attached)
             return;
-        }
 
-        await OnTap.InvokeAsync();
+        try
+        {
+            await _interop!.ResetAsync(_contentRef);
+        }
+        catch (JSDisconnectedException) { }
     }
 
-    private Task HandleTapStatic()
-        => OnTap.InvokeAsync();
+    private Task HandleTap() => OnTap.InvokeAsync();
+
+    private Task HandleTapStatic() => OnTap.InvokeAsync();
 
     /// <summary>
     /// Activation keys only. keypress (unlike keydown) never fires for Tab,
     /// arrows or Escape, so keyboard navigation past rows keeps working.
     /// </summary>
-    private async Task HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key is "Enter" or " ")
-            await HandleTap();
-    }
+    private Task HandleKeyPress(KeyboardEventArgs e)
+        => e.Key is "Enter" or " " ? OnTap.InvokeAsync() : Task.CompletedTask;
 
-    private async Task HandleKeyPressStatic(KeyboardEventArgs e)
+    private Task HandleKeyPressStatic(KeyboardEventArgs e)
+        => e.Key is "Enter" or " " ? OnTap.InvokeAsync() : Task.CompletedTask;
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
-        if (e.Key is "Enter" or " ")
-            await OnTap.InvokeAsync();
+        if (_attached)
+        {
+            _attached = false;
+            try
+            {
+                if (_interop is not null)
+                    await _interop.DetachAsync(_contentRef);
+            }
+            catch (JSDisconnectedException) { }
+        }
+
+        if (_interop is not null)
+            await _interop.DisposeAsync();
     }
 }

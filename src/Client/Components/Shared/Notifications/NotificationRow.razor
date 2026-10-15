@@ -1,7 +1,7 @@
 @namespace Client.Components
 @inject LocalizationService Loc
 
-<SwipeableRow ActionsWidth="@(Item.ReadAt is null ? 120 : 60)" InnerClass="flex items-center gap-3" AriaLabel="@Item.ItemName"
+<SwipeableRow ActionsWidth="@(Item.ReadAt is null ? 120 : 60)" InnerClass="flex items-center gap-3" AriaLabel="@Item.ItemName" ResetKey="@Item.Id"
               OnTap="@(() => OnView.InvokeAsync(Item))">
     <Actions>
         <SwipeActionButton Icon="eye" Label="@Loc["View"]"

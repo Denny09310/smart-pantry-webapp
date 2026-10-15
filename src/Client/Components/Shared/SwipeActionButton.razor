@@ -58,7 +58,9 @@ else
 
     private async Task HandleClickAsync()
     {
-        Row?.CloseActions();
+        if (Row is not null)
+            await Row.CloseActionsAsync();
+
         await OnClick.InvokeAsync();
     }
 }

@@ -5,7 +5,7 @@
 @inject ILogger<PantryItemRow> Logger
 @inject LocalizationService Loc
 
-<SwipeableRow ActionsWidth="180" InnerClass="block" AriaLabel="@Item.Name"
+<SwipeableRow ActionsWidth="180" InnerClass="block" AriaLabel="@Item.Name" ResetKey="@Item.Id"
               OnTap="@(() => OnOpen.InvokeAsync(Item))">
     <Actions>
         <SwipeActionButton Icon="pencil" Label="@Loc["Edit"]"
