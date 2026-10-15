@@ -7,7 +7,7 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 - `Server` — ASP.NET Core Minimal APIs, EF Core persistence, and background services.
 - `Client` — Blazor WebAssembly Standalone PWA.
 - `Shared` — API request/response contracts and DTOs.
-- Use `AppDbContext` directly where appropriate. Keep the solution simple; no CQRS, MediatR, repository interfaces, or extra projects without a concrete need.
+- Use `ApplicationDbContext` directly where appropriate. Keep the solution simple; no CQRS, MediatR, repository interfaces, or extra projects without a concrete need.
 - **One server instance and database per household.** Do not implement multi-tenant household isolation.
 - **No real authentication.** A household member is a simple profile, not a login identity: no usernames, passwords, or sign-in flow. Anyone who can reach the instance may be able to use it, so deployment access restrictions matter.
 - Prefer BlazorBlueprint components and patterns for UI before building custom components.
@@ -15,7 +15,7 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 ## Phase 1 — Solution foundation and data model
 
 - [x] Confirm the three-project solution builds and project references are correct.
-- [x] Configure EF Core, `AppDbContext`, the selected database provider, and migrations.
+- [x] Configure EF Core, `ApplicationDbContext`, the selected database provider, and migrations.
 - [x] Define the core pantry item fields: name, location, quantity, unit, and expiry date.
 - [x] Define simple household member profiles (for example, display name and active/archived state).
 - [x] Define transport DTOs and request/response contracts in `Shared`.
