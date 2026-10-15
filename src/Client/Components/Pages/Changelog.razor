@@ -58,7 +58,7 @@
 
         try
         {
-            var markdown = await Http.GetStringAsync("assets/changelog.md");
+            var markdown = await Http.GetStringAsync("changelog.md");
             _html = Markdown.ToHtml(markdown);
         }
         catch
