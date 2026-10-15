@@ -167,6 +167,37 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
     }
 
     [Fact]
+    public async Task CheckAsync_CountsDeadSubscriptionOnceAcrossItems()
+    {
+        var first = await SeedItemAsync($"test-push-{Guid.CreateVersion7()}");
+        var second = await SeedItemAsync($"test-push-{Guid.CreateVersion7()}");
+        var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
+        await SeedSubscriptionAsync(endpoint);
+
+        try
+        {
+            var sender = new RecordingSender(PushSendOutcome.InvalidSubscription);
+            var worker = CreateWorker(sender);
+
+            var result = await worker.CheckAsync(CancellationToken.None);
+
+            Assert.Equal(2, result.Created);
+            Assert.Equal(1, result.PushInvalid);
+            Assert.Single(sender.Sent);
+
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Assert.False(await db.PushSubscriptions.AnyAsync(x => x.Endpoint == endpoint));
+        }
+        finally
+        {
+            await DeleteItemAsync(first.Id);
+            await DeleteItemAsync(second.Id);
+            await DeleteSubscriptionAsync(endpoint);
+        }
+    }
+
+    [Fact]
     public async Task WebPushSender_WithoutKeys_ReportsNotConfigured()
     {
         var sender = new WebPushSender(
