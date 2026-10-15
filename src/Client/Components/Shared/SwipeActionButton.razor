@@ -1,24 +1,12 @@
 @namespace Client.Components
 
-@* One action inside a <see cref="SwipeableRow"/>. Renders full labeled in the
-   swipe layer and compact icon-only in the desktop inline bar (selected via
-   the cascaded CompactActions flag). Closes revealed actions before running
-   its own click handler. *@
-@if (CompactActions)
-{
-    <button type="button" @onclick="HandleClickAsync" aria-label="@(AriaLabel ?? Label)" title="@(AriaLabel ?? Label)"
-            class="@($"flex h-8 w-8 items-center justify-center rounded-md transition-colors {CompactClass}")">
-        <LucideIcon Name="@Icon" Size="16" />
-    </button>
-}
-else
-{
-    <button type="button" @onclick="HandleClickAsync" aria-label="@(AriaLabel ?? Label)"
-            class="@($"flex w-[60px] flex-col items-center justify-center gap-1 {VariantClass}")">
-        <LucideIcon Name="@Icon" Size="18" />
-        <span class="text-center text-xs leading-tight">@Label</span>
-    </button>
-}
+@* One revealed action inside a <see cref="SwipeableRow"/>. Closes the actions
+   automatically before running its own click handler. *@
+<button type="button" @onclick="HandleClickAsync" aria-label="@(AriaLabel ?? Label)"
+        class="@($"flex w-[60px] flex-col items-center justify-center gap-1 {VariantClass}")">
+    <LucideIcon Name="@Icon" Size="18" />
+    <span class="text-center text-xs leading-tight">@Label</span>
+</button>
 
 @code
 {
@@ -40,20 +28,11 @@ else
     [CascadingParameter]
     public SwipeableRow? Row { get; set; }
 
-    [CascadingParameter(Name = "CompactActions")]
-    public bool CompactActions { get; set; }
-
     private string VariantClass => Variant switch
     {
         SwipeActionVariant.Primary => "bg-primary text-primary-foreground",
         SwipeActionVariant.Danger => "bg-destructive text-destructive-foreground",
         _ => "bg-secondary text-secondary-foreground",
-    };
-
-    private string CompactClass => Variant switch
-    {
-        SwipeActionVariant.Danger => "text-destructive hover:bg-destructive/10",
-        _ => "text-muted-foreground hover:bg-muted hover:text-foreground",
     };
 
     private async Task HandleClickAsync()

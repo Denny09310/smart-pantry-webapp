@@ -3,41 +3,19 @@
 @inject ILogger<SwipeableRow> Logger
 @implements IAsyncDisposable
 
-@* Pointer-adaptive row. Touch (coarse pointers) gets swipe-to-reveal actions
-   driven entirely by the colocated gesture module (no per-move interop, so no
-   lag); fine pointers (mouse/trackpad) get a static row with inline compact
-   actions. Both presentations render from the same fragments. *@
-<div class="pointer-fine:hidden">
-    <div class="relative overflow-hidden rounded-md border bg-card">
-        <div class="absolute inset-y-0 right-0 flex items-stretch">
-            <CascadingValue Value="this" IsFixed="true">
-                <CascadingValue Value="false" Name="CompactActions" IsFixed="true">
-                    @Actions
-                </CascadingValue>
-            </CascadingValue>
-        </div>
-        <div @ref="_contentRef" @onclick="HandleTap" @onkeypress="HandleKeyPress" @onkeypress:preventDefault="true"
-             tabindex="0" role="button" aria-label="@AriaLabel"
-             class="@($"swipe-content relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")">
-            @ChildContent
-        </div>
+@* Swipe-to-reveal row with a tap-to-open body. Gesture tracking and transforms
+   run entirely in the colocated module: taps are never intercepted (capture
+   starts only past the drag slop), so mouse and touch share this one surface. *@
+<div class="relative overflow-hidden rounded-md border bg-card">
+    <div class="absolute inset-y-0 right-0 flex items-stretch">
+        <CascadingValue Value="this" IsFixed="true">
+            @Actions
+        </CascadingValue>
     </div>
-</div>
-
-<div class="hidden pointer-fine:block">
-    <div class="rounded-md border bg-card p-3">
-        <div class="flex items-center gap-2">
-            <div @onclick="HandleTapStatic" @onkeypress="HandleKeyPressStatic" @onkeypress:preventDefault="true"
-                 tabindex="0" role="button" aria-label="@AriaLabel"
-                 class="min-w-0 flex-1 cursor-pointer focus-visible:outline-2">
-                @ChildContent
-            </div>
-            <div class="flex shrink-0 items-center gap-1">
-                <CascadingValue Value="true" Name="CompactActions" IsFixed="true">
-                    @Actions
-                </CascadingValue>
-            </div>
-        </div>
+    <div @ref="_contentRef" @onclick="HandleTap" @onkeypress="HandleKeyPress" @onkeypress:preventDefault="true"
+         tabindex="0" role="button" aria-label="@AriaLabel"
+         class="@($"swipe-content relative w-full cursor-pointer bg-background p-3 text-left focus-visible:outline-2 {InnerClass}")">
+        @ChildContent
     </div>
 </div>
 
@@ -59,7 +37,7 @@
     [Parameter]
     public string? AriaLabel { get; set; }
 
-    /// <summary>Extra layout classes for the swipe-mode row body (e.g. "block", "flex items-center gap-3").</summary>
+    /// <summary>Extra layout classes for the row body (e.g. "block", "flex items-center gap-3").</summary>
     [Parameter]
     public string? InnerClass { get; set; } = "block";
 
@@ -139,16 +117,11 @@
 
     private Task HandleTap() => OnTap.InvokeAsync();
 
-    private Task HandleTapStatic() => OnTap.InvokeAsync();
-
     /// <summary>
     /// Activation keys only. keypress (unlike keydown) never fires for Tab,
     /// arrows or Escape, so keyboard navigation past rows keeps working.
     /// </summary>
     private Task HandleKeyPress(KeyboardEventArgs e)
-        => e.Key is "Enter" or " " ? OnTap.InvokeAsync() : Task.CompletedTask;
-
-    private Task HandleKeyPressStatic(KeyboardEventArgs e)
         => e.Key is "Enter" or " " ? OnTap.InvokeAsync() : Task.CompletedTask;
 
     async ValueTask IAsyncDisposable.DisposeAsync()
