@@ -1,0 +1,73 @@
+@page "/changelog"
+
+@using Markdig
+
+@inject HttpClient Http
+@inject LocalizationService Loc
+
+<div class="flex h-full flex-col">
+    <div class="flex flex-none items-center gap-2">
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["Back"]"
+                  Href="/settings">
+            <LucideIcon Name="chevron-left" Size="18" />
+        </BbButton>
+        <h1 class="text-xl font-semibold">@Loc["Changelog"]</h1>
+    </div>
+
+    <div class="sheet-scroll min-h-0 flex-1 space-y-6">
+        @if (_loading)
+        {
+            <div class="space-y-2" aria-hidden="true">
+                <BbSkeleton Height="22px" Class="w-1/3" />
+                <BbSkeleton Height="16px" Class="w-full" />
+                <BbSkeleton Height="16px" Class="w-4/5" />
+                <BbSkeleton Height="22px" Class="w-1/3" />
+                <BbSkeleton Height="16px" Class="w-full" />
+            </div>
+        }
+        else if (_error)
+        {
+            <div role="alert" class="space-y-2 rounded-md border p-4 text-center">
+                <p class="text-sm">@Loc["CouldNotLoad"]</p>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" @onclick="LoadAsync">@Loc["Retry"]</BbButton>
+            </div>
+        }
+        else
+        {
+            <div class="prose max-w-none dark:prose-invert">
+                @((MarkupString)_html)
+            </div>
+        }
+    </div>
+</div>
+
+@code
+{
+    // Rendered from docs/CHANGELOG.md (linked as wwwroot/changelog.md), the
+    // single release log. Trusted first-party content, hence raw MarkupString.
+    private string _html = string.Empty;
+    private bool _loading = true;
+    private bool _error;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = false;
+
+        try
+        {
+            var markdown = await Http.GetStringAsync("changelog.md");
+            _html = Markdown.ToHtml(markdown);
+        }
+        catch
+        {
+            _error = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
