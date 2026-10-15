@@ -23,7 +23,7 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         var today = DateOnly.FromDateTime(DateTime.Today);
         var ids = new List<string>();
         for (var i = 0; i < 5; i++)
-            ids.Add((await SeedItemAsync($"{prefix}-{i:00}", today.AddDays(30 - i))).Id);
+            ids.Add((await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-{i:00}", today.AddDays(30 - i))).Id);
 
         try
         {
@@ -47,7 +47,7 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         finally
         {
             foreach (var id in ids)
-                await DeleteItemAsync(id);
+                await PantryTestHelpers.DeleteItemAsync(factory.Services, id);
         }
     }
 
@@ -56,9 +56,9 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
     {
         var prefix = $"test-status-{Guid.CreateVersion7()}";
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var expired = await SeedItemAsync($"{prefix}-expired", today.AddDays(-1));
-        var soon = await SeedItemAsync($"{prefix}-soon", today.AddDays(2));
-        var fresh = await SeedItemAsync($"{prefix}-fresh", today.AddDays(30));
+        var expired = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-expired", today.AddDays(-1));
+        var soon = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-soon", today.AddDays(2));
+        var fresh = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-fresh", today.AddDays(30));
 
         try
         {
@@ -78,9 +78,9 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         }
         finally
         {
-            await DeleteItemAsync(expired.Id);
-            await DeleteItemAsync(soon.Id);
-            await DeleteItemAsync(fresh.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, expired.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, soon.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, fresh.Id);
         }
     }
 
@@ -89,8 +89,8 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
     {
         var prefix = $"test-all-{Guid.CreateVersion7()}";
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var expired = await SeedItemAsync($"{prefix}-expired", today.AddDays(-1));
-        var fresh = await SeedItemAsync($"{prefix}-fresh", today.AddDays(30));
+        var expired = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-expired", today.AddDays(-1));
+        var fresh = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-fresh", today.AddDays(30));
 
         try
         {
@@ -104,8 +104,8 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         }
         finally
         {
-            await DeleteItemAsync(expired.Id);
-            await DeleteItemAsync(fresh.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, expired.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, fresh.Id);
         }
     }
 
@@ -145,7 +145,7 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         }
         finally
         {
-            await DeleteItemAsync(id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, id);
         }
     }
 
@@ -153,8 +153,8 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
     public async Task SortName_ReturnsAlphabeticalOrder()
     {
         var prefix = $"test-sort-{Guid.CreateVersion7()}";
-        var first = await SeedItemAsync($"{prefix}-cherry", DateOnly.FromDateTime(DateTime.Today.AddDays(5)));
-        var second = await SeedItemAsync($"{prefix}-apple", DateOnly.FromDateTime(DateTime.Today.AddDays(5)));
+        var first = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-cherry", DateOnly.FromDateTime(DateTime.Today.AddDays(5)));
+        var second = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-apple", DateOnly.FromDateTime(DateTime.Today.AddDays(5)));
 
         try
         {
@@ -168,8 +168,8 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         }
         finally
         {
-            await DeleteItemAsync(first.Id);
-            await DeleteItemAsync(second.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, first.Id);
+            await PantryTestHelpers.DeleteItemAsync(factory.Services, second.Id);
         }
     }
 
@@ -193,7 +193,7 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         var ids = new List<string>();
         for (var i = 0; i < 3; i++)
         {
-            var item = await SeedItemAsync($"{prefix}-{i}", DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+            var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"{prefix}-{i}", DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
             ids.Add(item.Id);
             await SeedNotificationAsync(item.Id, item.ExpirationDate);
         }
@@ -211,25 +211,8 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         finally
         {
             foreach (var id in ids)
-                await DeleteItemAsync(id);
+                await PantryTestHelpers.DeleteItemAsync(factory.Services, id);
         }
-    }
-
-    private async Task<PantryItem> SeedItemAsync(string name, DateOnly expiration)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var item = new PantryItem
-        {
-            Name = name,
-            Quantity = 1,
-            Unit = "pcs",
-            Location = "pantry",
-            ExpirationDate = expiration
-        };
-        db.Items.Add(item);
-        await db.SaveChangesAsync();
-        return item;
     }
 
     private async Task SeedNotificationAsync(string itemId, DateOnly expiration)
@@ -245,10 +228,4 @@ public class PantryQueryTests(PantryApiFactory factory) : IClassFixture<PantryAp
         await db.SaveChangesAsync();
     }
 
-    private async Task DeleteItemAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
 }

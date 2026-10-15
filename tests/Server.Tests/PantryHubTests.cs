@@ -96,7 +96,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteItemsByNameAsync(name);
+            await PantryTestHelpers.DeleteItemsByNameAsync(factory.Services, name);
             await connection.StopAsync();
         }
     }
@@ -113,7 +113,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteMemberAsync(memberId);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, memberId);
         }
     }
 
@@ -165,7 +165,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await DeleteMemberAsync(memberId);
+            await PantryTestHelpers.DeleteMemberAsync(factory.Services, memberId);
         }
     }
 
@@ -237,24 +237,12 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         return member.Id;
     }
 
-    private async Task DeleteMemberAsync(string id)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Members.Where(x => x.Id == id).ExecuteDeleteAsync();
-    }
+
 
     private async Task<PantryItem?> FindByNameAsync(string name)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         return await db.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Name == name);
-    }
-
-    private async Task DeleteItemsByNameAsync(string name)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Items.Where(x => x.Name == name).ExecuteDeleteAsync();
     }
 }
