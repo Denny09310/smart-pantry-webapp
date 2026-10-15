@@ -29,7 +29,12 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
 
     public event Action? Changed;
 
-    public async Task InitializeAsync()
+    private Task? _initTask;
+
+    /// <summary>Concurrent callers share one initialization (no double load).</summary>
+    public Task InitializeAsync() => _initTask ??= InitializeCoreAsync();
+
+    private async Task InitializeCoreAsync()
     {
         if (_initialized)
             return;
@@ -66,6 +71,7 @@ internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger
         {
             LoadFailed = true;
             log.LogWarning(ex, "Member initialization failed.");
+            _initTask = null;
         }
 
         Changed?.Invoke();
