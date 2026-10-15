@@ -3,7 +3,7 @@
 @inject ToastService Toasts
 @inject LocalizationService Loc
 
-<RecipeDetailHeader />
+<SheetHeader Title="@Loc["Recipes"]" />
 <RecipeDetailContent Loading="_loading"
                      Meal="_meal"
                      OnRetry="LoadAsync" />

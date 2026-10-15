@@ -24,7 +24,7 @@
         <BbSwitch Checked="Notifications.Enabled" CheckedChanged="ToggleNotificationsAsync" />
     </div>
 
-    <div class="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain py-1 pr-1">
+    <div class="sheet-scroll">
         <InfiniteScrollList TItem="NotificationDto" @ref="_list" LoadPageAsync="LoadPageAsync"
                             KeySelector="NotificationKey" PageSize="20">
             <ItemTemplate>

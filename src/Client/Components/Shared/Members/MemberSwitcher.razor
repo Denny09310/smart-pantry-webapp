@@ -11,7 +11,7 @@
         <p class="text-sm text-muted-foreground">@Loc["WhoIsUsing"]</p>
         </div>
 
-        <div class="min-h-0 flex-1 touch-pan-y space-y-1 overflow-y-auto overscroll-contain py-1 pr-1">
+        <div class="sheet-scroll space-y-1">
             @{
                 var activeMembers = Members.ActiveMembers.ToList();
                 var archivedMembers = Members.Members.Where(m => m.IsArchived).ToList();
@@ -48,12 +48,7 @@
                     @foreach (var member in archivedMembers)
                     {
                         <div @key="member.Id" class="flex items-center gap-3 rounded-lg p-2 opacity-60">
-                            <BbAvatar>
-                                <BbAvatarFallback
-                                    style="@($"background-color: {member.Color ?? MemberDisplay.DefaultColor}; color: {MemberDisplay.ForegroundFor(member.Color)}")">
-                                    @MemberDisplay.Initials(member.DisplayName)
-                                </BbAvatarFallback>
-                            </BbAvatar>
+                            <MemberAvatar Member="member" />
                             <p class="min-w-0 flex-1 truncate text-sm font-medium">@member.DisplayName</p>
                             <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
                                       AriaLabel="@Loc["UnarchiveUser", member.DisplayName]" OnClick="@(() => UnarchiveAsync(member))">

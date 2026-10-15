@@ -3,7 +3,7 @@
 @inject BottomSheetService Sheet
 @inject ToastService Toasts
 
-<div class="min-h-0 flex-1 touch-pan-y space-y-4 overflow-y-auto overscroll-contain py-1 pr-1">
+<div class="sheet-scroll space-y-4">
     @if (Loading)
     {
         <div class="space-y-2" aria-hidden="true">
@@ -29,11 +29,10 @@
     }
     else
     {
-        var status = ExpiryHelper.GetStatus(Item.ExpirationDate, Today);
         <header class="space-y-2">
             <h3 class="text-xl font-semibold">@Item.Name</h3>
             <div class="flex flex-wrap gap-2">
-                <BbBadge Variant="@ExpiryHelper.Badge(status)">@ExpiryHelper.Label(status, Loc)</BbBadge>
+                <ExpiryBadge ExpirationDate="Item.ExpirationDate" Today="Today" />
                 <BbBadge Variant="BadgeVariant.Outline">@Item.Location</BbBadge>
             </div>
         </header>

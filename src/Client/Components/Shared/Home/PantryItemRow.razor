@@ -16,12 +16,9 @@
                            Variant="SwipeActionVariant.Danger" OnClick="DeleteAsync" />
     </Actions>
     <ChildContent>
-        @{
-            var status = ExpiryHelper.GetStatus(Item.ExpirationDate, Today);
-        }
         <span class="flex items-center justify-between gap-2">
             <span class="font-medium line-clamp-1">@Item.Name</span>
-            <BbBadge Variant="@ExpiryHelper.Badge(status)" class="shrink-0">@ExpiryHelper.Label(status, Loc)</BbBadge>
+            <ExpiryBadge ExpirationDate="Item.ExpirationDate" Today="Today" />
         </span>
         <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <span>@Item.Quantity @Item.Unit</span>
