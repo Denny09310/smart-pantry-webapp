@@ -375,6 +375,9 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+# Generated into src/Client/wwwroot from docs/CHANGELOG.md by the Client build
+src/Client/wwwroot/changelog.md
+
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
 

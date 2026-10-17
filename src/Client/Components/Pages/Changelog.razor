@@ -5,16 +5,15 @@
 @inject HttpClient Http
 @inject LocalizationService Loc
 
-<div class="flex h-full flex-col">
+<div class="flex flex-col">
     <div class="flex flex-none items-center gap-2">
-        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["Back"]"
-                  Href="/settings">
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall" AriaLabel="@Loc["Back"]" Href="/settings">
             <LucideIcon Name="chevron-left" Size="18" />
         </BbButton>
         <h1 class="text-xl font-semibold">@Loc["Changelog"]</h1>
     </div>
 
-    <div class="sheet-scroll min-h-0 flex-1 space-y-6">
+    <div class="flex-1 space-y-6">
         @if (_loading)
         {
             <div class="space-y-2" aria-hidden="true">
@@ -34,7 +33,7 @@
         }
         else
         {
-            <div class="prose max-w-none dark:prose-invert">
+            <div class="prose max-w-none max-h-[calc(100dvh-11rem)] overflow-y-auto overscroll-contain pr-1 md:max-h-[calc(100dvh-6rem)] dark:prose-invert">
                 @((MarkupString)_html)
             </div>
         }
@@ -43,8 +42,6 @@
 
 @code
 {
-    // Rendered from docs/CHANGELOG.md (linked as wwwroot/changelog.md), the
-    // single release log. Trusted first-party content, hence raw MarkupString.
     private string _html = string.Empty;
     private bool _loading = true;
     private bool _error;
