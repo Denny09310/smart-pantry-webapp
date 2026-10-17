@@ -2,20 +2,25 @@
 @inject LocalizationService Loc
 
 @* Quick view: one tappable tile per expiry bucket. The whole-pantry
-   overview, so it deliberately ignores the list's active filters. *@
+   overview, so it deliberately ignores the list's active filters.
+   Tints and icons mirror the expiry badge palette (ExpiryHelper.Badge) so a
+   tile and its row badge always read as the same status; a bucket with
+   nothing in it stays neutral instead of shouting an empty colour. *@
 @if (Stats is { } stats && stats.Total > 0)
 {
     <div class="flex items-stretch gap-2" role="group" aria-label="@Loc["PantryOverview"]">
         @foreach (var tile in Tiles(stats))
         {
             <button type="button"
-                    class="flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-0.5 rounded-md border px-1 py-1.5 text-center"
+                    class="flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-0.5 rounded-md border px-1 py-1.5 text-center @tile.Tone"
                     title="@Loc["FilterByStatus", tile.Label]"
                     @onclick="() => OnStatusSelected.InvokeAsync(tile.Status)">
-                <span class="text-sm leading-none font-semibold tabular-nums @(tile.Count == 0 ? "text-muted-foreground" : null)">
-                    @tile.Count
+                @* Lucide strokes use currentColor, so the wrapper sets the hue. *@
+                <span class="@tile.IconTone flex items-center justify-center">
+                    <LucideIcon Name="@tile.Icon" Size="14" />
                 </span>
-                <span class="w-full truncate text-[11px] leading-tight text-muted-foreground">@tile.Label</span>
+                <span class="text-sm leading-none font-semibold tabular-nums">@tile.Count</span>
+                <span class="w-full truncate text-[11px] leading-tight opacity-80">@tile.Label</span>
             </button>
         }
     </div>
@@ -23,16 +28,43 @@
 
 @code
 {
+    /// <summary>Kept in step with the soft badge palette: emerald / amber / destructive.</summary>
+    private const string MutedIcon = "text-muted-foreground";
+    private const string NeutralTile = "border-border bg-card";
+
     [Parameter] public PantryStatsDto? Stats { get; set; }
 
     [Parameter] public EventCallback<string> OnStatusSelected { get; set; }
 
-    private sealed record Tile(string Status, string Label, int Count);
+    private sealed record Tile(string Status, string Label, string Icon, int Count)
+    {
+        /// <summary>Tile background and border; neutral when the bucket is empty.</summary>
+        public required string Tone { get; init; }
+
+        /// <summary>Icon colour, matching the soft badge text of the same status.</summary>
+        public required string IconTone { get; init; }
+    }
 
     private Tile[] Tiles(PantryStatsDto stats) =>
     [
-        new(PantryRules.StatusFresh, Loc["StatusFresh"], stats.Fresh),
-        new(PantryRules.StatusSoon, Loc["StatusExpiringSoon"], stats.ExpiringSoon),
-        new(PantryRules.StatusExpired, Loc["StatusExpired"], stats.Expired)
+        Build(PantryRules.StatusFresh, Loc["StatusFresh"], "sprout", stats.Fresh,
+            "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40",
+            "text-emerald-700 dark:text-emerald-400"),
+
+        Build(PantryRules.StatusSoon, Loc["StatusExpiringSoon"], "clock", stats.ExpiringSoon,
+            "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40",
+            "text-amber-700 dark:text-amber-400"),
+
+        Build(PantryRules.StatusExpired, Loc["StatusExpired"], "circle-alert", stats.Expired,
+            "border-destructive/30 bg-destructive/10",
+            "text-destructive")
     ];
+
+    /// <summary>An empty bucket gets no tint and no icon colour: "none" is not an alarm.</summary>
+    private static Tile Build(string status, string label, string icon, int count, string tone, string iconTone)
+        => new(status, label, icon, count)
+        {
+            Tone = count == 0 ? NeutralTile : tone,
+            IconTone = count == 0 ? MutedIcon : iconTone
+        };
 }
