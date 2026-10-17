@@ -31,10 +31,28 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\docs\CHANGELOG.md" Link="wwwroot\assets\changelog.md">
+    <!--
+      The changelog lives in docs/ but has to be reachable as a plain static
+      file. In development the server resolves static web assets against
+      src/Client/wwwroot, and the manifest is built from whatever existed at
+      build time: a file that only appears in the output resolved to nothing
+      and came back as an empty 200, leaving the page blank with nothing to
+      scroll. Declaring it as Content keeps the publish path working from a
+      fresh clone; the target below puts the real file in wwwroot so
+      development serves the same bytes. Remove keeps the SDK's implicit
+      wwwroot glob from claiming it a second time.
+    -->
+    <Content Remove="wwwroot\changelog.md" />
+    <Content Include="..\..\docs\CHANGELOG.md" Link="wwwroot\changelog.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <Target Name="CopyChangelogToWwwroot" BeforeTargets="BeforeBuild">
+    <Copy SourceFiles="..\..\docs\CHANGELOG.md"
+          DestinationFiles="$(MSBuildProjectDirectory)\wwwroot\changelog.md"
+          SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />

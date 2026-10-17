@@ -98,6 +98,59 @@ internal class PantryEndpoints(
             totalItems));
     }
 
+    /// <summary>
+    /// Quick-view counters for the whole pantry: per-bucket counts and the
+    /// average Nutri-Score. Deliberately unfiltered — this is the overview
+    /// behind whatever filters the list currently has applied.
+    /// </summary>
+    [MapGet("/stats")]
+    public async Task<Ok<PantryStatsDto>> GetPantryStatsAsync(CancellationToken ct)
+    {
+        // One projection, then the arithmetic in C#: the pantry is a
+        // household-scale list, and bucketing here keeps the counts tied to
+        // PantryRules instead of a second copy of the window rules in SQL.
+        var rows = await db.Items.AsNoTracking()
+            .Select(x => new { x.ExpirationDate, x.NutriScore })
+            .ToListAsync(ct);
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var expired = 0;
+        var expiringSoon = 0;
+        var fresh = 0;
+        var scores = new List<int>();
+
+        foreach (var row in rows)
+        {
+            switch (PantryRules.ExpiryBucket(row.ExpirationDate, today))
+            {
+                case PantryRules.StatusExpired:
+                    expired++;
+                    break;
+                case PantryRules.StatusSoon:
+                    expiringSoon++;
+                    break;
+                default:
+                    fresh++;
+                    break;
+            }
+
+            if (PantryRules.NutriScoreValue(row.NutriScore) is { } score)
+                scores.Add(score);
+        }
+
+        var average = scores.Count > 0 ? scores.Average() : (double?)null;
+
+        return TypedResults.Ok(new PantryStatsDto(
+            rows.Count,
+            fresh,
+            expiringSoon,
+            expired,
+            scores.Count,
+            average,
+            PantryRules.NutriScoreLetter(average)));
+    }
+
     [MapPost("/")]
     public async Task<Results<Created<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
         CreatePantryItemRequest request,

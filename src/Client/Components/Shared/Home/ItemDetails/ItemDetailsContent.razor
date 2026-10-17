@@ -136,14 +136,7 @@
     [Parameter] public EventCallback<string> OnBarcodeScanned { get; set; }
     [Parameter] public EventCallback OnUnlinkBarcode { get; set; }
 
-    private BadgeVariant NutriScoreVariant => Item?.NutriScore?.Trim().ToUpperInvariant() switch
-    {
-        "A" => BadgeVariant.SoftSuccess,
-        "B" => BadgeVariant.SoftInfo,
-        "C" => BadgeVariant.SoftWarning,
-        "D" or "E" => BadgeVariant.SoftDestructive,
-        _ => BadgeVariant.Outline,
-    };
+    private BadgeVariant NutriScoreVariant => NutriScoreDisplay.Variant(Item?.NutriScore);
 
     private NutritionFacts? _rowsFor;
     private string? _rowsCulture;

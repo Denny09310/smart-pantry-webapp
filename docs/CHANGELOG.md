@@ -1,3 +1,19 @@
+## [1.6.0] - 2026-10-17
+
+### ✨ Features
+
+- Quick-view row on the pantry page: fresh, expiring soon and expired counts, each tile tappable to open that filter
+- Pantry goodness: average Nutri-Score across the pantry, with its coverage shown ("3/9 scored") because hand-entered items carry no score
+- Tiles carry icons and status colours drawn from the expiry badge palette; an empty bucket stays neutral
+
+### 🐛 Bug Fixes
+
+- Push notifications register atomically, so a subscribe racing an unsubscribe no longer fails and leaves the device subscribed with nothing to receive
+- An existing browser subscription re-registers on startup, healing a lost registration instead of showing "enabled" forever
+- The reminder worker now logs why nothing was pushed: no subscription registered, or VAPID keys not configured
+- Adding or deleting an item patches the loaded rows instead of refetching the whole list
+- Changelog page renders its notes in development (the file resolved to an empty 200) and scrolls only the notes, leaving the title pinned
+
 ## [1.5.1] - 2026-10-15
 
 ### 🐛 Bug Fixes

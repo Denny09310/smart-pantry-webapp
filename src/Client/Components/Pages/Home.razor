@@ -14,7 +14,10 @@
         <h1 class="truncate text-xl font-semibold">@Loc["AppTitle"]</h1>
         @if (_state.Total > 0)
         {
-            <p class="truncate text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</p>
+            <div class="flex min-w-0 items-center gap-2">
+                <p class="truncate text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</p>
+                <PantryGoodness Stats="_state.Stats" />
+            </div>
         }
     </div>
     <div class="flex flex-none items-center gap-2">
@@ -26,6 +29,8 @@
         <MemberAvatarButton />
     </div>
 </header>
+
+<PantryStatsRow Stats="_state.Stats" OnStatusSelected="ApplyStatusFilterAsync" />
 
 <div class="flex gap-2">
     <div class="flex-1">
@@ -93,9 +98,38 @@
     {
         Realtime.Changed += OnRealtimeChanged;
         await Realtime.StartAsync();
+        await RefreshStatsAsync();
     }
 
-    private Task OnRealtimeChanged(PantryChangedEvent change) => InvokeAsync(() => HandleChangeAsync(change));
+    private Task OnRealtimeChanged(PantryChangedEvent change)
+        => InvokeAsync(async () =>
+        {
+            await HandleChangeAsync(change);
+
+            // The quick view is a whole-pantry counter, so any row that moved
+            // invalidates it even when the patch itself was granular.
+            await RefreshStatsAsync();
+        });
+
+    /// <summary>
+    /// Loads the overview counters. Failures are non-fatal: the stats row and
+    /// goodness pill simply stay hidden rather than taking the page down.
+    /// </summary>
+    private async Task RefreshStatsAsync()
+    {
+        try
+        {
+            using var response = await Api.Pantry.GetStatsAsync();
+            if (response.IsSuccessfulWithContent && response.Content is not null)
+                _state.Stats = response.Content;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Pantry stats load failed.");
+        }
+
+        StateHasChanged();
+    }
 
     /// <summary>
     /// Patches the loaded rows instead of refetching the whole list: drops
@@ -155,9 +189,24 @@
             return;
         }
 
+        await ApplyItemAsync(item);
+    }
+
+    /// <summary>
+    /// Places one known row into the list: drops it when it no longer matches
+    /// the active filters, replaces it when already loaded, otherwise inserts it
+    /// at its sorted position. Shared by the realtime handler and by a local
+    /// save, so a create arriving both ways converges on the same single row.
+    /// </summary>
+    private async Task ApplyItemAsync(PantryItemDto item)
+    {
+        var list = _state.List;
+        if (list is null)
+            return;
+
         if (!MatchesFilters(item))
         {
-            await list.RemoveByKeyAsync(id);
+            await list.RemoveByKeyAsync(item.Id);
             return;
         }
 
@@ -212,8 +261,37 @@
     private async Task OpenAddAsync()
     {
         var result = await Sheet.OpenAsync<ItemForm>();
-        if (!result.Cancelled)
+
+        if (result.Cancelled)
+            return;
+
+        // The form hands back the saved row, so one insert replaces the whole
+        // refetch this used to do on every add.
+        if (result.GetData<PantryItemDto>() is { } item)
+            await ApplyItemAsync(item);
+        else
             await ReloadListAsync();
+
+        await RefreshStatsAsync();
+    }
+
+    /// <summary>Quick-view tile tap: jumps straight to that status filter.</summary>
+    private async Task ApplyStatusFilterAsync(string status)
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            ["Location"] = _state.Location,
+            ["Status"] = status,
+            ["Sort"] = _state.Sort
+        };
+
+        var result = await Sheet.OpenAsync<FilterSheetBody>(parameters);
+
+        if (result.Cancelled || result.GetData<FilterSheetBody.SelectedFilters>() is not { } filters)
+            return;
+
+        (_state.Location, _state.Status, _state.Sort) = (filters.Location, filters.Status, filters.Sort);
+        await ReloadListAsync();
     }
 
     private async Task OpenDetailsAsync(string id)
@@ -222,11 +300,18 @@
         {
             ["ItemId"] = id
         };
-        
+
         var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
-        await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger, Loc);
-        if (!result.Cancelled)
-            await ReloadListAsync();
+
+        // Edits made in the sheet arrive over the hub, which patches the row in
+        // place. A delete this client performed needs its own removal, and both
+        // make the quick-view counters stale.
+        if (await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger, Loc)
+            && _state.List is not null
+            && await _state.List.RemoveByKeyAsync(id))
+        {
+            await RefreshStatsAsync();
+        }
     }
 
     private async Task OpenFiltersAsync()

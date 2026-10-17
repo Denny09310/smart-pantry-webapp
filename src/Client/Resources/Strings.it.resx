@@ -580,6 +580,21 @@
   <data name="ItemsCount" xml:space="preserve">
     <value>{0} elementi</value>
   </data>
+  <data name="PantryOverview" xml:space="preserve">
+    <value>Panoramica dispensa</value>
+  </data>
+  <data name="FilterByStatus" xml:space="preserve">
+    <value>Filtra per {0}</value>
+  </data>
+  <data name="PantryGoodness" xml:space="preserve">
+    <value>Bontà della dispensa</value>
+  </data>
+  <data name="GoodnessCoverage" xml:space="preserve">
+    <value>Media del Nutri-Score dei {0} articoli che lo hanno, su {1} in totale. Gli articoli inseriti senza scansione non hanno punteggio.</value>
+  </data>
+  <data name="GoodnessCoverageShort" xml:space="preserve">
+    <value>{0}/{1} con punteggio</value>
+  </data>
   <data name="LanguageSelected" xml:space="preserve">
     <value>{0} selezionata</value>
   </data>

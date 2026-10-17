@@ -582,6 +582,21 @@
   <data name="ItemsCount" xml:space="preserve">
     <value>{0} items</value>
   </data>
+  <data name="PantryOverview" xml:space="preserve">
+    <value>Pantry overview</value>
+  </data>
+  <data name="FilterByStatus" xml:space="preserve">
+    <value>Filter by {0}</value>
+  </data>
+  <data name="PantryGoodness" xml:space="preserve">
+    <value>Pantry goodness</value>
+  </data>
+  <data name="GoodnessCoverage" xml:space="preserve">
+    <value>Average Nutri-Score of the {0} items that have one, out of {1} in total. Items added without scanning have no score.</value>
+  </data>
+  <data name="GoodnessCoverageShort" xml:space="preserve">
+    <value>{0}/{1} scored</value>
+  </data>
   <data name="LanguageSelected" xml:space="preserve">
     <value>{0} selected</value>
   </data>

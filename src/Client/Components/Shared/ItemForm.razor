@@ -269,6 +269,10 @@
         StateHasChanged();
         try
         {
+            // Closing with the saved row lets the opener patch the list in
+            // place; a bare "saved" marker forces it to refetch everything.
+            PantryItemDto? saved = null;
+
             if (Item is null)
             {
                 using var response = await Api.Pantry.CreateAsync(new CreatePantryItemRequest(
@@ -283,8 +287,7 @@
                     _state.ScannedNutrition),
                     Members.CurrentMemberId);
 
-                if (!await HandleSavedAsync(response, Loc["ItemAdded"]))
-                    return;
+                saved = await HandleSavedAsync(response, Loc["ItemAdded"]);
             }
             else
             {
@@ -299,11 +302,13 @@
                     _state.ScannedNutriScore,
                     _state.ScannedNutrition));
 
-                if (!await HandleSavedAsync(response, Loc["ItemUpdated"]))
-                    return;
+                saved = await HandleSavedAsync(response, Loc["ItemUpdated"]);
             }
 
-            await Sheet.CloseAsync("saved");
+            if (saved is null)
+                return;
+
+            await Sheet.CloseAsync(saved);
         }
         finally
         {
@@ -311,24 +316,25 @@
         }
     }
 
-    private async Task<bool> HandleSavedAsync<T>(ApiResponse<T> response, string successMessage)
+    /// <summary>Returns the saved row, or null when the write failed.</summary>
+    private async Task<T?> HandleSavedAsync<T>(ApiResponse<T> response, string successMessage)
     {
         if (response.IsSuccessStatusCode)
         {
             Toasts.Success(successMessage);
-            return true;
+            return response.Content;
         }
 
         var errors = await ApiErrors.ReadValidationErrorsAsync(response.Error);
         if (errors is not null)
         {
             _state.CustomValidator?.DisplayErrors(errors);
-            return false;
+            return default;
         }
 
         Logger.LogWarning("Save failed with {StatusCode}", response.StatusCode);
         Toasts.Error(Loc["CouldNotSave"]);
-        return false;
+        return default;
     }
 
     private sealed class InputModel
