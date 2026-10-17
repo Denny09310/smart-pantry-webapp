@@ -161,9 +161,20 @@ public sealed class ReminderWorker(
 
         var subscriptions = await db.PushSubscriptions.AsNoTracking().ToListAsync(ct);
         if (subscriptions.Count == 0)
+        {
+            // Reminders exist but nobody can receive them. Silence here reads
+            // exactly like "nothing to send", which is how a household ends up
+            // with in-app reminders and no push with no clue why.
+            log.LogInformation(
+                "{Count} reminder(s) created but no push subscription is registered; " +
+                "push delivery skipped. Enable notifications in the app to receive them.",
+                reminded.Count);
+
             return (0, 0);
+        }
 
         var sent = 0;
+        var notConfigured = 0;
         var invalidIds = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var item in reminded)
@@ -199,7 +210,21 @@ public sealed class ReminderWorker(
                     invalidIds.Add(subscription.Id);
                     log.LogInformation("Removing invalid push subscription {Id}.", subscription.Id);
                 }
+                else if (outcome == PushSendOutcome.NotConfigured)
+                {
+                    notConfigured++;
+                }
             }
+        }
+
+        // A missing VAPID key pair fails every delivery identically and silently:
+        // reminders pile up in-app while nothing ever reaches the device.
+        if (notConfigured > 0)
+        {
+            log.LogWarning(
+                "{Count} push delivery attempt(s) skipped because VAPID keys are not configured. " +
+                "Set Vapid:PublicKey and Vapid:PrivateKey (plus Vapid:Subject) on the server.",
+                notConfigured);
         }
 
         // One delete for all dead endpoints, after every delivery attempt.

@@ -77,6 +77,54 @@ public class PushEndpointTests(CosmeticApiFactory factory) : IClassFixture<Cosme
     }
 
     [Fact]
+    public async Task Subscribe_ConcurrentWithUnsubscribe_NeverFails()
+    {
+        var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
+        await _client.PostAsJsonAsync("/api/push/subscriptions",
+            new PushSubscriptionRequest(endpoint, "p256dh", "auth"));
+
+        try
+        {
+            // A browser re-registers its subscription on every load and can be
+            // disabled at the same time. The read-then-write upsert used to read
+            // the row, lose it to a concurrent delete and then fail the whole
+            // request with a 500, leaving the browser "enabled" with no server
+            // row and therefore no push, ever.
+            var inFlight = new List<Task<HttpResponseMessage>>();
+
+            for (var i = 0; i < 8; i++)
+            {
+                inFlight.Add(_client.PostAsJsonAsync("/api/push/subscriptions",
+                    new PushSubscriptionRequest(endpoint, $"p256dh-{i}", $"auth-{i}")));
+                inFlight.Add(_client.DeleteAsync(
+                    $"/api/push/subscriptions?endpoint={Uri.EscapeDataString(endpoint)}"));
+            }
+
+            var responses = await Task.WhenAll(inFlight);
+
+            Assert.All(responses, response =>
+            {
+                Assert.True(response.IsSuccessStatusCode, $"unexpected status {(int)response.StatusCode}");
+                response.Dispose();
+            });
+
+            // Whatever the interleaving, a subscribe afterwards must still
+            // succeed and leave exactly one row rather than failing outright.
+            var last = await _client.PostAsJsonAsync("/api/push/subscriptions",
+                new PushSubscriptionRequest(endpoint, "final", "final"));
+            Assert.True(last.IsSuccessStatusCode, $"unexpected status {(int)last.StatusCode}");
+
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Assert.Equal(1, await db.PushSubscriptions.CountAsync(x => x.Endpoint == endpoint));
+        }
+        finally
+        {
+            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+        }
+    }
+
+    [Fact]
     public async Task Subscribe_InvalidBody_ReturnsValidationProblem()
     {
         var response = await _client.PostAsJsonAsync("/api/push/subscriptions",
