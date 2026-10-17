@@ -8,10 +8,12 @@ namespace Client.Services;
 /// Item deletion always starts by closing the sheet: dialogs render beneath
 /// it, so a sheet body never opens a confirm itself. Instead the body closes
 /// with the item as the result and the opener confirms and executes here.
+/// Returns true only when this client actually deleted the item, so the caller
+/// can drop the row instead of refetching the list.
 /// </summary>
 internal static class ItemDeletion
 {
-    public static async Task HandleAsync(
+    public static async Task<bool> HandleAsync(
         DialogResult result,
         ServerApi api,
         DialogService dialogs,
@@ -20,10 +22,10 @@ internal static class ItemDeletion
         LocalizationService loc)
     {
         if (result.Cancelled)
-            return;
+            return false;
 
         if (result.GetData<PantryItemDto>() is not { } item)
-            return;
+            return false;
 
         var confirmed = await dialogs.ConfirmAsync(
             loc["DeleteItemConfirm"],
@@ -31,7 +33,7 @@ internal static class ItemDeletion
             new ConfirmDialogOptions { ConfirmText = loc["Delete"], Destructive = true });
 
         if (!confirmed.Confirmed)
-            return;
+            return false;
 
         try
         {
@@ -40,15 +42,17 @@ internal static class ItemDeletion
             {
                 logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", item.Id, response.StatusCode);
                 toasts.Error(loc["CouldNotDelete"]);
-                return;
+                return false;
             }
 
             toasts.Success(loc["ItemDeleted"]);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Item {ItemId} delete failed", item.Id);
             toasts.Error(loc["CouldNotDelete"]);
+            return false;
         }
     }
 }

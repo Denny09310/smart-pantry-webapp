@@ -11,6 +11,7 @@ public partial class Home
     {
         public InfiniteScrollList<PantryItemDto>? List { get; set; }
         public int Total { get; set; }
+        public PantryStatsDto? Stats { get; set; }
         public CancellationTokenSource? SearchCts { get; set; }
 
         public string? Location { get; set; } = PantryLocations.All;

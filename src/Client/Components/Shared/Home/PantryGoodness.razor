@@ -1,0 +1,23 @@
+@namespace Client.Components
+@inject LocalizationService Loc
+
+@* Pantry goodness: the average Nutri-Score, shown together with its coverage.
+   Hand-entered items carry no score, so a bare average would read as if it
+   described the whole pantry when it may cover two items out of thirty. *@
+@if (Stats is { ScoredItems: > 0 } stats)
+{
+    <span class="inline-flex items-center gap-1.5"
+          title="@Loc["GoodnessCoverage", stats.ScoredItems, stats.Total]">
+        <BbBadge Variant="NutriScoreDisplay.Variant(stats.NutriScoreGrade)">
+            @stats.NutriScoreGrade
+        </BbBadge>
+        <span class="text-[11px] text-muted-foreground tabular-nums">
+            @Loc["GoodnessCoverageShort", stats.ScoredItems, stats.Total]
+        </span>
+    </span>
+}
+
+@code
+{
+    [Parameter] public PantryStatsDto? Stats { get; set; }
+}

@@ -22,4 +22,35 @@ public static class PantryRules
 
     public static readonly string[] Statuses = [StatusExpired, StatusSoon, StatusFresh];
     public static readonly string[] Sorts = [SortExpiryAsc, SortExpiryDesc, SortName];
+
+    /// <summary>
+    /// The bucket a date falls into, using the same window as the status filter
+    /// so quick-view counts and list rows can never disagree.
+    /// </summary>
+    public static string ExpiryBucket(DateOnly expiration, DateOnly today)
+        => expiration < today
+            ? StatusExpired
+            : expiration <= today.AddDays(ExpirySoonDays) ? StatusSoon
+            : StatusFresh;
+
+    /// <summary>
+    /// Nutri-Score letters map to 1 (best, "a") through 5 (worst, "e").
+    /// Anything else — null, "unknown", "not-applicable" — is unscored and
+    /// must be left out of an average instead of dragging it either way.
+    /// </summary>
+    public static int? NutriScoreValue(string? grade)
+    {
+        if (grade?.Trim() is not { Length: 1 } letter)
+            return null;
+
+        var upper = char.ToUpperInvariant(letter[0]);
+
+        return upper is >= 'A' and <= 'E' ? upper - 'A' + 1 : null;
+    }
+
+    /// <summary>Nearest grade letter for an average in the 1..5 range.</summary>
+    public static string? NutriScoreLetter(double? average)
+        => average is not { } value || value < 1 || value > 5
+            ? null
+            : ((char)('A' + (int)Math.Round(value) - 1)).ToString();
 }

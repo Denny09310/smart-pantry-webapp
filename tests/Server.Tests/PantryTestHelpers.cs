@@ -10,7 +10,7 @@ namespace Server.Tests;
 internal static class PantryTestHelpers
 {
     public static async Task<PantryItem> SeedItemAsync(
-        IServiceProvider services, string name, DateOnly? expiration = null)
+        IServiceProvider services, string name, DateOnly? expiration = null, string? nutriScore = null)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -20,7 +20,8 @@ internal static class PantryTestHelpers
             Quantity = 1,
             Unit = "pcs",
             Location = "pantry",
-            ExpirationDate = expiration ?? DateOnly.FromDateTime(DateTime.Today.AddDays(2))
+            ExpirationDate = expiration ?? DateOnly.FromDateTime(DateTime.Today.AddDays(2)),
+            NutriScore = nutriScore
         };
         db.Items.Add(item);
         await db.SaveChangesAsync();

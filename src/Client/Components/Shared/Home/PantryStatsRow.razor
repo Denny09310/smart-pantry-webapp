@@ -1,0 +1,38 @@
+@namespace Client.Components
+@inject LocalizationService Loc
+
+@* Quick view: one tappable tile per expiry bucket. The whole-pantry
+   overview, so it deliberately ignores the list's active filters. *@
+@if (Stats is { } stats && stats.Total > 0)
+{
+    <div class="flex items-stretch gap-2" role="group" aria-label="@Loc["PantryOverview"]">
+        @foreach (var tile in Tiles(stats))
+        {
+            <button type="button"
+                    class="flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-0.5 rounded-md border px-1 py-1.5 text-center"
+                    title="@Loc["FilterByStatus", tile.Label]"
+                    @onclick="() => OnStatusSelected.InvokeAsync(tile.Status)">
+                <span class="text-sm leading-none font-semibold tabular-nums @(tile.Count == 0 ? "text-muted-foreground" : null)">
+                    @tile.Count
+                </span>
+                <span class="w-full truncate text-[11px] leading-tight text-muted-foreground">@tile.Label</span>
+            </button>
+        }
+    </div>
+}
+
+@code
+{
+    [Parameter] public PantryStatsDto? Stats { get; set; }
+
+    [Parameter] public EventCallback<string> OnStatusSelected { get; set; }
+
+    private sealed record Tile(string Status, string Label, int Count);
+
+    private Tile[] Tiles(PantryStatsDto stats) =>
+    [
+        new(PantryRules.StatusFresh, Loc["StatusFresh"], stats.Fresh),
+        new(PantryRules.StatusSoon, Loc["StatusExpiringSoon"], stats.ExpiringSoon),
+        new(PantryRules.StatusExpired, Loc["StatusExpired"], stats.Expired)
+    ];
+}

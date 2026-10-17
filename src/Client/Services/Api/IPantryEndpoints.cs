@@ -17,6 +17,10 @@ internal interface IPantryEndpoints
         string id,
         CancellationToken ct = default);
 
+    [Get("/stats")]
+    Task<ApiResponse<PantryStatsDto>> GetStatsAsync(
+        CancellationToken ct = default);
+
     [Post("/")]
     Task<ApiResponse<PantryItemDto>> CreateAsync(
         [Body] CreatePantryItemRequest request,
