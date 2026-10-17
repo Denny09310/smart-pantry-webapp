@@ -28,6 +28,14 @@ internal sealed class NotificationService(
         {
             var subscription = await push.GetSubscription();
             SetEnabled(subscription.IsActive);
+
+            // The browser keeps its subscription across reloads, but the server
+            // row can disappear: a subscribe that lost a race, an endpoint the
+            // push service rejected, or simply a new database. Once that happens
+            // the UI still says "enabled" and no push ever arrives again, so
+            // re-register on startup to heal the drift.
+            if (subscription.IsActive && !string.IsNullOrWhiteSpace(subscription.Endpoint))
+                await RegisterAsync(subscription.Endpoint, subscription.P256dh, subscription.Auth);
         }
         catch (Exception ex)
         {
@@ -35,6 +43,32 @@ internal sealed class NotificationService(
         }
 
         await RefreshAsync();
+    }
+
+    /// <summary>
+    /// Upserts a browser subscription with the server. False means the server
+    /// refused it, which is the only signal that push cannot work.
+    /// </summary>
+    private async Task<bool> RegisterAsync(string endpoint, string p256dh, string auth)
+    {
+        try
+        {
+            using var response = await api.Push.SubscribeAsync(
+                new Shared.Models.PushSubscriptionRequest(endpoint, p256dh, auth));
+
+            if (!response.IsSuccessStatusCode)
+            {
+                log.LogWarning("Push subscription save failed with {StatusCode}.", response.StatusCode);
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            log.LogWarning(ex, "Push subscription save failed.");
+            return false;
+        }
     }
 
     public async Task RefreshAsync()
@@ -104,10 +138,10 @@ internal sealed class NotificationService(
             if (!info.IsActive || string.IsNullOrWhiteSpace(info.Endpoint))
                 return false;
 
-            using var saveResponse = await api.Push.SubscribeAsync(
-                new Shared.Models.PushSubscriptionRequest(info.Endpoint, info.P256dh, info.Auth));
-
-            if (!saveResponse.IsSuccessStatusCode)
+            // Keep the browser subscription only when the server accepted it:
+            // a local subscription the server does not know about silently
+            // never receives anything.
+            if (!await RegisterAsync(info.Endpoint, info.P256dh, info.Auth))
             {
                 await push.Unsubscribe();
                 return false;
