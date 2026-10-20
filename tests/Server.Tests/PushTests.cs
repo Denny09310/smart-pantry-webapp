@@ -120,7 +120,7 @@ public class PushEndpointTests(CosmeticApiFactory factory) : IClassFixture<Cosme
         }
         finally
         {
-            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+            await CosmeticTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
