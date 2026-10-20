@@ -13,14 +13,14 @@ namespace Server.Tests;
 /// <summary>
 /// Boots the full Server host in-memory (including Minimal API validation)
 /// against a dedicated <c>smart_cosmetics_tests</c> Postgres database, which is
-/// created on demand. Override the connection with SMARTPANTRY_TEST_CONNECTION.
+/// created on demand. Override the connection with SMARTCOSMETICS_TEST_CONNECTION.
 /// </summary>
 public class CosmeticApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public string TestDatabase { get; } = $"smart_cosmetics_tests_{Guid.CreateVersion7():N}";
 
     public string ConnectionString =>
-        Environment.GetEnvironmentVariable("SMARTPANTRY_TEST_CONNECTION") is { } configured
+        Environment.GetEnvironmentVariable("SMARTCOSMETICS_TEST_CONNECTION") is { } configured
             ? new NpgsqlConnectionStringBuilder(configured) { Database = TestDatabase }.ConnectionString
             : $"Server=localhost;Database={TestDatabase};Uid=postgres;Pwd=mypassword123";
 
