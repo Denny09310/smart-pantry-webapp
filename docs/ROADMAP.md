@@ -1,4 +1,4 @@
-# Smart Pantry — Implementation Roadmap
+# Smart Cosmetics — Implementation Roadmap
 
 Use this as the end-to-end implementation checklist. Check off work that is already complete; the phases are ordered by dependency, not a claim that every item is still outstanding.
 
@@ -16,7 +16,7 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 - [x] Confirm the three-project solution builds and project references are correct.
 - [x] Configure EF Core, `ApplicationDbContext`, the selected database provider, and migrations.
-- [x] Define the core pantry item fields: name, location, quantity, unit, and expiry date.
+- [x] Define the core cosmetic item fields: name, category, quantity, unit, and expiry date.
 - [x] Define simple household member profiles (for example, display name and active/archived state).
 - [x] Define transport DTOs and request/response contracts in `Shared`.
 - [x] Add input validation and consistent API error handling.
@@ -24,32 +24,32 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 **Done when:** a clean restore/build succeeds, migrations can create the database, and the core model is documented by code and tests.
 
-## Phase 2 — Pantry API and persistence
+## Phase 2 — Cosmetics API and persistence
 
-- [x] Implement Minimal API endpoints to list, create, read, update, and delete pantry items.
+- [x] Implement Minimal API endpoints to list, create, read, update, and delete cosmetic items.
 - [x] Validate required fields, quantities, units, and expiry dates at the API boundary.
 - [x] Return the shared DTOs rather than exposing EF entities directly.
 - [x] Handle missing records and invalid requests consistently.
 - [x] Add tests for CRUD behavior and validation.
 
-**Done when:** pantry data can be managed through the API and the main success/error cases are covered by tests.
+**Done when:** cosmetic data can be managed through the API and the main success/error cases are covered by tests.
 
 ## Phase 3 — Core Blazor UI
 
-- [x] Build the pantry list, item details/edit form, and add-item flow.
-- [x] Build a dashboard with useful at-a-glance pantry and expiry information.
-- [x] Support locations, quantities/units, and expiry dates in everyday workflows.
+- [x] Build the cosmetics list, item details/edit form, and add-item flow.
+- [x] Build a dashboard with useful at-a-glance cosmetics and expiry information.
+- [x] Support categories, quantities/units, and expiry dates in everyday workflows.
 - [x] Add loading, empty, validation, and error states.
 - [x] Make the layouts usable on phone and desktop.
 - [x] Check BlazorBlueprint first; create custom UI components only when existing components do not fit.
 
-**Done when:** a user can add, browse, edit, and remove pantry items comfortably on desktop and mobile.
+**Done when:** a user can add, browse, edit, and remove cosmetic items comfortably on desktop and mobile.
 
 ## Phase 4 — Expiry status and everyday usability
 
 - [x] Derive expiry status from the expiry date (for example, expired, expiring soon, and okay); avoid storing a value that can become stale.
 - [x] Use consistent date-only semantics for expiry dates and test boundary dates.
-- [x] Sort and filter the list by expiry date, status, and location where useful.
+- [x] Sort and filter the list by expiry date, status, and category where useful.
 - [x] Make status labels understandable and consistent across dashboard, list, and item details.
 
 **Done when:** the same item has a consistent status everywhere, including on date boundaries and after the date changes.
@@ -93,39 +93,29 @@ Use this as the end-to-end implementation checklist. Check off work that is alre
 
 **Done when:** a supported browser can subscribe, unsubscribe, and store its subscription safely, with denial and failure paths handled.
 
-## Phase 9 — Barcode scanning & OpenFoodFacts integration
+## Phase 9 — Barcode scanning & Open Beauty Facts integration
 
 - [x] Add barcode scanner using the platform BarcodeDetector API (EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, ITF).
-- [x] Integrate OpenFoodFacts API to look up product name, brand, quantity, unit, Nutri-Score, and nutrition facts per 100g.
-- [x] Persist scanned barcode, Nutri-Score, and nutrition JSON on the pantry item.
+- [x] Integrate Open Beauty Facts API to look up product name, brand, quantity, and unit per barcode.
+- [x] Persist the scanned barcode on the cosmetic item.
 - [x] Pre-fill the item form when a barcode is recognized; allow manual override.
 - [x] Fall back to local database for previously scanned items when offline or API unavailable.
 - [x] Handle missing products gracefully - show info toast and let user fill manually.
 
 **Done when:** a user can scan a product barcode and have the form pre-filled with accurate product data, with sensible fallbacks.
 
-## Phase 10 — Recipe suggestions (TheMealDB + translation)
-
-- [x] Search recipes by ingredient tags via TheMealDB (`filter.php?i=` fan-out, intersected server-side for multi-tag queries).
-- [x] Translate tags and meal names via MyMemory (server-side, cached in memory to protect the free quota); TheMealDB data stays English-only otherwise.
-- [x] Ingredient autocomplete for the tag input from TheMealDB's ingredient list (query translated first so Italian input matches).
-- [x] Recipes page with `BbTagInput`, results grid, and meal detail bottom sheet; no OFF categories stored (product-type labels, wrong granularity for ingredient search).
-
-**Done when:** a user can tag ingredients in their own language and get matching recipes with translated names.
-
 Keep native apps, offline synchronization, email reminders, barcode/OCR/AI, complex permissions, inventory ledgers, queues, event buses, and additional architectural layers out of scope unless requirements change.
 
 ## Recommended implementation order
 
 1. Foundation and data model
-2. Pantry API and persistence
+2. Cosmetics API and persistence
 3. Core UI
 4. Expiry status
 5. Member profiles
 6. In-app notifications and worker
 7. PWA installation
 8. Push subscriptions
-9. Barcode scanning & OpenFoodFacts
-10. Recipe suggestions
+9. Barcode scanning & Open Beauty Facts
 
 The goal is a straightforward, reliable household app—not a multi-tenant service or an identity platform.

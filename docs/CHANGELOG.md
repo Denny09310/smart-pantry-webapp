@@ -1,3 +1,25 @@
+## [2.0.0] - 2026-10-20
+
+### 💥 Breaking Changes
+
+- Smart Pantry is now Smart Cosmetics: the food domain is fully replaced with a cosmetics domain, keeping the app workflow identical
+- `PantryItem` → `CosmeticItem`; API routes `/api/pantry` → `/api/cosmetics`; SignalR hub `/hubs/pantry` → `/hubs/cosmetics`; all `Pantry*` types renamed to `Cosmetic*`
+- `Location` → `Category` with new values (`face`, `hair`, `body`, `hands`, `perfume`); existing rows are migrated to `body`
+- `ExpirationDate` → `ExpiryDate` (`expiration_date` → `expiry_date`); status literal `fresh` → `good` in queries and labels
+- Nutrition facts and Nutri-Score dropped from the item model, DTOs, form, and details; recipe suggestions (TheMealDB + translation) removed entirely
+- DB renamed to `smart_cosmetics` in dev config; a new EF migration renames the columns and migrates legacy category values
+
+### ✨ Features
+
+- Open Beauty Facts product lookup replaces OpenFoodFacts (barcode → name, brand, quantity, unit; no nutrition)
+- New categories with dedicated icons in the form toggle and filter sheet; `perfume` added, `sparkles` app icon and nav updates
+
+### 🧹 Refactoring & Chores
+
+- Localized strings renamed (en + it): categories, statuses, headings; nutrition and recipe strings deleted
+- wwwroot metadata refreshed (title, manifest name/description, notification title, storage keys `smart-cosmetics:*`)
+- Tests updated for the new DTO shapes, status literals, and lookup service
+
 ## [1.5.1] - 2026-10-15
 
 ### 🐛 Bug Fixes

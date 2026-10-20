@@ -1,6 +1,6 @@
 # AGENTS.md — Coding Agent Instructions
 
-These instructions apply across the Smart Pantry repository.
+These instructions apply across the Smart Cosmetics repository.
 
 ## 1. Understand the repository first
 
@@ -86,31 +86,31 @@ Do not claim deployment, external actions, or successful verification unless the
 - .NET 10 solution (`smart-pantry-webapp.slnx`): `src/Client` (Blazor WebAssembly) + `src/Server` (ASP.NET Core) + `src/Shared` (transport contracts) + `tests/Server.Tests` + `tests/Client.Tests` (xUnit). No CI.
 - Routing: Bit.Brouter 10.6.2 replaces `<Router>` in `App.razor` (view transitions on, scroll-to-top, focus `h1`); pages are discovered via `@page` + `AppAssembly` scan. Do not add the built-in `<Router>` back.
 - Build: `dotnet build smart-pantry-webapp.slnx`. Run/debug via the **Server** project (`http://localhost:5125`, `https://localhost:7139`); it serves the Client (`MapStaticAssets` + `MapFallbackToFile("index.html")` in `src/Server/Program.cs`). Run with `ASPNETCORE_ENVIRONMENT=Development` (or a launch profile) — `appsettings.json` has no connection string, so Production startup fails at `MigrateAsync`.
-- Tests: `dotnet test smart-pantry-webapp.slnx` (single test: `dotnet test tests/Server.Tests --filter <Name>`). `PantryApiTests` boot the real host via `WebApplicationFactory` and need local Postgres; each test class gets its own auto-created database, dropped afterwards (base connection override via `SMARTPANTRY_TEST_CONNECTION`).
+- Tests: `dotnet test smart-pantry-webapp.slnx` (single test: `dotnet test tests/Server.Tests --filter <Name>`). `CosmeticApiTests` boot the real host via `WebApplicationFactory` and need local Postgres; each test class gets its own auto-created database, dropped afterwards (base connection override via `SMARTPANTRY_TEST_CONNECTION`).
 - Product plan and phase order live in `ROADMAP.md`; check it before adding features outside the current slice.
 
 ## Endpoints: update both sides
 
 - Server uses `GeneratedEndpoints` source gen: handler classes with `[MapGroup]` / `[MapGet]` / `[MapPost]`, registered via `AddEndpointHandlers()` / `MapEndpointHandlers()`.
-- Client uses Refit: hand-written endpoint interfaces in `Client/Services/Api/` (`IPantryEndpoints`, `IMemberEndpoints` with `[PathPrefix]` + verb attributes), registered via `AddRefitGeneratedClient` on the `"Server.API"` `HttpClient`.
+- Client uses Refit: hand-written endpoint interfaces in `Client/Services/Api/` (`ICosmeticEndpoints`, `IMemberEndpoints` with `[PathPrefix]` + verb attributes), registered via `AddRefitGeneratedClient` on the `"Server.API"` `HttpClient`.
 - When adding an endpoint, add the server handler **and** the matching Refit interface method, keeping route prefixes and shapes in sync.
-- Full pantry CRUD in `src/Server/Endpoints/PantryEndpoints.cs`: `GET /api/pantry` (filters: `Location` — `"all"` means unfiltered — `Name` via `ILike`, `Status` (`expired`/`soon`/`fresh`), `Sort` (`expiry-asc`/`expiry-desc`/`name`, default `expiry-asc` with deterministic ordering); paging `Skip`/`Take` are nullable, defaulting to `0`/`20` in the handler, max `Take` 100), `POST /api/pantry`, `GET /api/pantry/{id}`, `PUT /api/pantry/{id}`, `DELETE /api/pantry/{id}` (204). Missing items return 404 ProblemDetails. Shared literals and the 7-day window live in `Shared.Models.PantryRules` — both tiers reference it.
+- Full cosmetics CRUD in `src/Server/Endpoints/CosmeticEndpoints.cs`: `GET /api/cosmetics` (filters: `Category` — `"all"` means unfiltered — `Name` via `ILike`, `Status` (`expired`/`soon`/`good`), `Sort` (`expiry-asc`/`expiry-desc`/`name`, default `expiry-asc` with deterministic ordering); paging `Skip`/`Take` are nullable, defaulting to `0`/`20` in the handler, max `Take` 100), `POST /api/cosmetics`, `GET /api/cosmetics/{id}`, `PUT /api/cosmetics/{id}`, `DELETE /api/cosmetics/{id}` (204). Missing items return 404 ProblemDetails. Shared literals and the 7-day window live in `Shared.Models.CosmeticRules` — both tiers reference it.
 - Member profiles in `src/Server/Endpoints/MemberEndpoints.cs`: `GET /api/members`, `POST /api/members` (201), `PUT /api/members/{id}` (rename/color/archive), `DELETE /api/members/{id}` (archived only, 409 otherwise; items keep working with nulled attribution). Attribution flows via the `X-Member-Id` request header, stamped at item creation only; unknown/missing members resolve to null, never 400.
 - Notifications in `src/Server/Endpoints/NotificationEndpoints.cs`: `GET /api/notifications` (newest first + unread count + total; `Skip`/`Take` paging), `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`.
 - Push in `src/Server/Endpoints/PushEndpoints.cs`: `GET /api/push/public-key` (404 when unconfigured), `POST /api/push/subscriptions` (upsert by endpoint: 201 on create, 200 on update), `DELETE /api/push/subscriptions?endpoint=` (400 on blank endpoint). The reminder worker sends one push per new reminder to every subscription (best-effort; rejected subscriptions are deleted). VAPID keys live in `VapidOptions` (`PublicKey` may be in source; `PrivateKey` only via user-secrets/env — validated on startup, never logged).
-- Realtime in `src/Server/Hubs/PantryHub.cs` (typed `Hub<IPantryHubClient>`, mapped at `/hubs/pantry`): pantry create/update/delete broadcast `PantryChangedEvent` (item id + created/updated/removed). Client `PantryRealtimeService` connects with automatic reconnect; pages patch their loaded rows from a single-item fetch (insert/drop/replace, full reload as fallback) and treat a dead connection as silent fallback to manual reload. Contract in `Shared.Models` (`PantryHubModels.cs`).
+- Realtime in `src/Server/Hubs/CosmeticHub.cs` (typed `Hub<ICosmeticHubClient>`, mapped at `/hubs/cosmetics`): cosmetics create/update/delete broadcast `CosmeticChangedEvent` (item id + created/updated/removed). Client `CosmeticRealtimeService` connects with automatic reconnect; pages patch their loaded rows from a single-item fetch (insert/drop/replace, full reload as fallback) and treat a dead connection as silent fallback to manual reload. Contract in `Shared.Models` (`CosmeticHubModels.cs`).
 - Paged lists use the generic `InfiniteScrollList<T>` (`Client/Components/Shared/`, Bit.Butil IntersectionObserver sentinel with bottom pre-load margin; `ReloadAsync()` after filter changes; dispose the subscription). It needs the `bit-butil.js` script tag in `index.html` — without it browser reads silently return defaults.
 - Validation is framework-driven: DataAnnotations on Shared DTOs (use `[property: ...]` targets on positional records — bare attributes land on the ctor parameter and are ignored), enforced automatically via `AddValidation()` + `AddSharedValidation()` (source-gen metadata is per-assembly, so Shared registers itself and marks roots `[ValidatableType]`). Invalid requests get a 400 ProblemDetails before the handler runs — no manual validation in endpoints. Keep `[AsParameters]` query properties nullable (non-nullable value types bind as required and break optional paging).
 
 ## Database
 
-- PostgreSQL via Npgsql with snake_case naming (`UseSnakeCaseNamingConvention`). `ApplicationDbContext` has `DbSet<PantryItem> Items`.
+- PostgreSQL via Npgsql with snake_case naming (`UseSnakeCaseNamingConvention`). `ApplicationDbContext` has `DbSet<CosmeticItem> Items`.
 - `Program.cs` runs `MigrateAsync()` at startup. Connection string `Default` exists **only** in `Server/appsettings.Development.json` (local Postgres); `appsettings.json` has none — configure per-environment, keep secrets out of source.
 - Migrations: `dotnet ef migrations add <Name> --project Server` (EF Design package is on Server). Review `Server/Data/Migrations` conventions first; avoid destructive changes.
 
 ## Domain quirks
 
-- `PantryItem.Id` is a GUIDv7 string generated in the entity default; `ExpirationDate` is `DateOnly` — keep date-only semantics and test boundary dates. Do not store derived expiry status; compute it.
+- `CosmeticItem.Id` is a GUIDv7 string generated in the entity default; `ExpiryDate` is `DateOnly` — keep date-only semantics and test boundary dates. Do not store derived expiry status; compute it.
 - **No auth, no multi-tenant isolation.** Per `ROADMAP.md`, one server instance + database per household, member profiles without login; restrict access at deployment, not in app code. Do not add auth roles, `HouseholdId` scoping, invitations, or push infrastructure unless the roadmap phase is explicitly in scope.
 
 ## UI
