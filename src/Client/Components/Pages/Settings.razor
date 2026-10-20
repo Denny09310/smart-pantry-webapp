@@ -31,6 +31,19 @@
             </BbSelect>
         </section>
 
+        @* Appearance Section *@
+        <section class="space-y-3">
+            <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["Appearance"]</h2>
+            <div class="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+                <span class="flex items-center gap-2 text-sm font-medium">
+                    <LucideIcon Name="sun-moon" Size="18" />
+                    @Loc["DarkMode"]
+                </span>
+                <BbDarkModeToggle Variant="ButtonVariant.Ghost" Size="ButtonSize.IconSmall"
+                                  aria-label="@Loc["DarkMode"]" />
+            </div>
+        </section>
+
         @* User Section *@
         <section class="space-y-3">
             <h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">@Loc["User"]</h2>

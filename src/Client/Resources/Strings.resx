@@ -597,4 +597,10 @@
   <data name="Shortcuts" xml:space="preserve">
     <value>Shortcuts</value>
   </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="DarkMode" xml:space="preserve">
+    <value>Dark mode</value>
+  </data>
 </root>

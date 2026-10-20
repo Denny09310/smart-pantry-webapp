@@ -595,4 +595,10 @@
   <data name="Shortcuts" xml:space="preserve">
     <value>Scorciatoie</value>
   </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Aspetto</value>
+  </data>
+  <data name="DarkMode" xml:space="preserve">
+    <value>Tema scuro</value>
+  </data>
 </root>
