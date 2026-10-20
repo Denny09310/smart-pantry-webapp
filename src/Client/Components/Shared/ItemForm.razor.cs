@@ -11,13 +11,11 @@ public partial class ItemForm
         public string? EditingId { get; set; }
 
         /// <summary>Last item the form was synced from (record equality).</summary>
-        public PantryItemDto? SyncedItem { get; set; }
+        public CosmeticItemDto? SyncedItem { get; set; }
         public CustomValidator? CustomValidator { get; set; }
         public bool Saving { get; set; }
 
         public string? ScannedBarcode { get; set; }
-        public string? ScannedNutriScore { get; set; }
-        public NutritionFacts? ScannedNutrition { get; set; }
         public bool LookingUp { get; set; }
     }
 

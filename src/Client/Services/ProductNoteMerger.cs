@@ -2,7 +2,7 @@ namespace Client.Services;
 
 /// <summary>
 /// Merges a scanned product brand into the notes field without accumulating
-/// repetitions: re-scanning the same barcode (or a brand list Open Food Facts
+/// repetitions: re-scanning the same barcode (or a brand list Open Beauty Facts
 /// already repeats) leaves the notes unchanged.
 /// </summary>
 public static class ProductNoteMerger

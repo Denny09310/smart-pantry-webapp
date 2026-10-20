@@ -94,7 +94,7 @@
     private async Task ViewItemAsync(NotificationDto notification)
     {
         await Notifications.MarkReadAsync(notification.Id);
-        await Sheet.OpenAsync<ItemDetailsBody>(new Dictionary<string, object?> { ["ItemId"] = notification.PantryItemId });
+        await Sheet.OpenAsync<ItemDetailsBody>(new Dictionary<string, object?> { ["ItemId"] = notification.CosmeticItemId });
     }
 
     private async Task MarkReadAsync(NotificationDto notification)

@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 @inject ServerApi Api
 @inject BottomSheetService Sheet
@@ -6,7 +6,7 @@
 @inject ToastService Toasts
 @inject ILogger<Home> Logger
 @inject LocalizationService Loc
-@inject PantryRealtimeService Realtime
+@inject CosmeticRealtimeService Realtime
 @implements IDisposable
 
 <header class="flex items-center justify-between gap-2">
@@ -48,10 +48,10 @@
 </div>
 
 <PullToRefresh OnRefresh="ReloadListAsync">
-    <InfiniteScrollList TItem="PantryItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync"
-                        KeySelector="PantryKey" TotalChanged="OnTotalChanged">
+    <InfiniteScrollList TItem="CosmeticItemDto" @ref="_state.List" LoadPageAsync="LoadPageAsync"
+                        KeySelector="CosmeticKey" TotalChanged="OnTotalChanged">
         <ItemTemplate>
-            <PantryItemRow Item="context" Today="_state.Today"
+            <CosmeticItemRow Item="context" Today="_state.Today"
                            OnOpen="OpenDetailsForItem"
                            OnChanged="UpsertItemAsync" />
         </ItemTemplate>
@@ -81,13 +81,13 @@
 @code
 {
     private bool HasFilters =>
-        _state.Location != PantryLocations.All || _state.Status != PantryRules.StatusAll || _state.Sort != ItemSort.ExpiryAsc;
+        _state.Category != CosmeticCategories.All || _state.Status != CosmeticRules.StatusAll || _state.Sort != ItemSort.ExpiryAsc;
 
     private void OnTotalChanged(int total) => _state.Total = total;
 
-    private static object? PantryKey(PantryItemDto item) => item.Id;
+    private static object? CosmeticKey(CosmeticItemDto item) => item.Id;
 
-    private Task OpenDetailsForItem(PantryItemDto item) => OpenDetailsAsync(item.Id);
+    private Task OpenDetailsForItem(CosmeticItemDto item) => OpenDetailsAsync(item.Id);
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,14 +95,14 @@
         await Realtime.StartAsync();
     }
 
-    private Task OnRealtimeChanged(PantryChangedEvent change) => InvokeAsync(() => HandleChangeAsync(change));
+    private Task OnRealtimeChanged(CosmeticChangedEvent change) => InvokeAsync(() => HandleChangeAsync(change));
 
     /// <summary>
     /// Patches the loaded rows instead of refetching the whole list: drops
     /// removals, replaces visible updates, and inserts creates at their sorted
     /// position. Anything uncertain falls back to a full reload.
     /// </summary>
-    private async Task HandleChangeAsync(PantryChangedEvent change)
+    private async Task HandleChangeAsync(CosmeticChangedEvent change)
     {
         if (_state.List is null)
             return;
@@ -111,7 +111,7 @@
         {
             switch (change.ChangeKind)
             {
-                case PantryChangeKind.Removed:
+                case CosmeticChangeKind.Removed:
                     await _state.List.RemoveByKeyAsync(change.ItemId);
                     break;
                 default:
@@ -122,7 +122,7 @@
         catch (Exception ex)
         {
             // A patch must never break the list: fall back to a full reload.
-            Logger.LogWarning(ex, "Granular pantry update failed; reloading.");
+            Logger.LogWarning(ex, "Granular cosmetics update failed; reloading.");
             await ReloadListAsync();
         }
     }
@@ -133,10 +133,10 @@
         if (list is null)
             return;
 
-        PantryItemDto item;
+        CosmeticItemDto item;
         try
         {
-            using var response = await Api.Pantry.GetByIdAsync(id);
+            using var response = await Api.Cosmetics.GetByIdAsync(id);
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 await list.RemoveByKeyAsync(id);
@@ -171,42 +171,42 @@
     }
 
     /// <summary>Mirrors the server query: exact location, substring name, derived status.</summary>
-    private bool MatchesFilters(PantryItemDto item)
-        => PantryClientFilter.MatchesFilters(item, _state.Location, _state.Name, _state.Status, _state.Today);
+    private bool MatchesFilters(CosmeticItemDto item)
+        => CosmeticClientFilter.MatchesFilters(item, _state.Category, _state.Name, _state.Status, _state.Today);
 
     /// <summary>Mirrors the server ordering; any drift self-corrects on the next full reload.</summary>
-    private Comparison<PantryItemDto> CurrentComparer => PantryClientFilter.GetComparer(_state.Sort);
+    private Comparison<CosmeticItemDto> CurrentComparer => CosmeticClientFilter.GetComparer(_state.Sort);
 
-    private async Task<Page<PantryItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
+    private async Task<Page<CosmeticItemDto>> LoadPageAsync(int skip, int take, CancellationToken ct)
     {
-        var request = new GetPantryItemsRequest
+        var request = new GetCosmeticItemsRequest
         {
-            Location = _state.Location,
+            Category = _state.Category,
             Name = _state.Name,
-            Status = _state.Status == PantryRules.StatusAll ? null : _state.Status,
+            Status = _state.Status == CosmeticRules.StatusAll ? null : _state.Status,
             Sort = _state.Sort switch
             {
-                ItemSort.ExpiryDesc => PantryRules.SortExpiryDesc,
-                ItemSort.Name => PantryRules.SortName,
-                _ => PantryRules.SortExpiryAsc
+                ItemSort.ExpiryDesc => CosmeticRules.SortExpiryDesc,
+                ItemSort.Name => CosmeticRules.SortName,
+                _ => CosmeticRules.SortExpiryAsc
             },
             Skip = skip,
             Take = take
         };
 
-        using var response = await Api.Pantry.GetAsync(request, ct);
+        using var response = await Api.Cosmetics.GetAsync(request, ct);
 
         if (!response.IsSuccessfulWithContent)
         {
-            Logger.LogWarning("Pantry list load failed with {StatusCode}", response.StatusCode);
-            throw new HttpRequestException($"Pantry list load failed with {response.StatusCode}.");
+            Logger.LogWarning("Cosmetics list load failed with {StatusCode}", response.StatusCode);
+            throw new HttpRequestException($"Cosmetics list load failed with {response.StatusCode}.");
         }
 
         // An empty-but-successful body is an empty page, not a crash.
         var content = response.Content;
         return content is null
-            ? new Page<PantryItemDto>([], 0)
-            : new Page<PantryItemDto>(content.Items.ToList(), content.TotalItems);
+            ? new Page<CosmeticItemDto>([], 0)
+            : new Page<CosmeticItemDto>(content.Items.ToList(), content.TotalItems);
     }
 
     private async Task OpenAddAsync()
@@ -233,7 +233,7 @@
     {
         var parameters = new Dictionary<string, object?>
         {
-            ["Location"] = _state.Location,
+            ["Category"] = _state.Category,
             ["Status"] = _state.Status,
             ["Sort"] = _state.Sort
         };
@@ -248,7 +248,7 @@
         if (data is not { } filters)
             return;
 
-        (_state.Location, _state.Status, _state.Sort) = (filters.Location, filters.Status, filters.Sort);
+        (_state.Category, _state.Status, _state.Sort) = (filters.Category, filters.Status, filters.Sort);
         await ReloadListAsync();
     }
 

@@ -20,17 +20,17 @@ internal class NotificationEndpoints(ApplicationDbContext db)
         var items = await db.Notifications.AsNoTracking()
             .OrderByDescending(x => x.CreatedAt)
             .Join(db.Items.AsNoTracking(),
-                n => n.PantryItemId,
+                n => n.CosmeticItemId,
                 i => i.Id,
                 (n, i) => new NotificationDto(
                     n.Id,
-                    n.PantryItemId,
+                    n.CosmeticItemId,
                     i.Name,
-                    i.ExpirationDate,
+                    i.ExpiryDate,
                     n.CreatedAt,
                     n.ReadAt))
             .Skip(Math.Max(0, request.Skip ?? 0))
-            .Take(Math.Clamp(request.Take ?? PantryRules.DefaultPageSize, 1, PantryRules.MaxPageSize))
+            .Take(Math.Clamp(request.Take ?? CosmeticRules.DefaultPageSize, 1, CosmeticRules.MaxPageSize))
             .ToListAsync(ct);
 
         var unread = await db.Notifications.AsNoTracking()
@@ -52,23 +52,23 @@ internal class NotificationEndpoints(ApplicationDbContext db)
             return NotificationNotFound(id);
 
         var item = await db.Items.AsNoTracking()
-            .Where(x => x.Id == entry.PantryItemId)
-            .Select(x => new { x.Name, x.ExpirationDate })
+            .Where(x => x.Id == entry.CosmeticItemId)
+            .Select(x => new { x.Name, x.ExpiryDate })
             .FirstOrDefaultAsync(ct);
 
         if (item is null)
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                detail: $"Pantry item '{entry.PantryItemId}' for notification '{id}' was not found.");
+                detail: $"Cosmetic item '{entry.CosmeticItemId}' for notification '{id}' was not found.");
 
         entry.ReadAt ??= DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
 
         return TypedResults.Ok(new NotificationDto(
             entry.Id,
-            entry.PantryItemId,
+            entry.CosmeticItemId,
             item.Name,
-            item.ExpirationDate,
+            item.ExpiryDate,
             entry.CreatedAt,
             entry.ReadAt));
     }

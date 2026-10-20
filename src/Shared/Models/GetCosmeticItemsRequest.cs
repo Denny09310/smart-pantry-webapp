@@ -5,7 +5,7 @@ using Microsoft.Extensions.Validation.Embedded;
 namespace Shared.Models;
 
 [ValidatableType]
-public record GetPantryItemsRequest
+public record GetCosmeticItemsRequest
 {
     // Nullable so [AsParameters] treats missing query values as absent;
     // the endpoint applies Defaults when null. [Range] still runs when set.
@@ -15,10 +15,10 @@ public record GetPantryItemsRequest
     [Range(1, 100)]
     public int? Take { get; set; }
 
-    public string? Location { get; set; }
+    public string? Category { get; set; }
     public string? Name { get; set; }
 
-    /// <summary>Status filter (<c>expired</c>, <c>soon</c>, <c>fresh</c>); null means all.</summary>
+    /// <summary>Status filter (<c>expired</c>, <c>soon</c>, <c>good</c>); null means all.</summary>
     public string? Status { get; set; }
 
     /// <summary>

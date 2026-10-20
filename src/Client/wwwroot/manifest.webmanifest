@@ -1,7 +1,7 @@
 {
-  "name": "Smart Pantry",
-  "short_name": "Pantry",
-  "description": "Track pantry items, expiries and recipes for your household.",
+  "name": "Smart Cosmetics",
+  "short_name": "Cosmetics",
+  "description": "Track cosmetic products, expiries and open dates for your household.",
   "id": "./",
   "start_url": "./",
   "prefer_related_applications": false,

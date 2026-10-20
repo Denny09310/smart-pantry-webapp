@@ -24,15 +24,15 @@ public class ModelTests
     }
 
     [Fact]
-    public void PantryItem_MemberLink_IsOptionalByDefault()
+    public void CosmeticItem_MemberLink_IsOptionalByDefault()
     {
-        var item = new PantryItem
+        var item = new CosmeticItem
         {
             Name = "Milk",
             Quantity = 1,
             Unit = "L",
-            Location = "fridge",
-            ExpirationDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))
+            Category = "face",
+            ExpiryDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))
         };
 
         Assert.Null(item.HouseholdMemberId);
@@ -41,19 +41,19 @@ public class ModelTests
     }
 
     [Fact]
-    public void PantryItem_ExpirationDate_UsesDateOnlySemantics()
+    public void CosmeticItem_ExpiryDate_UsesDateOnlySemantics()
     {
         var date = new DateOnly(2026, 10, 12);
-        var item = new PantryItem
+        var item = new CosmeticItem
         {
             Name = "Yogurt",
             Quantity = 2,
             Unit = "pcs",
-            Location = "fridge",
-            ExpirationDate = date
+            Category = "face",
+            ExpiryDate = date
         };
 
-        Assert.Equal(date, item.ExpirationDate);
+        Assert.Equal(date, item.ExpiryDate);
         Assert.Equal(date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).Date, date.ToDateTime(TimeOnly.MinValue).Date);
     }
 }

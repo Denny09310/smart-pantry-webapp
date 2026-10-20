@@ -8,12 +8,12 @@
 
     <div class="sheet-scroll space-y-5">
         <div>
-            <span class="mb-1 block text-sm font-medium">@Loc["Location"]</span>
-            <BbChipSet @bind-Value="_state.Location" Class="scrollbar-none!" Wrap="false">
-                <BbChip Value="@(PantryLocations.All)">@Loc["AllLocations"]</BbChip>
-                @foreach (var location in PantryLocations.Values)
+            <span class="mb-1 block text-sm font-medium">@Loc["Category"]</span>
+            <BbChipSet @bind-Value="_state.Category" Class="scrollbar-none!" Wrap="false">
+                <BbChip Value="@(CosmeticCategories.All)">@Loc["AllCategories"]</BbChip>
+                @foreach (var category in CosmeticCategories.Values)
                 {
-                    <BbChip Value="@(location)">@LocationLabel(location)</BbChip>
+                    <BbChip Value="@(category)">@CategoryLabel(category)</BbChip>
                 }
             </BbChipSet>
         </div>
@@ -21,10 +21,10 @@
         <div>
             <span class="mb-1 block text-sm font-medium">@Loc["Status"]</span>
             <BbChipSet @bind-Value="_state.Status" Class="scrollbar-none!" Wrap="false">
-                <BbChip Value="@PantryRules.StatusAll">@Loc["AllStatuses"]</BbChip>
-                <BbChip Value="@PantryRules.StatusExpired">@Loc["StatusExpired"]</BbChip>
-                <BbChip Value="@PantryRules.StatusSoon">@Loc["StatusExpiringSoon"]</BbChip>
-                <BbChip Value="@PantryRules.StatusFresh">@Loc["StatusFresh"]</BbChip>
+                <BbChip Value="@CosmeticRules.StatusAll">@Loc["AllStatuses"]</BbChip>
+                <BbChip Value="@CosmeticRules.StatusExpired">@Loc["StatusExpired"]</BbChip>
+                <BbChip Value="@CosmeticRules.StatusSoon">@Loc["StatusExpiringSoon"]</BbChip>
+                <BbChip Value="@CosmeticRules.StatusGood">@Loc["StatusGood"]</BbChip>
             </BbChipSet>
         </div>
 
@@ -52,21 +52,21 @@
 
 @code
 {
-    public sealed record SelectedFilters(string? Location, string Status, ItemSort Sort);
+    public sealed record SelectedFilters(string? Category, string Status, ItemSort Sort);
 
-    [Parameter] public string? Location { get; set; }
-    [Parameter] public string Status { get; set; } = PantryRules.StatusAll;
+    [Parameter] public string? Category { get; set; }
+    [Parameter] public string Status { get; set; } = CosmeticRules.StatusAll;
     [Parameter] public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
 
     protected override void OnParametersSet()
     {
-        if (_state.SeenSort is null || Location != _state.SeenLocation || Status != _state.SeenStatus || Sort != _state.SeenSort)
+        if (_state.SeenSort is null || Category != _state.SeenCategory || Status != _state.SeenStatus || Sort != _state.SeenSort)
         {
-            _state.SeenLocation = Location;
+            _state.SeenCategory = Category;
             _state.SeenStatus = Status;
             _state.SeenSort = Sort;
 
-            _state.Location = Location;
+            _state.Category = Category;
             _state.Status = Status;
             _state.Sort = Sort;
         }
@@ -74,8 +74,8 @@
 
     private void Reset()
     {
-        _state.Location = PantryLocations.All;
-        _state.Status = PantryRules.StatusAll;
+        _state.Category = CosmeticCategories.All;
+        _state.Status = CosmeticRules.StatusAll;
         _state.Sort = ItemSort.ExpiryAsc;
     }
 
@@ -87,13 +87,14 @@
     };
 
     private Task ApplyAsync()
-        => Sheet.CloseAsync(new SelectedFilters(_state.Location, _state.Status, _state.Sort));
+        => Sheet.CloseAsync(new SelectedFilters(_state.Category, _state.Status, _state.Sort));
 
-    private string LocationLabel(string location) => location switch
+    private string CategoryLabel(string category) => category switch
     {
-        "fridge" => Loc["Fridge"],
-        "freezer" => Loc["Freezer"],
-        "cabinet" => Loc["Cabinet"],
-        _ => Loc["Pantry"]
+        "hair" => Loc["Hair"],
+        "body" => Loc["Body"],
+        "hands" => Loc["Hands"],
+        "perfume" => Loc["Perfume"],
+        _ => Loc["Face"]
     };
 }

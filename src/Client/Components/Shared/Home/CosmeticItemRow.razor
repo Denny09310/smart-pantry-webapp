@@ -2,7 +2,7 @@
 @inject BottomSheetService Sheet
 @inject ServerApi Api
 @inject ToastService Toasts
-@inject ILogger<PantryItemRow> Logger
+@inject ILogger<CosmeticItemRow> Logger
 @inject LocalizationService Loc
 
 <SwipeableRow ActionsWidth="180" InnerClass="block" AriaLabel="@Item.Name" ResetKey="@Item.Id"
@@ -18,12 +18,12 @@
     <ChildContent>
         <span class="flex items-center justify-between gap-2">
             <span class="font-medium line-clamp-1">@Item.Name</span>
-            <ExpiryBadge ExpirationDate="Item.ExpirationDate" Today="Today" />
+            <ExpiryBadge ExpiryDate="Item.ExpiryDate" Today="Today" />
         </span>
         <span class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <span>@Item.Quantity @Item.Unit</span>
-            <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@Item.Location</BbBadge>
-            <span class="shrink-0">@Item.ExpirationDate.ToString("MMM d")</span>
+            <BbBadge Variant="BadgeVariant.Outline" class="shrink-0">@Item.Category</BbBadge>
+            <span class="shrink-0">@Item.ExpiryDate.ToString("MMM d")</span>
         </span>
     </ChildContent>
 </SwipeableRow>
@@ -31,14 +31,14 @@
 @code
 {
     [Parameter, EditorRequired]
-    public PantryItemDto Item { get; set; } = default!;
+    public CosmeticItemDto Item { get; set; } = default!;
 
     [Parameter]
     public DateOnly Today { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     /// <summary>Tap on the row body (open details).</summary>
     [Parameter]
-    public EventCallback<PantryItemDto> OnOpen { get; set; }
+    public EventCallback<CosmeticItemDto> OnOpen { get; set; }
 
     /// <summary>Raised with the item id after an action changed it.</summary>
     [Parameter]
@@ -67,7 +67,7 @@
     {
         try
         {
-            using var response = await Api.Pantry.DeleteAsync(Item.Id);
+            using var response = await Api.Cosmetics.DeleteAsync(Item.Id);
             if (!response.IsSuccessStatusCode)
             {
                 Logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", Item.Id, response.StatusCode);

@@ -11,24 +11,24 @@ public enum ExpiryStatus
 {
     Expired,
     ExpiringSoon,
-    Fresh
+    Good
 }
 
 public static class ExpiryHelper
 {
     /// <summary>Days ahead that still counts as "expiring soon" (roadmap reminder window).</summary>
-    public const int SoonDays = Shared.Models.PantryRules.ExpirySoonDays;
+    public const int SoonDays = Shared.Models.CosmeticRules.ExpirySoonDays;
 
     public static ExpiryStatus GetStatus(DateOnly expiration, DateOnly today)
         => expiration < today ? ExpiryStatus.Expired
             : expiration <= today.AddDays(SoonDays) ? ExpiryStatus.ExpiringSoon
-            : ExpiryStatus.Fresh;
+            : ExpiryStatus.Good;
 
     public static string Label(ExpiryStatus status, LocalizationService loc) => status switch
     {
         ExpiryStatus.Expired => loc["StatusExpired"],
         ExpiryStatus.ExpiringSoon => loc["StatusExpiringSoon"],
-        _ => loc["StatusFresh"]
+        _ => loc["StatusGood"]
     };
 
     public static BadgeVariant Badge(ExpiryStatus status) => status switch
@@ -61,9 +61,9 @@ public static class ExpiryHelper
                 BadgeVariant.SoftWarning);
 
         // Note: days == 1 always lands in the "soon" branch above (SoonDays >= 1),
-        // so there is no singular fresh case.
+        // so there is no singular good case.
         return new ExpiryBanner(
-            loc["FreshDaysLeft", days],
+            loc["GoodDaysLeft", days],
             "info",
             BadgeVariant.SoftSuccess);
     }

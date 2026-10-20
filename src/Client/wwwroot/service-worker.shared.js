@@ -21,7 +21,7 @@ self.addEventListener('push', (event) => {
         data: { url: (data && data.url) || '/' }
     };
 
-    event.waitUntil(self.registration.showNotification(data.title || 'Smart Pantry', options));
+    event.waitUntil(self.registration.showNotification(data.title || 'Smart Cosmetics', options));
 });
 
 self.addEventListener('notificationclick', (event) => {

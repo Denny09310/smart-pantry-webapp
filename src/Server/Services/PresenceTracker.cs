@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 namespace Server.Services;
 
 /// <summary>
-/// Who is currently connected to the pantry hub, per household member.
+/// Who is currently connected to the cosmetics hub, per household member.
 /// Anonymous connections (no or unknown member id) still receive broadcasts
 /// but never appear in the roster. Connection counts per member collapse to
 /// a set: one member with three tabs open is simply online.

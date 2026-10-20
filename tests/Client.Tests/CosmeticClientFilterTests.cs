@@ -8,33 +8,33 @@ namespace Client.Tests;
 /// Pins the client-side mirror of the server query used for granular realtime
 /// patching: if this mirror drifts, patched rows land in the wrong place.
 /// </summary>
-public class PantryClientFilterTests
+public class CosmeticClientFilterTests
 {
     private static readonly DateOnly Today = new(2026, 10, 14);
 
-    private static PantryItemDto Item(
+    private static CosmeticItemDto Item(
         string id = "a",
         string name = "Milk",
-        string location = "fridge",
+        string category = "face",
         DateOnly? expiration = null)
-        => new(id, name, 1, "pcs", location, null, expiration ?? Today.AddDays(3), null, null, null, null);
+        => new(id, name, 1, "pcs", category, null, expiration ?? Today.AddDays(3), null, null);
 
     [Fact]
     public void MatchesFilters_AllPassesEverything()
     {
-        Assert.True(PantryClientFilter.MatchesFilters(
-            Item(location: "cellar", name: "zzz", expiration: Today.AddDays(-40)),
-            PantryLocations.All, null, PantryRules.StatusAll, Today));
+        Assert.True(CosmeticClientFilter.MatchesFilters(
+            Item(category: "body", name: "zzz", expiration: Today.AddDays(-40)),
+            CosmeticCategories.All, null, CosmeticRules.StatusAll, Today));
     }
 
     [Theory]
-    [InlineData("fridge", "fridge", true)]
-    [InlineData("FRIDGE", "fridge", true)]
-    [InlineData("fridge", "pantry", false)]
-    public void MatchesFilters_LocationIsExactCaseInsensitive(string filter, string location, bool expected)
+    [InlineData("face", "face", true)]
+    [InlineData("FACE", "face", true)]
+    [InlineData("face", "hair", false)]
+    public void MatchesFilters_CategoryIsExactCaseInsensitive(string filter, string category, bool expected)
     {
-        Assert.Equal(expected, PantryClientFilter.MatchesFilters(
-            Item(location: location), filter, null, PantryRules.StatusAll, Today));
+        Assert.Equal(expected, CosmeticClientFilter.MatchesFilters(
+            Item(category: category), filter, null, CosmeticRules.StatusAll, Today));
     }
 
     [Theory]
@@ -45,29 +45,29 @@ public class PantryClientFilterTests
     [InlineData("  ", true)]
     public void MatchesFilters_NameIsSubstringCaseInsensitive(string filter, bool expected)
     {
-        Assert.Equal(expected, PantryClientFilter.MatchesFilters(
-            Item(name: "Whole Milk"), PantryLocations.All, filter, PantryRules.StatusAll, Today));
+        Assert.Equal(expected, CosmeticClientFilter.MatchesFilters(
+            Item(name: "Whole Milk"), CosmeticCategories.All, filter, CosmeticRules.StatusAll, Today));
     }
 
     [Theory]
-    [InlineData(-1, PantryRules.StatusExpired, true)]
-    [InlineData(0, PantryRules.StatusExpired, false)]
-    [InlineData(0, PantryRules.StatusSoon, true)]
-    [InlineData(7, PantryRules.StatusSoon, true)]
-    [InlineData(8, PantryRules.StatusSoon, false)]
-    [InlineData(8, PantryRules.StatusFresh, true)]
-    [InlineData(-1, PantryRules.StatusFresh, false)]
+    [InlineData(-1, CosmeticRules.StatusExpired, true)]
+    [InlineData(0, CosmeticRules.StatusExpired, false)]
+    [InlineData(0, CosmeticRules.StatusSoon, true)]
+    [InlineData(7, CosmeticRules.StatusSoon, true)]
+    [InlineData(8, CosmeticRules.StatusSoon, false)]
+    [InlineData(8, CosmeticRules.StatusGood, true)]
+    [InlineData(-1, CosmeticRules.StatusGood, false)]
     public void MatchesFilters_StatusUsesDerivedBucket(int offsetDays, string status, bool expected)
     {
-        Assert.Equal(expected, PantryClientFilter.MatchesFilters(
-            Item(expiration: Today.AddDays(offsetDays)), PantryLocations.All, null, status, Today));
+        Assert.Equal(expected, CosmeticClientFilter.MatchesFilters(
+            Item(expiration: Today.AddDays(offsetDays)), CosmeticCategories.All, null, status, Today));
     }
 
     [Fact]
     public void Comparer_ExpiryAsc_OrdersByDateThenId()
     {
-        var comparer = PantryClientFilter.GetComparer(ItemSort.ExpiryAsc);
-        var list = new List<PantryItemDto>
+        var comparer = CosmeticClientFilter.GetComparer(ItemSort.ExpiryAsc);
+        var list = new List<CosmeticItemDto>
         {
             Item("b", expiration: Today.AddDays(5)),
             Item("a", expiration: Today.AddDays(1)),
@@ -82,8 +82,8 @@ public class PantryClientFilterTests
     [Fact]
     public void Comparer_ExpiryDesc_OrdersByDateDescThenId()
     {
-        var comparer = PantryClientFilter.GetComparer(ItemSort.ExpiryDesc);
-        var list = new List<PantryItemDto>
+        var comparer = CosmeticClientFilter.GetComparer(ItemSort.ExpiryDesc);
+        var list = new List<CosmeticItemDto>
         {
             Item("b", expiration: Today.AddDays(1)),
             Item("a", expiration: Today.AddDays(5)),
@@ -98,8 +98,8 @@ public class PantryClientFilterTests
     [Fact]
     public void Comparer_Name_OrdersCaseInsensitiveThenId()
     {
-        var comparer = PantryClientFilter.GetComparer(ItemSort.Name);
-        var list = new List<PantryItemDto>
+        var comparer = CosmeticClientFilter.GetComparer(ItemSort.Name);
+        var list = new List<CosmeticItemDto>
         {
             Item("b", name: "banana"),
             Item("a", name: "Apple"),

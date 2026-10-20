@@ -10,7 +10,7 @@ namespace Client.Services;
 /// </summary>
 internal sealed class MemberService(ServerApi api, LocalStorage storage, ILogger<MemberService> log)
 {
-    private const string StorageKey = "smart-pantry.member-id";
+    private const string StorageKey = "smart-cosmetics.member-id";
 
     private readonly List<HouseholdMemberDto> _members = [];
     private bool _initialized;

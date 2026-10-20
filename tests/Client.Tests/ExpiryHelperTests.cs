@@ -13,8 +13,8 @@ public class ExpiryHelperTests
     [InlineData(0, ExpiryStatus.ExpiringSoon)]
     [InlineData(1, ExpiryStatus.ExpiringSoon)]
     [InlineData(7, ExpiryStatus.ExpiringSoon)]
-    [InlineData(8, ExpiryStatus.Fresh)]
-    [InlineData(365, ExpiryStatus.Fresh)]
+    [InlineData(8, ExpiryStatus.Good)]
+    [InlineData(365, ExpiryStatus.Good)]
     public void GetStatus_ClassifiesBoundaries(int offsetDays, ExpiryStatus expected)
     {
         Assert.Equal(expected, ExpiryHelper.GetStatus(Today.AddDays(offsetDays), Today));
@@ -23,7 +23,7 @@ public class ExpiryHelperTests
     [Theory]
     [InlineData(ExpiryStatus.Expired, "StatusExpired")]
     [InlineData(ExpiryStatus.ExpiringSoon, "StatusExpiringSoon")]
-    [InlineData(ExpiryStatus.Fresh, "StatusFresh")]
+    [InlineData(ExpiryStatus.Good, "StatusGood")]
     public void Label_UsesLocalizerKey(ExpiryStatus status, string expectedKey)
     {
         var loc = TestLoc.Create(new Dictionary<string, string> { [expectedKey] = $"[{expectedKey}]" });
@@ -34,7 +34,7 @@ public class ExpiryHelperTests
     [Theory]
     [InlineData(ExpiryStatus.Expired, BadgeVariant.Destructive)]
     [InlineData(ExpiryStatus.ExpiringSoon, BadgeVariant.Warning)]
-    [InlineData(ExpiryStatus.Fresh, BadgeVariant.SoftSuccess)]
+    [InlineData(ExpiryStatus.Good, BadgeVariant.SoftSuccess)]
     public void Badge_MapsStatus(ExpiryStatus status, BadgeVariant expected)
     {
         Assert.Equal(expected, ExpiryHelper.Badge(status));
@@ -81,15 +81,15 @@ public class ExpiryHelperTests
     }
 
     [Fact]
-    public void GetBanner_SoonAndFresh_FormatCounts()
+    public void GetBanner_SoonAndGood_FormatCounts()
     {
         var loc = TestLoc.Create(new Dictionary<string, string>
         {
             ["UseSoonDaysLeft"] = "soon {0}",
-            ["FreshDaysLeft"] = "fresh {0}",
+            ["GoodDaysLeft"] = "good {0}",
         });
 
         Assert.Equal("soon 5", ExpiryHelper.GetBanner(Today.AddDays(5), Today, loc).Text);
-        Assert.Equal("fresh 30", ExpiryHelper.GetBanner(Today.AddDays(30), Today, loc).Text);
+        Assert.Equal("good 30", ExpiryHelper.GetBanner(Today.AddDays(30), Today, loc).Text);
     }
 }

@@ -22,7 +22,7 @@
         <span class="min-w-0 flex-1">
             <span class="block truncate text-sm font-medium">@Item.ItemName</span>
             <span class="block text-xs text-muted-foreground">
-                @Loc["ExpiresAt", Item.ExpirationDate.ToString("MMM d")] · @Ago(Item.CreatedAt)
+                @Loc["ExpiresAt", Item.ExpiryDate.ToString("MMM d")] · @Ago(Item.CreatedAt)
             </span>
         </span>
     </ChildContent>

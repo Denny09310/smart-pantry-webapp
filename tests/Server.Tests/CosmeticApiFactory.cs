@@ -12,12 +12,12 @@ namespace Server.Tests;
 
 /// <summary>
 /// Boots the full Server host in-memory (including Minimal API validation)
-/// against a dedicated <c>smart_pantry_tests</c> Postgres database, which is
+/// against a dedicated <c>smart_cosmetics_tests</c> Postgres database, which is
 /// created on demand. Override the connection with SMARTPANTRY_TEST_CONNECTION.
 /// </summary>
-public class PantryApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class CosmeticApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    public string TestDatabase { get; } = $"smart_pantry_tests_{Guid.CreateVersion7():N}";
+    public string TestDatabase { get; } = $"smart_cosmetics_tests_{Guid.CreateVersion7():N}";
 
     public string ConnectionString =>
         Environment.GetEnvironmentVariable("SMARTPANTRY_TEST_CONNECTION") is { } configured

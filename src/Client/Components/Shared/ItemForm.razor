@@ -38,7 +38,7 @@
                     <BbFieldContent>
                         <BbInputGroup Class="bg-card">
                             <BbInputGroupInput Id="item-name" @bind-Value="_state.Input.Name"
-                                               Placeholder="e.g. Tomato passata, Whole milk" UpdateTiming="UpdateTiming.Immediate" />
+                                               Placeholder="e.g. Face cream, Shampoo" UpdateTiming="UpdateTiming.Immediate" />
                         </BbInputGroup>
                         <BbFieldError Errors="@context.GetValidationMessages(() => _state.Input.Name)" />
                     </BbFieldContent>
@@ -67,7 +67,7 @@
                     <ValidationMessage For="@(() => _state.Input.Quantity)" class="text-sm text-destructive" />
 
                     <BbChipSet @bind-Value="_state.Input.Unit" Wrap="false" Class="gap-1.5 scrollbar-none!">
-                        @foreach (var unit in PantryLocations.Units)
+                        @foreach (var unit in CosmeticCategories.Units)
                         {
                             <BbChip Value="@(unit)">@unit</BbChip>
                         }
@@ -75,39 +75,43 @@
                     <ValidationMessage For="@(() => _state.Input.Unit)" class="text-sm text-destructive" />
                 </div>
 
-                @* Location *@
+                @* Category *@
                 <div class="space-y-2">
-                    <BbLabel Class="text-sm font-medium">@Loc["Location"]</BbLabel>
-                    <BbToggleGroup @bind-Value="_state.Input.Location" Type="ToggleGroupType.Single" Required="true"
-                                   Variant="ToggleVariant.Outline" Class="grid grid-cols-4 gap-2">
-                        <BbToggleGroupItem Value="@("pantry")" Class="h-auto flex-col gap-1 py-2">
-                            <LucideIcon Name="package" Size="20" />
-                            <span class="text-xs font-medium">@Loc["Pantry"]</span>
+                    <BbLabel Class="text-sm font-medium">@Loc["Category"]</BbLabel>
+                    <BbToggleGroup @bind-Value="_state.Input.Category" Type="ToggleGroupType.Single" Required="true"
+                                   Variant="ToggleVariant.Outline" Class="grid grid-cols-5 gap-2">
+                        <BbToggleGroupItem Value="@("face")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="smile" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Face"]</span>
                         </BbToggleGroupItem>
-                        <BbToggleGroupItem Value="@("fridge")" Class="h-auto flex-col gap-1 py-2">
-                            <LucideIcon Name="refrigerator" Size="20" />
-                            <span class="text-xs font-medium">@Loc["Fridge"]</span>
+                        <BbToggleGroupItem Value="@("hair")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="brush" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Hair"]</span>
                         </BbToggleGroupItem>
-                        <BbToggleGroupItem Value="@("freezer")" Class="h-auto flex-col gap-1 py-2">
-                            <LucideIcon Name="snowflake" Size="20" />
-                            <span class="text-xs font-medium">@Loc["Freezer"]</span>
+                        <BbToggleGroupItem Value="@("body")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="person-standing" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Body"]</span>
                         </BbToggleGroupItem>
-                        <BbToggleGroupItem Value="@("cabinet")" Class="h-auto flex-col gap-1 py-2">
-                            <LucideIcon Name="archive" Size="20" />
-                            <span class="text-xs font-medium">@Loc["Cabinet"]</span>
+                        <BbToggleGroupItem Value="@("hands")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="hand" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Hands"]</span>
+                        </BbToggleGroupItem>
+                        <BbToggleGroupItem Value="@("perfume")" Class="h-auto flex-col gap-1 py-2">
+                            <LucideIcon Name="spray-can" Size="20" />
+                            <span class="text-xs font-medium">@Loc["Perfume"]</span>
                         </BbToggleGroupItem>
                     </BbToggleGroup>
-                    <ValidationMessage For="@(() => _state.Input.Location)" class="text-sm text-destructive" />
+                    <ValidationMessage For="@(() => _state.Input.Category)" class="text-sm text-destructive" />
                 </div>
 
                 @* Expiry *@
                 <BbField>
                     <BbFieldLabel Class="text-sm font-medium">@Loc["DurationAndExpiry"]</BbFieldLabel>
                     <BbFieldContent>
-                        <BbDatePicker @bind-Value="_state.Input.ExpirationDate"
+                        <BbDatePicker @bind-Value="_state.Input.ExpiryDate"
                                       MinDate="@(Item is null ? DateTime.Today : null)" DateFormat="dd/MM/yyyy"
                                       Placeholder="@Loc["PickADate"]" Class="w-full" />
-                        <ValidationMessage For="@(() => _state.Input.ExpirationDate)" class="text-sm text-destructive" />
+                        <ValidationMessage For="@(() => _state.Input.ExpiryDate)" class="text-sm text-destructive" />
                     </BbFieldContent>
                 </BbField>
 
@@ -136,7 +140,7 @@
                         <span class="text-xs text-muted-foreground">@Loc["Optional"]</span>
                     </div>
                     <BbTextarea Id="batch-notes" @bind-Value="_state.Input.Notes"
-                                Placeholder="e.g. Arrabbiata, top shelf, opened" rows="2" />
+                                Placeholder="e.g. Nivea, blue label, opened" rows="2" />
                 </div>
             </div>
 
@@ -160,10 +164,10 @@
 {
     /// <summary>When set, the form edits this item instead of creating a new one.</summary>
     [Parameter]
-    public PantryItemDto? Item { get; set; }
+    public CosmeticItemDto? Item { get; set; }
 
     private ExpiryHelper.ExpiryBanner Banner => ExpiryHelper.GetBanner(
-        DateOnly.FromDateTime((_state.Input.ExpirationDate ?? DateTime.Today.AddDays(7)).Date),
+        DateOnly.FromDateTime((_state.Input.ExpiryDate ?? DateTime.Today.AddDays(7)).Date),
         DateOnly.FromDateTime(DateTime.Today),
         Loc);
 
@@ -180,16 +184,14 @@
             _state.SyncedItem = item;
             _state.EditingId = item.Id;
             _state.ScannedBarcode = item.Barcode;
-            _state.ScannedNutriScore = item.NutriScore;
-            _state.ScannedNutrition = item.Nutrition;
             _state.Input = new InputModel
             {
                 Name = item.Name,
                 Quantity = item.Quantity,
                 Unit = item.Unit,
-                Location = item.Location,
+                Category = item.Category,
                 Notes = item.Notes,
-                ExpirationDate = item.ExpirationDate.ToDateTime(TimeOnly.MinValue)
+                ExpiryDate = item.ExpiryDate.ToDateTime(TimeOnly.MinValue)
             };
         }
         else if (_state.SyncedItem is not null)
@@ -197,8 +199,6 @@
             _state.SyncedItem = null;
             _state.EditingId = null;
             _state.ScannedBarcode = null;
-            _state.ScannedNutriScore = null;
-            _state.ScannedNutrition = null;
             _state.Input = new InputModel();
         }
     }
@@ -229,10 +229,8 @@
             if (!string.IsNullOrWhiteSpace(product.Unit))
                 _state.Input.Unit = product.Unit;
 
-            // Store barcode and nutrition info for saving
+            // Store the barcode for saving
             _state.ScannedBarcode = product.Barcode;
-            _state.ScannedNutriScore = product.NutriScore;
-            _state.ScannedNutrition = product.Nutrition;
 
             StateHasChanged();
         }
@@ -257,12 +255,12 @@
 
     private void SetExpiry(int daysFromToday)
     {
-        _state.Input.ExpirationDate = DateTime.Today.AddDays(daysFromToday);
+        _state.Input.ExpiryDate = DateTime.Today.AddDays(daysFromToday);
     }
 
     private async Task HandleSubmitAsync()
     {
-        if (_state.Input.ExpirationDate is null)
+        if (_state.Input.ExpiryDate is null)
             return;
 
         _state.Saving = true;
@@ -271,16 +269,14 @@
         {
             if (Item is null)
             {
-                using var response = await Api.Pantry.CreateAsync(new CreatePantryItemRequest(
+                using var response = await Api.Cosmetics.CreateAsync(new CreateCosmeticItemRequest(
                     _state.Input.Name.Trim(),
                     _state.Input.Quantity,
                     _state.Input.Unit,
-                    _state.Input.Location,
+                    _state.Input.Category,
                     string.IsNullOrWhiteSpace(_state.Input.Notes) ? null : _state.Input.Notes.Trim(),
-                    DateOnly.FromDateTime(_state.Input.ExpirationDate.Value),
-                    _state.ScannedBarcode,
-                    _state.ScannedNutriScore,
-                    _state.ScannedNutrition),
+                    DateOnly.FromDateTime(_state.Input.ExpiryDate.Value),
+                    _state.ScannedBarcode),
                     Members.CurrentMemberId);
 
                 if (!await HandleSavedAsync(response, Loc["ItemAdded"]))
@@ -288,16 +284,14 @@
             }
             else
             {
-                using var response = await Api.Pantry.UpdateAsync(Item.Id, new UpdatePantryItemRequest(
+                using var response = await Api.Cosmetics.UpdateAsync(Item.Id, new UpdateCosmeticItemRequest(
                     _state.Input.Name.Trim(),
                     _state.Input.Quantity,
                     _state.Input.Unit,
-                    _state.Input.Location,
+                    _state.Input.Category,
                     string.IsNullOrWhiteSpace(_state.Input.Notes) ? null : _state.Input.Notes.Trim(),
-                    DateOnly.FromDateTime(_state.Input.ExpirationDate.Value),
-                    _state.ScannedBarcode,
-                    _state.ScannedNutriScore,
-                    _state.ScannedNutrition));
+                    DateOnly.FromDateTime(_state.Input.ExpiryDate.Value),
+                    _state.ScannedBarcode));
 
                 if (!await HandleSavedAsync(response, Loc["ItemUpdated"]))
                     return;
@@ -344,10 +338,10 @@
         public string Unit { get; set; } = "pcs";
 
         [Required]
-        public string Location { get; set; } = "pantry";
+        public string Category { get; set; } = "face";
 
         [Required]
-        public DateTime? ExpirationDate { get; set; } = DateTime.Today.AddDays(7);
+        public DateTime? ExpiryDate { get; set; } = DateTime.Today.AddDays(7);
 
         [StringLength(2000)]
         public string? Notes { get; set; }

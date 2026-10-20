@@ -10,11 +10,11 @@ public partial class FilterSheetBody
 
     private sealed class State
     {
-        public string? Location { get; set; } = PantryLocations.All;
-        public string Status { get; set; } = PantryRules.StatusAll;
+        public string? Category { get; set; } = CosmeticCategories.All;
+        public string Status { get; set; } = CosmeticRules.StatusAll;
         public ItemSort Sort { get; set; } = ItemSort.ExpiryAsc;
 
-        public string? SeenLocation { get; set; } = "__none__";
+        public string? SeenCategory { get; set; } = "__none__";
         public string SeenStatus { get; set; } = "__none__";
         public ItemSort? SeenSort { get; set; }
     }

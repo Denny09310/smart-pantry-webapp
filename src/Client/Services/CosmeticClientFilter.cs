@@ -4,34 +4,34 @@ using Shared.Models;
 namespace Client.Services;
 
 /// <summary>
-/// Client-side mirror of the server pantry query (filters + ordering) so
+/// Client-side mirror of the server cosmetics query (filters + ordering) so
 /// realtime broadcasts can patch loaded rows without a full refetch.
 /// Approximate by design: any doubt falls back to a full reload, which
 /// self-corrects placement and membership.
 /// </summary>
-public static class PantryClientFilter
+public static class CosmeticClientFilter
 {
     /// <summary>Mirrors the server query: exact location, substring name, derived status.</summary>
     public static bool MatchesFilters(
-        PantryItemDto item, string? location, string? name, string status, DateOnly today)
+        CosmeticItemDto item, string? location, string? name, string status, DateOnly today)
     {
         if (!string.IsNullOrWhiteSpace(location)
-            && location != PantryLocations.All
-            && !string.Equals(item.Location, location, StringComparison.OrdinalIgnoreCase))
+            && location != CosmeticCategories.All
+            && !string.Equals(item.Category, location, StringComparison.OrdinalIgnoreCase))
             return false;
 
         if (!string.IsNullOrWhiteSpace(name)
             && !item.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        if (status != PantryRules.StatusAll)
+        if (status != CosmeticRules.StatusAll)
         {
-            var itemStatus = ExpiryHelper.GetStatus(item.ExpirationDate, today);
+            var itemStatus = ExpiryHelper.GetStatus(item.ExpiryDate, today);
             var matches = status switch
             {
-                var s when s == PantryRules.StatusExpired => itemStatus == ExpiryStatus.Expired,
-                var s when s == PantryRules.StatusSoon => itemStatus == ExpiryStatus.ExpiringSoon,
-                var s when s == PantryRules.StatusFresh => itemStatus == ExpiryStatus.Fresh,
+                var s when s == CosmeticRules.StatusExpired => itemStatus == ExpiryStatus.Expired,
+                var s when s == CosmeticRules.StatusSoon => itemStatus == ExpiryStatus.ExpiringSoon,
+                var s when s == CosmeticRules.StatusGood => itemStatus == ExpiryStatus.Good,
                 _ => true
             };
             if (!matches)
@@ -42,11 +42,11 @@ public static class PantryClientFilter
     }
 
     /// <summary>Mirrors the server ordering; any drift self-corrects on the next full reload.</summary>
-    public static Comparison<PantryItemDto> GetComparer(ItemSort sort) => sort switch
+    public static Comparison<CosmeticItemDto> GetComparer(ItemSort sort) => sort switch
     {
         ItemSort.ExpiryDesc => (a, b) =>
         {
-            var cmp = b.ExpirationDate.CompareTo(a.ExpirationDate);
+            var cmp = b.ExpiryDate.CompareTo(a.ExpiryDate);
             return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
         },
         ItemSort.Name => (a, b) =>
@@ -56,7 +56,7 @@ public static class PantryClientFilter
         },
         _ => (a, b) =>
         {
-            var cmp = a.ExpirationDate.CompareTo(b.ExpirationDate);
+            var cmp = a.ExpiryDate.CompareTo(b.ExpiryDate);
             return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
         }
     };

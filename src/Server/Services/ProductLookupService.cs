@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,9 +10,9 @@ public interface IProductLookupService
     Task<ProductLookupDto?> LookupAsync(string barcode, CancellationToken ct);
 }
 
-public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProductLookupService
+public sealed class OpenBeautyFactsProductLookupService(HttpClient http) : IProductLookupService
 {
-    private const string BaseUrl = "https://world.openfoodfacts.org/api/v0/product/";
+    private const string BaseUrl = "https://world.openbeautyfacts.org/api/v0/product/";
 
     public async Task<ProductLookupDto?> LookupAsync(string barcode, CancellationToken ct)
     {
@@ -21,23 +20,12 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
 
         try
         {
-            var response = await http.GetFromJsonAsync<OpenFoodFactsResponse>(url, ct);
+            var response = await http.GetFromJsonAsync<OpenBeautyFactsResponse>(url, ct);
 
             if (response?.Status != 1 || response.Product is null)
                 return null;
 
             var product = response.Product;
-            var nutriments = product.Nutriments;
-
-            var nutrition = new NutritionFacts(
-                EnergyKcal: EnergyKcal(nutriments),
-                Proteins: ToDouble(nutriments?.Proteins),
-                Carbohydrates: ToDouble(nutriments?.Carbohydrates),
-                Sugars: ToDouble(nutriments?.Sugars),
-                Fat: ToDouble(nutriments?.Fat),
-                SaturatedFat: ToDouble(nutriments?.SaturatedFat),
-                Salt: ToDouble(nutriments?.Salt),
-                Fiber: ToDouble(nutriments?.Fiber));
 
             return new ProductLookupDto(
                 Barcode: barcode,
@@ -45,8 +33,6 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
                 Brand: NormalizeBrands(product.Brands),
                 Quantity: ParseQuantity(product.Quantity),
                 Unit: ParseUnit(product.Quantity),
-                NutriScore: NormalizeNutriScore(product.NutriscoreGrade),
-                Nutrition: nutrition,
                 ImageUrl: product.ImageUrl ?? product.ImageFrontUrl,
                 IngredientsText: string.IsNullOrWhiteSpace(product.IngredientsText)
                     ? null
@@ -79,23 +65,11 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
         return null;
     }
 
-    /// <summary>
-    /// OFF grades are single a–e letters; anything else ("unknown",
-    /// "not-applicable") becomes null so the save never trips validation.
-    /// </summary>
-    private static string? NormalizeNutriScore(string? grade)
-    {
-        var letter = grade?.Trim().ToUpperInvariant();
-        return letter is { Length: 1 } value && value[0] is >= 'A' and <= 'E'
-            ? value
-            : null;
-    }
-
     private static string Truncate(string value, int maxLength)
         => value.Length <= maxLength ? value : value[..maxLength];
 
     /// <summary>
-    /// Open Food Facts returns brands as a free-form comma list that often
+    /// Open Beauty Facts returns brands as a free-form comma list that often
     /// repeats entries ("Acme, acme, ACME"). Split, trim, drop empties and
     /// dedupe case-insensitively so downstream notes don't accumulate junk.
     /// </summary>
@@ -135,16 +109,16 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
         return null;
     }
 
-    private sealed class OpenFoodFactsResponse
+    private sealed class OpenBeautyFactsResponse
     {
         [JsonPropertyName("status")]
         public int Status { get; set; }
 
         [JsonPropertyName("product")]
-        public OpenFoodFactsProduct? Product { get; set; }
+        public OpenBeautyFactsProduct? Product { get; set; }
     }
 
-    private sealed class OpenFoodFactsProduct
+    private sealed class OpenBeautyFactsProduct
     {
         [JsonPropertyName("product_name")]
         public string? ProductName { get; set; }
@@ -158,9 +132,6 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
         [JsonPropertyName("quantity")]
         public string? Quantity { get; set; }
 
-        [JsonPropertyName("nutriscore_grade")]
-        public string? NutriscoreGrade { get; set; }
-
         [JsonPropertyName("ingredients_text")]
         public string? IngredientsText { get; set; }
 
@@ -169,86 +140,5 @@ public sealed class OpenFoodFactsProductLookupService(HttpClient http) : IProduc
 
         [JsonPropertyName("image_front_url")]
         public string? ImageFrontUrl { get; set; }
-
-        [JsonPropertyName("nutriments")]
-        public OpenFoodFactsNutriments? Nutriments { get; set; }
-    }
-
-    private sealed class OpenFoodFactsNutriments
-    {
-        // OFF sends numbers, numeric strings, or "" per key — never assume.
-        [JsonPropertyName("energy-kcal_100g")]
-        public JsonElement? EnergyKcal { get; set; }
-
-        [JsonPropertyName("proteins_100g")]
-        public JsonElement? Proteins { get; set; }
-
-        [JsonPropertyName("carbohydrates_100g")]
-        public JsonElement? Carbohydrates { get; set; }
-
-        [JsonPropertyName("sugars_100g")]
-        public JsonElement? Sugars { get; set; }
-
-        [JsonPropertyName("fat_100g")]
-        public JsonElement? Fat { get; set; }
-
-        [JsonPropertyName("saturated-fat_100g")]
-        public JsonElement? SaturatedFat { get; set; }
-
-        [JsonPropertyName("salt_100g")]
-        public JsonElement? Salt { get; set; }
-
-        [JsonPropertyName("fiber_100g")]
-        public JsonElement? Fiber { get; set; }
-
-        [JsonPropertyName("energy_100g")]
-        public JsonElement? Energy { get; set; }
-
-        [JsonPropertyName("energy_unit")]
-        public string? EnergyUnit { get; set; }
-    }
-
-    /// <summary>
-    /// Energy prefers the explicit kcal field. Plain <c>energy_100g</c> is
-    /// kJ unless <c>energy_unit</c> says otherwise; when the unit is unknown
-    /// we return null instead of guessing between kJ and kcal.
-    /// </summary>
-    private static double? EnergyKcal(OpenFoodFactsNutriments? nutriments)
-    {
-        if (ToDouble(nutriments?.EnergyKcal) is { } kcal)
-            return kcal;
-
-        if (ToDouble(nutriments?.Energy) is not { } energy)
-            return null;
-
-        var unit = nutriments?.EnergyUnit;
-
-        if (string.Equals(unit, "kcal", StringComparison.OrdinalIgnoreCase))
-            return energy;
-
-        if (string.Equals(unit, "kj", StringComparison.OrdinalIgnoreCase))
-            return energy / 4.184;
-
-        return null;
-    }
-
-    private static double? ToDouble(JsonElement? element)
-    {
-        if (element is not { } value
-            || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return null;
-
-        if (value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number))
-            return number;
-
-        if (value.ValueKind == JsonValueKind.String
-            && double.TryParse(
-                value.GetString()?.Replace(',', '.'),
-                NumberStyles.Any,
-                CultureInfo.InvariantCulture,
-                out var parsed))
-            return parsed;
-
-        return null;
     }
 }

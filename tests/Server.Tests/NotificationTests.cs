@@ -12,7 +12,7 @@ using Server.Services;
 
 namespace Server.Tests;
 
-public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class NotificationApiTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -31,8 +31,8 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
     [Fact]
     public async Task MarkRead_SetsReadAt_AndDecrementsUnread()
     {
-        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-item-{Guid.CreateVersion7()}");
-        var notification = await SeedNotificationAsync(item.Id, item.ExpirationDate);
+        var item = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-item-{Guid.CreateVersion7()}");
+        var notification = await SeedNotificationAsync(item.Id, item.ExpiryDate);
 
         try
         {
@@ -50,7 +50,7 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, item.Id);
         }
     }
 
@@ -65,10 +65,10 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
     [Fact]
     public async Task MarkAllRead_MarksEverything()
     {
-        var first = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-item-a-{Guid.CreateVersion7()}");
-        var second = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-item-b-{Guid.CreateVersion7()}");
-        await SeedNotificationAsync(first.Id, first.ExpirationDate);
-        await SeedNotificationAsync(second.Id, second.ExpirationDate);
+        var first = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-item-a-{Guid.CreateVersion7()}");
+        var second = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-item-b-{Guid.CreateVersion7()}");
+        await SeedNotificationAsync(first.Id, first.ExpiryDate);
+        await SeedNotificationAsync(second.Id, second.ExpiryDate);
 
         try
         {
@@ -84,8 +84,8 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, first.Id);
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, second.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, first.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, second.Id);
         }
     }
 
@@ -96,8 +96,8 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
         var notification = new Notification
         {
             Type = ReminderWorker.ExpiryWarningType,
-            PantryItemId = itemId,
-            ExpirationDate = expiration
+            CosmeticItemId = itemId,
+            ExpiryDate = expiration
         };
         db.Notifications.Add(notification);
         await db.SaveChangesAsync();
@@ -107,7 +107,7 @@ public class NotificationApiTests(PantryApiFactory factory) : IClassFixture<Pant
 
 }
 
-public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class ReminderWorkerTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     [Theory]
     [InlineData(7, 0, 0, 1)] // 7am -> 1h to 8am
@@ -126,11 +126,11 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
     public async Task CheckAsync_CreatesRemindersOnlyInsideWindow_AndDeduplicates()
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var soon = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-soon-{Guid.CreateVersion7()}", today.AddDays(3));
-        var todayItem = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-today-{Guid.CreateVersion7()}", today);
-        var edge = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-edge-{Guid.CreateVersion7()}", today.AddDays(7));
-        var expired = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-expired-{Guid.CreateVersion7()}", today.AddDays(-1));
-        var future = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-future-{Guid.CreateVersion7()}", today.AddDays(8));
+        var soon = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-soon-{Guid.CreateVersion7()}", today.AddDays(3));
+        var todayItem = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-today-{Guid.CreateVersion7()}", today);
+        var edge = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-edge-{Guid.CreateVersion7()}", today.AddDays(7));
+        var expired = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-expired-{Guid.CreateVersion7()}", today.AddDays(-1));
+        var future = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-future-{Guid.CreateVersion7()}", today.AddDays(8));
 
         try
         {
@@ -153,12 +153,12 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var remindedIds = await db.Notifications.AsNoTracking()
                     .Where(x => x.Type == ReminderWorker.ExpiryWarningType
-                        && (x.PantryItemId == soon.Id
-                            || x.PantryItemId == todayItem.Id
-                            || x.PantryItemId == edge.Id
-                            || x.PantryItemId == expired.Id
-                            || x.PantryItemId == future.Id))
-                    .Select(x => x.PantryItemId)
+                        && (x.CosmeticItemId == soon.Id
+                            || x.CosmeticItemId == todayItem.Id
+                            || x.CosmeticItemId == edge.Id
+                            || x.CosmeticItemId == expired.Id
+                            || x.CosmeticItemId == future.Id))
+                    .Select(x => x.CosmeticItemId)
                     .ToListAsync();
 
                 Assert.Equal(3, remindedIds.Count);
@@ -174,11 +174,11 @@ public class ReminderWorkerTests(PantryApiFactory factory) : IClassFixture<Pantr
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, soon.Id);
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, todayItem.Id);
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, edge.Id);
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, expired.Id);
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, future.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, soon.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, todayItem.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, edge.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, expired.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, future.Id);
         }
     }
 

@@ -34,7 +34,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         if (cached is not null)
             return TypedResults.Ok(ToDto(cached));
 
-        // Miss: ask OpenFoodFacts, then remember the answer.
+        // Miss: ask OpenBeautyFacts, then remember the answer.
         var product = await lookup.LookupAsync(request.Barcode, ct);
 
         if (product is not null)
@@ -44,7 +44,7 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         }
 
         // Fall back to the local database for barcodes we know from
-        // manually entered pantry items that were never fetched remotely.
+        // manually entered cosmetics that were never fetched remotely.
         var localProduct = await db.Items.AsNoTracking()
             .Where(x => x.Barcode == request.Barcode)
             .Select(x => new ProductLookupDto(
@@ -53,8 +53,6 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
                 null,
                 x.Quantity > 0 ? x.Quantity : null,
                 x.Unit,
-                x.NutriScore,
-                NutritionFactsExtensions.FromJson(x.NutritionJson),
                 null))
             .FirstOrDefaultAsync(ct);
 
@@ -77,8 +75,6 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
             existing.Brand = product.Brand;
             existing.Quantity = product.Quantity;
             existing.Unit = product.Unit;
-            existing.NutriScore = product.NutriScore;
-            existing.NutritionJson = product.Nutrition?.ToJson();
             existing.ImageUrl = product.ImageUrl;
             existing.IngredientsText = product.IngredientsText;
             existing.UpdatedAt = DateTimeOffset.UtcNow;
@@ -103,8 +99,6 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         cached.Brand,
         cached.Quantity,
         cached.Unit,
-        cached.NutriScore,
-        NutritionFactsExtensions.FromJson(cached.NutritionJson),
         cached.ImageUrl,
         cached.IngredientsText);
 
@@ -115,8 +109,6 @@ internal class ProductEndpoints(ApplicationDbContext db, IProductLookupService l
         Brand = product.Brand,
         Quantity = product.Quantity,
         Unit = product.Unit,
-        NutriScore = product.NutriScore,
-        NutritionJson = product.Nutrition?.ToJson(),
         ImageUrl = product.ImageUrl,
         IngredientsText = product.IngredientsText,
         UpdatedAt = DateTimeOffset.UtcNow

@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle" xml:space="preserve">
-    <value>Smart Pantry</value>
+    <value>Smart Cosmetics</value>
   </data>
-  <data name="Pantry" xml:space="preserve">
-    <value>Dispensa</value>
+  <data name="Cosmetics" xml:space="preserve">
+    <value>Cosmetici</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Impostazioni</value>
@@ -154,7 +154,7 @@
     <value>Aggiungi articolo</value>
   </data>
   <data name="SearchPlaceholder" xml:space="preserve">
-    <value>Cerca articoli in dispensa...</value>
+    <value>Cerca cosmetici...</value>
   </data>
   <data name="Filters" xml:space="preserve">
     <value>Filtri</value>
@@ -171,14 +171,14 @@
   <data name="IncreaseQuantity" xml:space="preserve">
     <value>Aumenta quantità</value>
   </data>
-  <data name="Location" xml:space="preserve">
-    <value>Posizione</value>
+  <data name="Category" xml:space="preserve">
+    <value>Categoria</value>
   </data>
   <data name="DurationAndExpiry" xml:space="preserve">
     <value>Durata e scadenza</value>
   </data>
   <data name="BatchNotes" xml:space="preserve">
-    <value>Note lotto</value>
+    <value>Note</value>
   </data>
   <data name="SaveItem" xml:space="preserve">
     <value>Salva articolo</value>
@@ -222,41 +222,11 @@
   <data name="UseSoonDaysLeft" xml:space="preserve">
     <value>Da consumare · {0} giorni rimasti</value>
   </data>
-  <data name="FreshDaysLeft" xml:space="preserve">
-    <value>Fresco · {0} giorni rimasti</value>
+  <data name="GoodDaysLeft" xml:space="preserve">
+    <value>In buono stato · {0} giorni rimasti</value>
   </data>
   <data name="Notes" xml:space="preserve">
     <value>Note</value>
-  </data>
-  <data name="NutriScore" xml:space="preserve">
-    <value>Nutri-Score</value>
-  </data>
-  <data name="NutritionPer100g" xml:space="preserve">
-    <value>Valori nutrizionali per 100 g</value>
-  </data>
-  <data name="NutritionEnergy" xml:space="preserve">
-    <value>Energia</value>
-  </data>
-  <data name="NutritionProtein" xml:space="preserve">
-    <value>Proteine</value>
-  </data>
-  <data name="NutritionCarbs" xml:space="preserve">
-    <value>Carboidrati</value>
-  </data>
-  <data name="NutritionSugars" xml:space="preserve">
-    <value>Zuccheri</value>
-  </data>
-  <data name="NutritionFat" xml:space="preserve">
-    <value>Grassi</value>
-  </data>
-  <data name="NutritionSaturatedFat" xml:space="preserve">
-    <value>Grassi saturi</value>
-  </data>
-  <data name="NutritionSalt" xml:space="preserve">
-    <value>Sale</value>
-  </data>
-  <data name="Fiber" xml:space="preserve">
-    <value>Fibre</value>
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Modifica</value>
@@ -320,14 +290,20 @@
   <data name="NoItemsDescription" xml:space="preserve">
     <value>Prova a rimuovere i filtri o aggiungine uno</value>
   </data>
-  <data name="Fridge" xml:space="preserve">
-    <value>Frigo</value>
+  <data name="Face" xml:space="preserve">
+    <value>Viso</value>
   </data>
-  <data name="Freezer" xml:space="preserve">
-    <value>Freezer</value>
+  <data name="Hair" xml:space="preserve">
+    <value>Capelli</value>
   </data>
-  <data name="Cabinet" xml:space="preserve">
-    <value>Mobiletto</value>
+  <data name="Body" xml:space="preserve">
+    <value>Corpo</value>
+  </data>
+  <data name="Hands" xml:space="preserve">
+    <value>Mani</value>
+  </data>
+  <data name="Perfume" xml:space="preserve">
+    <value>Profumo</value>
   </data>
   <data name="ScanBarcode" xml:space="preserve">
     <value>Scansiona codice a barre (opzionale)</value>
@@ -403,11 +379,11 @@
   <data name="StatusExpiringSoon" xml:space="preserve">
     <value>In scadenza</value>
   </data>
-  <data name="StatusFresh" xml:space="preserve">
-    <value>Fresco</value>
+  <data name="StatusGood" xml:space="preserve">
+    <value>In buono stato</value>
   </data>
-  <data name="AllLocations" xml:space="preserve">
-    <value>Tutte le posizioni</value>
+  <data name="AllCategories" xml:space="preserve">
+    <value>Tutte le categorie</value>
   </data>
   <data name="AllStatuses" xml:space="preserve">
     <value>Tutti gli stati</value>
@@ -444,27 +420,6 @@
   </data>
   <data name="NoUserSelected" xml:space="preserve">
     <value>Nessun utente selezionato</value>
-  </data>
-  <data name="Recipes" xml:space="preserve">
-    <value>Ricette</value>
-  </data>
-  <data name="RecipeSearchPlaceholder" xml:space="preserve">
-    <value>Aggiungi ingredienti...</value>
-  </data>
-  <data name="NoRecipesFound" xml:space="preserve">
-    <value>Nessuna ricetta trovata</value>
-  </data>
-  <data name="NoRecipesDescription" xml:space="preserve">
-    <value>Prova con ingredienti diversi.</value>
-  </data>
-  <data name="SearchRecipesFailed" xml:space="preserve">
-    <value>Ricerca ricette non riuscita. Riprova.</value>
-  </data>
-  <data name="RecipeIngredients" xml:space="preserve">
-    <value>Ingredienti</value>
-  </data>
-  <data name="RecipeInstructions" xml:space="preserve">
-    <value>Preparazione</value>
   </data>
   <data name="Barcode" xml:space="preserve">
     <value>Codice a barre</value>
@@ -584,10 +539,10 @@
     <value>{0} selezionata</value>
   </data>
   <data name="AddItemSubtitle" xml:space="preserve">
-    <value>Registra un nuovo lotto con la scadenza.</value>
+    <value>Registra un nuovo prodotto con la sua data di scadenza.</value>
   </data>
   <data name="EditItemSubtitle" xml:space="preserve">
-    <value>Aggiorna i dettagli del lotto.</value>
+    <value>Aggiorna i dettagli del prodotto.</value>
   </data>
   <data name="ScanBarcodeButton" xml:space="preserve">
     <value>Scansiona codice</value>

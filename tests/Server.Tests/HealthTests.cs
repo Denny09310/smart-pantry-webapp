@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Server.Tests;
 
-public class HealthTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class HealthTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 

@@ -2,9 +2,9 @@ namespace Shared.Models;
 
 public record NotificationDto(
     string Id,
-    string PantryItemId,
+    string CosmeticItemId,
     string ItemName,
-    DateOnly ExpirationDate,
+    DateOnly ExpiryDate,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ReadAt);
 

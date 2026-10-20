@@ -6,7 +6,7 @@
 @code
 {
     [Parameter, EditorRequired]
-    public DateOnly ExpirationDate { get; set; }
+    public DateOnly ExpiryDate { get; set; }
 
     [Parameter]
     public DateOnly Today { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -14,5 +14,5 @@
     [Parameter]
     public string? Class { get; set; } = "shrink-0";
 
-    private ExpiryStatus Status => ExpiryHelper.GetStatus(ExpirationDate, Today);
+    private ExpiryStatus Status => ExpiryHelper.GetStatus(ExpiryDate, Today);
 }

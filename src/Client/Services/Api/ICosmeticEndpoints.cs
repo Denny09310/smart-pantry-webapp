@@ -4,29 +4,29 @@ using Shared.Models;
 
 namespace Client.Services;
 
-[PathPrefix("/api/pantry")]
-internal interface IPantryEndpoints
+[PathPrefix("/api/cosmetics")]
+internal interface ICosmeticEndpoints
 {
     [Get("/")]
-    Task<ApiResponse<GetPantryItemsResponse>> GetAsync(
-        GetPantryItemsRequest? request = null,
+    Task<ApiResponse<GetCosmeticItemsResponse>> GetAsync(
+        GetCosmeticItemsRequest? request = null,
         CancellationToken ct = default);
 
     [Get("/{id}")]
-    Task<ApiResponse<PantryItemDto>> GetByIdAsync(
+    Task<ApiResponse<CosmeticItemDto>> GetByIdAsync(
         string id,
         CancellationToken ct = default);
 
     [Post("/")]
-    Task<ApiResponse<PantryItemDto>> CreateAsync(
-        [Body] CreatePantryItemRequest request,
+    Task<ApiResponse<CosmeticItemDto>> CreateAsync(
+        [Body] CreateCosmeticItemRequest request,
         [Header("X-Member-Id")] string? memberId,
         CancellationToken ct = default);
 
     [Put("/{id}")]
-    Task<ApiResponse<PantryItemDto>> UpdateAsync(
+    Task<ApiResponse<CosmeticItemDto>> UpdateAsync(
         string id,
-        [Body] UpdatePantryItemRequest request,
+        [Body] UpdateCosmeticItemRequest request,
         CancellationToken ct = default);
 
     [Delete("/{id}")]

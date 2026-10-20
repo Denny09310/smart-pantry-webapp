@@ -49,15 +49,6 @@ namespace Server.Data.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<string>("NutriScore")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("nutri_score");
-
-                    b.Property<string>("NutritionJson")
-                        .HasColumnType("text")
-                        .HasColumnName("nutrition_json");
-
                     b.Property<double?>("Quantity")
                         .HasColumnType("double precision")
                         .HasColumnName("quantity");
@@ -75,6 +66,75 @@ namespace Server.Data.Migrations
                         .HasName("pk_cached_products");
 
                     b.ToTable("cached_products", (string)null);
+                });
+
+            modelBuilder.Entity("Server.Data.Entities.CosmeticItem", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("barcode");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("ExpiryDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiry_date");
+
+                    b.Property<string>("HouseholdMemberId")
+                        .HasColumnType("text")
+                        .HasColumnName("household_member_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<double>("Quantity")
+                        .HasColumnType("double precision")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_items");
+
+                    b.HasIndex("Barcode")
+                        .HasDatabaseName("ix_items_barcode");
+
+                    b.HasIndex("ExpiryDate")
+                        .HasDatabaseName("ix_items_expiry_date");
+
+                    b.HasIndex("HouseholdMemberId")
+                        .HasDatabaseName("ix_items_household_member_id");
+
+                    b.ToTable("items", (string)null);
                 });
 
             modelBuilder.Entity("Server.Data.Entities.HouseholdMember", b =>
@@ -118,18 +178,18 @@ namespace Server.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
+                    b.Property<string>("CosmeticItemId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cosmetic_item_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateOnly>("ExpirationDate")
+                    b.Property<DateOnly>("ExpiryDate")
                         .HasColumnType("date")
-                        .HasColumnName("expiration_date");
-
-                    b.Property<string>("PantryItemId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("pantry_item_id");
+                        .HasColumnName("expiry_date");
 
                     b.Property<DateTimeOffset?>("ReadAt")
                         .HasColumnType("timestamp with time zone")
@@ -148,89 +208,11 @@ namespace Server.Data.Migrations
                         .IsDescending()
                         .HasDatabaseName("ix_notifications_created_at");
 
-                    b.HasIndex("PantryItemId", "ExpirationDate", "Type")
+                    b.HasIndex("CosmeticItemId", "ExpiryDate", "Type")
                         .IsUnique()
-                        .HasDatabaseName("ix_notifications_pantry_item_id_expiration_date_type");
+                        .HasDatabaseName("ix_notifications_cosmetic_item_id_expiry_date_type");
 
                     b.ToTable("notifications", (string)null);
-                });
-
-            modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Barcode")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("barcode");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateOnly>("ExpirationDate")
-                        .HasColumnType("date")
-                        .HasColumnName("expiration_date");
-
-                    b.Property<string>("HouseholdMemberId")
-                        .HasColumnType("text")
-                        .HasColumnName("household_member_id");
-
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("location");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("notes");
-
-                    b.Property<string>("NutriScore")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("nutri_score");
-
-                    b.Property<string>("NutritionJson")
-                        .HasColumnType("text")
-                        .HasColumnName("nutrition_json");
-
-                    b.Property<double>("Quantity")
-                        .HasColumnType("double precision")
-                        .HasColumnName("quantity");
-
-                    b.Property<string>("Unit")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("unit");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_items");
-
-                    b.HasIndex("Barcode")
-                        .HasDatabaseName("ix_items_barcode");
-
-                    b.HasIndex("ExpirationDate")
-                        .HasDatabaseName("ix_items_expiration_date");
-
-                    b.HasIndex("HouseholdMemberId")
-                        .HasDatabaseName("ix_items_household_member_id");
-
-                    b.ToTable("items", (string)null);
                 });
 
             modelBuilder.Entity("Server.Data.Entities.PushSubscription", b =>
@@ -275,19 +257,7 @@ namespace Server.Data.Migrations
                     b.ToTable("push_subscriptions", (string)null);
                 });
 
-            modelBuilder.Entity("Server.Data.Entities.Notification", b =>
-                {
-                    b.HasOne("Server.Data.Entities.PantryItem", "PantryItem")
-                        .WithMany()
-                        .HasForeignKey("PantryItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_notifications_items_pantry_item_id");
-
-                    b.Navigation("PantryItem");
-                });
-
-            modelBuilder.Entity("Server.Data.Entities.PantryItem", b =>
+            modelBuilder.Entity("Server.Data.Entities.CosmeticItem", b =>
                 {
                     b.HasOne("Server.Data.Entities.HouseholdMember", "HouseholdMember")
                         .WithMany()
@@ -296,6 +266,18 @@ namespace Server.Data.Migrations
                         .HasConstraintName("fk_items_members_household_member_id");
 
                     b.Navigation("HouseholdMember");
+                });
+
+            modelBuilder.Entity("Server.Data.Entities.Notification", b =>
+                {
+                    b.HasOne("Server.Data.Entities.CosmeticItem", "CosmeticItem")
+                        .WithMany()
+                        .HasForeignKey("CosmeticItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_items_cosmetic_item_id");
+
+                    b.Navigation("CosmeticItem");
                 });
 #pragma warning restore 612, 618
         }

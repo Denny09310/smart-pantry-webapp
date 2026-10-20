@@ -11,50 +11,11 @@ public record LookupProductRequest(
     [property: RegularExpression(@"^\d{8}$|^\d{12}$|^\d{13}$", ErrorMessage = "Invalid barcode format. Must be 8, 12, or 13 digits.")]
     string? Barcode);
 
-/// <summary>Nutrition facts per 100g; every value optional.</summary>
-public record NutritionFacts(
-    double? EnergyKcal = null,
-    double? Proteins = null,
-    double? Carbohydrates = null,
-    double? Sugars = null,
-    double? Fat = null,
-    double? SaturatedFat = null,
-    double? Salt = null,
-    double? Fiber = null);
-
-public static class NutritionFactsExtensions
-{
-    public static string ToJson(this NutritionFacts facts) =>
-        JsonSerializer.Serialize(facts);
-
-    /// <summary>Never throws: hand-edited rows can't 500 list endpoints.</summary>
-    public static NutritionFacts? Parse(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-            return null;
-
-        try
-        {
-            return JsonSerializer.Deserialize<NutritionFacts>(json);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    /// <summary>Null/blank-safe parse for optional stored snapshots.</summary>
-    public static NutritionFacts? FromJson(string? json) =>
-        string.IsNullOrWhiteSpace(json) ? null : Parse(json);
-}
-
 public record ProductLookupDto(
     string Barcode,
     string Name,
     string? Brand,
     double? Quantity,
     string? Unit,
-    string? NutriScore,
-    NutritionFacts? Nutrition,
     string? ImageUrl,
     string? IngredientsText = null);

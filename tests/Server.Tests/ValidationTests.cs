@@ -18,11 +18,11 @@ public class ValidationTests
             request, new ValidationContext(request), results, validateAllProperties: true);
     }
 
-    private static CreatePantryItemRequest ValidItemRequest() => new(
-        "Milk", 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
+    private static CreateCosmeticItemRequest ValidItemRequest() => new(
+        "Milk", 1, "L", "face", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
 
     [Fact]
-    public void ValidPantryItemRequest_PassesValidation()
+    public void ValidCosmeticItemRequest_PassesValidation()
     {
         Assert.True(IsValid(ValidItemRequest()));
     }
@@ -30,7 +30,7 @@ public class ValidationTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void PantryItemRequest_NameIsRequired(string? name)
+    public void CosmeticItemRequest_NameIsRequired(string? name)
     {
         var request = ValidItemRequest() with { Name = name! };
 
@@ -38,18 +38,18 @@ public class ValidationTests
     }
 
     [Fact]
-    public void PantryItemRequest_NegativeQuantity_Fails()
+    public void CosmeticItemRequest_NegativeQuantity_Fails()
     {
         var request = ValidItemRequest() with { Quantity = -1 };
 
         Assert.False(IsValid(request));
     }
 
-    private static UpdatePantryItemRequest ValidUpdateRequest() => new(
-        "Milk", 1, "L", "fridge", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
+    private static UpdateCosmeticItemRequest ValidUpdateRequest() => new(
+        "Milk", 1, "L", "face", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)));
 
     [Fact]
-    public void UpdatePantryItemRequest_Valid_Passes()
+    public void UpdateCosmeticItemRequest_Valid_Passes()
     {
         Assert.True(IsValid(ValidUpdateRequest()));
     }
@@ -57,13 +57,13 @@ public class ValidationTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void UpdatePantryItemRequest_NameIsRequired(string? name)
+    public void UpdateCosmeticItemRequest_NameIsRequired(string? name)
     {
         Assert.False(IsValid(ValidUpdateRequest() with { Name = name! }));
     }
 
     [Fact]
-    public void UpdatePantryItemRequest_NegativeQuantity_Fails()
+    public void UpdateCosmeticItemRequest_NegativeQuantity_Fails()
     {
         Assert.False(IsValid(ValidUpdateRequest() with { Quantity = -1 }));
     }
@@ -93,7 +93,7 @@ public class ValidationTests
     }
 
     [Fact]
-    public void PantryItemRequest_OverlongUnit_Fails()
+    public void CosmeticItemRequest_OverlongUnit_Fails()
     {
         var request = ValidItemRequest() with { Unit = new string('x', 33) };
 
@@ -103,7 +103,7 @@ public class ValidationTests
     [Fact]
     public void GetRequest_TakeAboveMaximum_Fails()
     {
-        var request = new GetPantryItemsRequest { Take = 101 };
+        var request = new GetCosmeticItemsRequest { Take = 101 };
 
         Assert.False(IsValid(request));
     }
@@ -111,14 +111,14 @@ public class ValidationTests
     [Fact]
     public void GetRequest_DefaultPaging_Passes()
     {
-        Assert.True(IsValid(new GetPantryItemsRequest { Location = "all" }));
-        Assert.True(IsValid(new GetPantryItemsRequest()));
+        Assert.True(IsValid(new GetCosmeticItemsRequest { Category = "all" }));
+        Assert.True(IsValid(new GetCosmeticItemsRequest()));
     }
 
     [Fact]
     public void GetRequest_NegativeSkip_Fails()
     {
-        Assert.False(IsValid(new GetPantryItemsRequest { Skip = -1 }));
+        Assert.False(IsValid(new GetCosmeticItemsRequest { Skip = -1 }));
     }
 
     [Theory]

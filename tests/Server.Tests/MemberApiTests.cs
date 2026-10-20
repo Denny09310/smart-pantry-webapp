@@ -11,7 +11,7 @@ using Shared.Models;
 
 namespace Server.Tests;
 
-public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class MemberApiTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -34,7 +34,7 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await PantryTestHelpers.DeleteMembersByNameAsync(factory.Services, name);
+            await CosmeticTestHelpers.DeleteMembersByNameAsync(factory.Services, name);
         }
     }
 
@@ -86,7 +86,7 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await PantryTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
+            await CosmeticTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
         }
     }
 
@@ -105,10 +105,10 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         var created = await CreateMemberAsync($"test-member-{Guid.CreateVersion7()}");
 
         var itemName = $"test-item-{Guid.CreateVersion7()}";
-        using var itemRequest = new HttpRequestMessage(HttpMethod.Post, "/api/pantry")
+        using var itemRequest = new HttpRequestMessage(HttpMethod.Post, "/api/cosmetics")
         {
-            Content = JsonContent.Create(new CreatePantryItemRequest(
-                itemName, 1, "pcs", "pantry", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))))
+            Content = JsonContent.Create(new CreateCosmeticItemRequest(
+                itemName, 1, "pcs", "body", null, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7))))
         };
         itemRequest.Headers.Add("X-Member-Id", created.Id);
         using var itemResponse = await _client.SendAsync(itemRequest);
@@ -127,16 +127,16 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
             Assert.NotNull(list);
             Assert.DoesNotContain(list, m => m.Id == created.Id);
 
-            var items = await _client.GetFromJsonAsync<GetPantryItemsResponse>(
-                $"/api/pantry?name={Uri.EscapeDataString(itemName)}");
+            var items = await _client.GetFromJsonAsync<GetCosmeticItemsResponse>(
+                $"/api/cosmetics?name={Uri.EscapeDataString(itemName)}");
             Assert.NotNull(items);
             var item = Assert.Single(items.Items);
             Assert.Null(item.HouseholdMemberId);
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemsByNameAsync(factory.Services, itemName);
-            await PantryTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
+            await CosmeticTestHelpers.DeleteItemsByNameAsync(factory.Services, itemName);
+            await CosmeticTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
         }
     }
 
@@ -152,7 +152,7 @@ public class MemberApiTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await PantryTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
+            await CosmeticTestHelpers.DeleteMemberAsync(factory.Services, created.Id);
         }
     }
 

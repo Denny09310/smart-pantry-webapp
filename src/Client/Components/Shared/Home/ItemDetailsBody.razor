@@ -46,7 +46,7 @@
 
         try
         {
-            using var response = await Api.Pantry.GetByIdAsync(ItemId);
+            using var response = await Api.Cosmetics.GetByIdAsync(ItemId);
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return;
@@ -112,16 +112,14 @@
                 return;
 
             var item = _state.Item;
-            using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(
+            using var update = await Api.Cosmetics.UpdateAsync(item.Id, new UpdateCosmeticItemRequest(
                 item.Name,
                 item.Quantity,
                 item.Unit,
-                item.Location,
+                item.Category,
                 item.Notes,
-                item.ExpirationDate,
-                product.Barcode,
-                product.NutriScore,
-                product.Nutrition));
+                item.ExpiryDate,
+                product.Barcode));
 
             if (!update.IsSuccessStatusCode)
             {
@@ -165,15 +163,13 @@
         try
         {
             var item = _state.Item;
-            using var update = await Api.Pantry.UpdateAsync(item.Id, new UpdatePantryItemRequest(
+            using var update = await Api.Cosmetics.UpdateAsync(item.Id, new UpdateCosmeticItemRequest(
                 item.Name,
                 item.Quantity,
                 item.Unit,
-                item.Location,
+                item.Category,
                 item.Notes,
-                item.ExpirationDate,
-                null,
-                null,
+                item.ExpiryDate,
                 null));
 
             if (!update.IsSuccessStatusCode)

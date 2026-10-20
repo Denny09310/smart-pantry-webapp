@@ -7,20 +7,20 @@ using Server.Data.Entities;
 namespace Server.Tests;
 
 /// <summary>Shared EF seed/cleanup helpers (one database per test class).</summary>
-internal static class PantryTestHelpers
+internal static class CosmeticTestHelpers
 {
-    public static async Task<PantryItem> SeedItemAsync(
+    public static async Task<CosmeticItem> SeedItemAsync(
         IServiceProvider services, string name, DateOnly? expiration = null)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var item = new PantryItem
+        var item = new CosmeticItem
         {
             Name = name,
             Quantity = 1,
             Unit = "pcs",
-            Location = "pantry",
-            ExpirationDate = expiration ?? DateOnly.FromDateTime(DateTime.Today.AddDays(2))
+            Category = "body",
+            ExpiryDate = expiration ?? DateOnly.FromDateTime(DateTime.Today.AddDays(2))
         };
         db.Items.Add(item);
         await db.SaveChangesAsync();

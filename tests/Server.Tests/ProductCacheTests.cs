@@ -11,15 +11,14 @@ using Shared.Models;
 
 namespace Server.Tests;
 
-public class ProductCacheTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class ProductCacheTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     [Fact]
     public async Task Lookup_Miss_Fetches_Remote_And_Caches()
     {
         var barcode = $"800{Guid.CreateVersion7():N}"[..13];
         var remote = new ProductLookupDto(
-            barcode, "Test Biscuits", "TestBrand", 500, "g", "B",
-            new NutritionFacts(EnergyKcal: 450, Salt: 0.5), null);
+            barcode, "Test Biscuits", "TestBrand", 500, "g", null, null);
         var lookup = new CountingLookup(remote);
 
         try
@@ -43,7 +42,7 @@ public class ProductCacheTests(PantryApiFactory factory) : IClassFixture<PantryA
     }
 
     [Fact]
-    public async Task Lookup_Unknown_Remote_Falls_Back_To_Pantry_Items()
+    public async Task Lookup_Unknown_Remote_Falls_Back_To_Local_Items()
     {
         var barcode = $"801{Guid.CreateVersion7():N}"[..13];
         var name = $"test-cache-item-{Guid.CreateVersion7()}";
@@ -52,13 +51,13 @@ public class ProductCacheTests(PantryApiFactory factory) : IClassFixture<PantryA
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var item = new PantryItem
+            var item = new CosmeticItem
             {
                 Name = name,
                 Quantity = 2,
                 Unit = "pcs",
-                Location = "pantry",
-                ExpirationDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3)),
+                Category = "face",
+                ExpiryDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3)),
                 Barcode = barcode
             };
             db.Items.Add(item);

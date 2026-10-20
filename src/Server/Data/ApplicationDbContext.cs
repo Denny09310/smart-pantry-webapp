@@ -8,7 +8,7 @@ public class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options)
     : DbContext(options)
 {
-    public DbSet<PantryItem> Items => Set<PantryItem>();
+    public DbSet<CosmeticItem> Items => Set<CosmeticItem>();
     public DbSet<CachedProduct> CachedProducts => Set<CachedProduct>();
     public DbSet<HouseholdMember> Members => Set<HouseholdMember>();
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -18,16 +18,15 @@ public class ApplicationDbContext(
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<PantryItem>(entity =>
+        modelBuilder.Entity<CosmeticItem>(entity =>
         {
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.Unit).HasMaxLength(32);
-            entity.Property(x => x.Location).HasMaxLength(64);
+            entity.Property(x => x.Category).HasMaxLength(64);
             entity.Property(x => x.Notes).HasMaxLength(2000);
             entity.Property(x => x.Barcode).HasMaxLength(32);
-            entity.Property(x => x.NutriScore).HasMaxLength(2);
 
-            entity.HasIndex(x => x.ExpirationDate);
+            entity.HasIndex(x => x.ExpiryDate);
             entity.HasIndex(x => x.Barcode);
 
             entity.HasOne(x => x.HouseholdMember)
@@ -43,7 +42,6 @@ public class ApplicationDbContext(
             entity.Property(x => x.Name).HasMaxLength(200);
             entity.Property(x => x.Brand).HasMaxLength(200);
             entity.Property(x => x.Unit).HasMaxLength(32);
-            entity.Property(x => x.NutriScore).HasMaxLength(2);
             entity.Property(x => x.ImageUrl).HasMaxLength(2000);
         });
 
@@ -59,12 +57,12 @@ public class ApplicationDbContext(
 
             entity.HasIndex(x => x.CreatedAt).IsDescending();
 
-            entity.HasOne(x => x.PantryItem)
+            entity.HasOne(x => x.CosmeticItem)
                 .WithMany()
-                .HasForeignKey(x => x.PantryItemId)
+                .HasForeignKey(x => x.CosmeticItemId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(x => new { x.PantryItemId, x.ExpirationDate, x.Type }).IsUnique();
+            entity.HasIndex(x => new { x.CosmeticItemId, x.ExpiryDate, x.Type }).IsUnique();
         });
 
         modelBuilder.Entity<PushSubscription>(entity =>

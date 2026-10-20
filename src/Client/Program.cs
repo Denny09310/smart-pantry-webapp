@@ -34,7 +34,7 @@ builder.Services.AddBitBrouterServices(o =>
 builder.Services.AddBottomSheet();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<PantryRealtimeService>();
+builder.Services.AddScoped<CosmeticRealtimeService>();
 
 // Localization
 builder.Services.AddLocalization();

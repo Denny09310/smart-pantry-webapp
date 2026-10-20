@@ -18,7 +18,7 @@ using Shared.Models;
 
 namespace Server.Tests;
 
-public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class PushEndpointTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
 
@@ -72,7 +72,7 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+            await CosmeticTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
@@ -112,14 +112,14 @@ public class PushEndpointTests(PantryApiFactory factory) : IClassFixture<PantryA
 
 }
 
-public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class PushDeliveryTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     [Fact]
     public async Task CheckAsync_SendsPushForNewReminders()
     {
-        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
+        var item = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
         var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
-        await PantryTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
+        await CosmeticTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
 
         try
         {
@@ -136,17 +136,17 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
-            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, item.Id);
+            await CosmeticTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
     [Fact]
     public async Task CheckAsync_RemovesInvalidSubscriptions()
     {
-        var item = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
+        var item = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
         var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
-        await PantryTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
+        await CosmeticTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
 
         try
         {
@@ -164,18 +164,18 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, item.Id);
-            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, item.Id);
+            await CosmeticTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 
     [Fact]
     public async Task CheckAsync_CountsDeadSubscriptionOnceAcrossItems()
     {
-        var first = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
-        var second = await PantryTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
+        var first = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
+        var second = await CosmeticTestHelpers.SeedItemAsync(factory.Services, $"test-push-{Guid.CreateVersion7()}");
         var endpoint = $"https://test.push/sub-{Guid.CreateVersion7()}";
-        await PantryTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
+        await CosmeticTestHelpers.SeedSubscriptionAsync(factory.Services, endpoint);
 
         try
         {
@@ -194,9 +194,9 @@ public class PushDeliveryTests(PantryApiFactory factory) : IClassFixture<PantryA
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, first.Id);
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, second.Id);
-            await PantryTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, first.Id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, second.Id);
+            await CosmeticTestHelpers.DeleteSubscriptionAsync(factory.Services, endpoint);
         }
     }
 

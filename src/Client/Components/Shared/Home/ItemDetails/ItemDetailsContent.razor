@@ -32,8 +32,8 @@
         <header class="space-y-2">
             <h3 class="text-xl font-semibold">@Item.Name</h3>
             <div class="flex flex-wrap gap-2">
-                <ExpiryBadge ExpirationDate="Item.ExpirationDate" Today="Today" />
-                <BbBadge Variant="BadgeVariant.Outline">@Item.Location</BbBadge>
+                <ExpiryBadge ExpiryDate="Item.ExpiryDate" Today="Today" />
+                <BbBadge Variant="BadgeVariant.Outline">@Item.Category</BbBadge>
             </div>
         </header>
 
@@ -44,7 +44,7 @@
             </div>
             <div class="flex justify-between gap-2">
                 <dt class="text-muted-foreground">@Loc["ExpiresOn"]</dt>
-                <dd>@Item.ExpirationDate.ToString("MMM d, yyyy")</dd>
+                <dd>@Item.ExpiryDate.ToString("MMM d, yyyy")</dd>
             </div>
             @if (!string.IsNullOrWhiteSpace(Item.Notes))
             {
@@ -66,32 +66,7 @@
                     </dd>
                 </div>
             }
-            @if (!string.IsNullOrWhiteSpace(Item.NutriScore))
-            {
-                <div class="flex items-center justify-between gap-2">
-                    <dt class="text-muted-foreground">@Loc["NutriScore"]</dt>
-                    <dd>
-                        <BbBadge Variant="@NutriScoreVariant">@Item.NutriScore.ToUpperInvariant()</BbBadge>
-                    </dd>
-                </div>
-            }
         </dl>
-
-        @if (NutritionRows is { Count: > 0 } rows)
-        {
-            <div class="space-y-2">
-                <h3 class="text-sm font-medium">@Loc["NutritionPer100g"]</h3>
-                <dl class="space-y-2 rounded-md border p-4 text-sm">
-                    @foreach (var row in rows)
-                    {
-                        <div class="flex justify-between gap-2">
-                            <dt class="text-muted-foreground">@row.Label</dt>
-                            <dd class="font-medium">@row.Value</dd>
-                        </div>
-                    }
-                </dl>
-            </div>
-        }
 
         @if (!string.IsNullOrWhiteSpace(Product?.IngredientsText))
         {
@@ -125,7 +100,7 @@
 {
     [Parameter, EditorRequired] public bool Loading { get; set; }
     [Parameter] public string? Error { get; set; }
-    [Parameter] public PantryItemDto? Item { get; set; }
+    [Parameter] public CosmeticItemDto? Item { get; set; }
     [Parameter] public ProductLookupDto? Product { get; set; }
     [Parameter] public DateOnly Today { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     [Parameter] public bool LinkingBarcode { get; set; }
@@ -135,59 +110,4 @@
     [Parameter] public EventCallback OnCancelLinkBarcode { get; set; }
     [Parameter] public EventCallback<string> OnBarcodeScanned { get; set; }
     [Parameter] public EventCallback OnUnlinkBarcode { get; set; }
-
-    private BadgeVariant NutriScoreVariant => Item?.NutriScore?.Trim().ToUpperInvariant() switch
-    {
-        "A" => BadgeVariant.SoftSuccess,
-        "B" => BadgeVariant.SoftInfo,
-        "C" => BadgeVariant.SoftWarning,
-        "D" or "E" => BadgeVariant.SoftDestructive,
-        _ => BadgeVariant.Outline,
-    };
-
-    private NutritionFacts? _rowsFor;
-    private string? _rowsCulture;
-    private IReadOnlyList<(string Label, string Value)>? _rowsCache;
-
-    /// <summary>Memoized per nutrition payload + culture (labels localize).</summary>
-    private IReadOnlyList<(string Label, string Value)> NutritionRows
-    {
-        get
-        {
-            var culture = Loc.CurrentCulture.Name;
-            if (_rowsCache is not null && Equals(_rowsFor, Item?.Nutrition) && _rowsCulture == culture)
-                return _rowsCache;
-
-            _rowsFor = Item?.Nutrition;
-            _rowsCulture = culture;
-            return _rowsCache = BuildNutritionRows(_rowsFor);
-        }
-    }
-
-    private List<(string Label, string Value)> BuildNutritionRows(NutritionFacts? nutrition)
-    {
-        List<(string Label, string Value)> rows = [];
-
-        if (nutrition is not { })
-            return rows;
-
-        if (nutrition.EnergyKcal is { } energy)
-            rows.Add((Loc["NutritionEnergy"], $"{energy:0} kcal"));
-        if (nutrition.Fat is { } fat)
-            rows.Add((Loc["NutritionFat"], $"{fat:0.#} g"));
-        if (nutrition.SaturatedFat is { } satFat)
-            rows.Add((Loc["NutritionSaturatedFat"], $"{satFat:0.#} g"));
-        if (nutrition.Carbohydrates is { } carbs)
-            rows.Add((Loc["NutritionCarbs"], $"{carbs:0.#} g"));
-        if (nutrition.Sugars is { } sugars)
-            rows.Add((Loc["NutritionSugars"], $"{sugars:0.#} g"));
-        if (nutrition.Fiber is { } fiber)
-            rows.Add((Loc["Fiber"], $"{fiber:0.#} g"));
-        if (nutrition.Proteins is { } protein)
-            rows.Add((Loc["NutritionProtein"], $"{protein:0.#} g"));
-        if (nutrition.Salt is { } salt)
-            rows.Add((Loc["NutritionSalt"], $"{salt:0.##} g"));
-
-        return rows;
-    }
 }

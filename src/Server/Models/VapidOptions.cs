@@ -21,7 +21,7 @@ public sealed class VapidOptions
     public string? PrivateKey { get; set; }
 
     [Required]
-    public string Subject { get; set; } = "mailto:smart-pantry@localhost";
+    public string Subject { get; set; } = "mailto:smart-cosmetics@localhost";
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(PublicKey) && !string.IsNullOrWhiteSpace(PrivateKey);

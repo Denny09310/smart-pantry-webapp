@@ -22,7 +22,7 @@ public sealed class ReminderWorker(
     ILogger<ReminderWorker> log) : BackgroundService
 {
     public const string ExpiryWarningType = "expiry-warning";
-    public const int ReminderDaysAhead = PantryRules.ExpirySoonDays;
+    public const int ReminderDaysAhead = CosmeticRules.ExpirySoonDays;
 
     /// <summary>Server-local time of the daily run.</summary>
     private static readonly TimeSpan RunAt = new(8, 0, 0);
@@ -85,8 +85,8 @@ public sealed class ReminderWorker(
         log.LogInformation("Reminder check started (today {Today}, horizon {Horizon}).", today, horizon);
 
         var candidates = await db.Items.AsNoTracking()
-            .Where(x => x.ExpirationDate >= today && x.ExpirationDate <= horizon)
-            .Select(x => new { x.Id, x.Name, x.ExpirationDate })
+            .Where(x => x.ExpiryDate >= today && x.ExpiryDate <= horizon)
+            .Select(x => new { x.Id, x.Name, x.ExpiryDate })
             .ToListAsync(ct);
 
         // Only reminders for items in the current window matter: the table
@@ -94,19 +94,19 @@ public sealed class ReminderWorker(
         var candidateIds = candidates.Select(x => x.Id).ToHashSet(StringComparer.Ordinal);
 
         var seen = (await db.Notifications.AsNoTracking()
-            .Where(x => x.Type == ExpiryWarningType && candidateIds.Contains(x.PantryItemId))
-            .Select(x => new { x.PantryItemId, x.ExpirationDate })
+            .Where(x => x.Type == ExpiryWarningType && candidateIds.Contains(x.CosmeticItemId))
+            .Select(x => new { x.CosmeticItemId, x.ExpiryDate })
             .ToListAsync(ct))
-            .Select(x => (x.PantryItemId, x.ExpirationDate))
+            .Select(x => (x.CosmeticItemId, x.ExpiryDate))
             .ToHashSet();
 
         var created = 0;
         var failed = 0;
-        var reminded = new List<(string Id, string Name, DateOnly ExpirationDate)>();
+        var reminded = new List<(string Id, string Name, DateOnly ExpiryDate)>();
 
         foreach (var item in candidates)
         {
-            if (!seen.Add((item.Id, item.ExpirationDate)))
+            if (!seen.Add((item.Id, item.ExpiryDate)))
                 continue;
 
             try
@@ -114,12 +114,12 @@ public sealed class ReminderWorker(
                 db.Notifications.Add(new Notification
                 {
                     Type = ExpiryWarningType,
-                    PantryItemId = item.Id,
-                    ExpirationDate = item.ExpirationDate
+                    CosmeticItemId = item.Id,
+                    ExpiryDate = item.ExpiryDate
                 });
                 await db.SaveChangesAsync(ct);
                 created++;
-                reminded.Add((item.Id, item.Name, item.ExpirationDate));
+                reminded.Add((item.Id, item.Name, item.ExpiryDate));
             }
             catch (OperationCanceledException)
             {
@@ -153,7 +153,7 @@ public sealed class ReminderWorker(
 
     private async Task<(int Sent, int Invalid)> SendPushAsync(
         ApplicationDbContext db,
-        List<(string Id, string Name, DateOnly ExpirationDate)> reminded,
+        List<(string Id, string Name, DateOnly ExpiryDate)> reminded,
         CancellationToken ct)
     {
         if (reminded.Count == 0)
@@ -169,7 +169,7 @@ public sealed class ReminderWorker(
         foreach (var item in reminded)
         {
             var title = "Expiring soon";
-            var body = $"{item.Name} expires {item.ExpirationDate:MMM d}.";
+            var body = $"{item.Name} expires {item.ExpiryDate:MMM d}.";
 
             foreach (var subscription in subscriptions)
             {

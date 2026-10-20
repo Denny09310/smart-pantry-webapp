@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppTitle" xml:space="preserve">
-    <value>Smart Pantry</value>
+    <value>Smart Cosmetics</value>
   </data>
-  <data name="Pantry" xml:space="preserve">
-    <value>Pantry</value>
+  <data name="Cosmetics" xml:space="preserve">
+    <value>Cosmetics</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
@@ -154,7 +154,7 @@
     <value>Add item</value>
   </data>
   <data name="SearchPlaceholder" xml:space="preserve">
-    <value>Search pantry items...</value>
+    <value>Search cosmetics...</value>
   </data>
   <data name="Filters" xml:space="preserve">
     <value>Filters</value>
@@ -171,14 +171,14 @@
   <data name="IncreaseQuantity" xml:space="preserve">
     <value>Increase quantity</value>
   </data>
-  <data name="Location" xml:space="preserve">
-    <value>Location</value>
+  <data name="Category" xml:space="preserve">
+    <value>Category</value>
   </data>
   <data name="DurationAndExpiry" xml:space="preserve">
     <value>Duration and expiry</value>
   </data>
   <data name="BatchNotes" xml:space="preserve">
-    <value>Batch notes</value>
+    <value>Notes</value>
   </data>
   <data name="SaveItem" xml:space="preserve">
     <value>Save item</value>
@@ -222,41 +222,11 @@
   <data name="UseSoonDaysLeft" xml:space="preserve">
     <value>Use soon · {0} days left</value>
   </data>
-  <data name="FreshDaysLeft" xml:space="preserve">
-    <value>Fresh · {0} days left</value>
+  <data name="GoodDaysLeft" xml:space="preserve">
+    <value>Good · {0} days left</value>
   </data>
   <data name="Notes" xml:space="preserve">
     <value>Notes</value>
-  </data>
-  <data name="NutriScore" xml:space="preserve">
-    <value>Nutri-Score</value>
-  </data>
-  <data name="NutritionPer100g" xml:space="preserve">
-    <value>Nutrition per 100 g</value>
-  </data>
-  <data name="NutritionEnergy" xml:space="preserve">
-    <value>Energy</value>
-  </data>
-  <data name="NutritionProtein" xml:space="preserve">
-    <value>Protein</value>
-  </data>
-  <data name="NutritionCarbs" xml:space="preserve">
-    <value>Carbohydrates</value>
-  </data>
-  <data name="NutritionSugars" xml:space="preserve">
-    <value>Sugars</value>
-  </data>
-  <data name="NutritionFat" xml:space="preserve">
-    <value>Fat</value>
-  </data>
-  <data name="NutritionSaturatedFat" xml:space="preserve">
-    <value>Saturated fat</value>
-  </data>
-  <data name="NutritionSalt" xml:space="preserve">
-    <value>Salt</value>
-  </data>
-  <data name="Fiber" xml:space="preserve">
-    <value>Fiber</value>
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Edit</value>
@@ -321,14 +291,20 @@
   <data name="NoItemsDescription" xml:space="preserve">
     <value>Try clearing filters or add one</value>
   </data>
-  <data name="Fridge" xml:space="preserve">
-    <value>Fridge</value>
+  <data name="Face" xml:space="preserve">
+    <value>Face</value>
   </data>
-  <data name="Freezer" xml:space="preserve">
-    <value>Freezer</value>
+  <data name="Hair" xml:space="preserve">
+    <value>Hair</value>
   </data>
-  <data name="Cabinet" xml:space="preserve">
-    <value>Cabinet</value>
+  <data name="Body" xml:space="preserve">
+    <value>Body</value>
+  </data>
+  <data name="Hands" xml:space="preserve">
+    <value>Hands</value>
+  </data>
+  <data name="Perfume" xml:space="preserve">
+    <value>Perfume</value>
   </data>
   <data name="ScanBarcode" xml:space="preserve">
     <value>Scan barcode (optional)</value>
@@ -405,11 +381,11 @@
   <data name="StatusExpiringSoon" xml:space="preserve">
     <value>Expiring soon</value>
   </data>
-  <data name="StatusFresh" xml:space="preserve">
-    <value>Fresh</value>
+  <data name="StatusGood" xml:space="preserve">
+    <value>Good</value>
   </data>
-  <data name="AllLocations" xml:space="preserve">
-    <value>All locations</value>
+  <data name="AllCategories" xml:space="preserve">
+    <value>All categories</value>
   </data>
   <data name="AllStatuses" xml:space="preserve">
     <value>All statuses</value>
@@ -446,27 +422,6 @@
   </data>
   <data name="NoUserSelected" xml:space="preserve">
     <value>No user selected</value>
-  </data>
-  <data name="Recipes" xml:space="preserve">
-    <value>Recipes</value>
-  </data>
-  <data name="RecipeSearchPlaceholder" xml:space="preserve">
-    <value>Add ingredients...</value>
-  </data>
-  <data name="NoRecipesFound" xml:space="preserve">
-    <value>No recipes found</value>
-  </data>
-  <data name="NoRecipesDescription" xml:space="preserve">
-    <value>Try different ingredients.</value>
-  </data>
-  <data name="SearchRecipesFailed" xml:space="preserve">
-    <value>Couldn't search recipes. Try again.</value>
-  </data>
-  <data name="RecipeIngredients" xml:space="preserve">
-    <value>Ingredients</value>
-  </data>
-  <data name="RecipeInstructions" xml:space="preserve">
-    <value>Instructions</value>
   </data>
   <data name="Barcode" xml:space="preserve">
     <value>Barcode</value>
@@ -586,10 +541,10 @@
     <value>{0} selected</value>
   </data>
   <data name="AddItemSubtitle" xml:space="preserve">
-    <value>Register a new batch with its expiry date.</value>
+    <value>Register a new product with its expiry date.</value>
   </data>
   <data name="EditItemSubtitle" xml:space="preserve">
-    <value>Update the batch details.</value>
+    <value>Update the product details.</value>
   </data>
   <data name="ScanBarcodeButton" xml:space="preserve">
     <value>Scan barcode</value>

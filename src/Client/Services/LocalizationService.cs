@@ -8,7 +8,7 @@ namespace Client.Services;
 
 public sealed class LocalizationService(IStringLocalizer<Strings> localizer, Bit.Butil.LocalStorage storage)
 {
-    private const string StorageKey = "smart-pantry:culture";
+    private const string StorageKey = "smart-cosmetics:culture";
 
     public event Action? CultureChanged;
 

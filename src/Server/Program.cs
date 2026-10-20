@@ -32,13 +32,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddVapidOptions(builder.Configuration);
 
 // External HTTP Clients
-builder.Services.AddHttpClient<IProductLookupService, OpenFoodFactsProductLookupService>(
-    client => client.Timeout = TimeSpan.FromSeconds(15));
-
-builder.Services.AddHttpClient<IRecipeService, ThemealDbRecipeService>(
-    client => client.Timeout = TimeSpan.FromSeconds(15));
-
-builder.Services.AddHttpClient<ITranslationService, MyMemoryTranslationService>(
+builder.Services.AddHttpClient<IProductLookupService, OpenBeautyFactsProductLookupService>(
     client => client.Timeout = TimeSpan.FromSeconds(15));
 
 // Push
@@ -85,7 +79,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapEndpointHandlers();
-app.MapHub<PantryHub>("/hubs/pantry");
+app.MapHub<CosmeticHub>("/hubs/cosmetics");
 
 app.MapHealthChecks("/health/live", new()
 {

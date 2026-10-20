@@ -12,43 +12,43 @@ using Shared.Models;
 
 namespace Server.Tests;
 
-public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiFactory>
+public class CosmeticHubTests(CosmeticApiFactory factory) : IClassFixture<CosmeticApiFactory>
 {
     [Fact]
-    public async Task Create_Broadcasts_PantryChanged()
+    public async Task Create_Broadcasts_CosmeticChanged()
     {
         var name = $"test-hub-{Guid.CreateVersion7()}";
-        PantryItem? created = null;
+        CosmeticItem? created = null;
         var change = await ActAndCaptureAsync(async () =>
         {
-            using var create = await factory.CreateClient().PostAsJsonAsync("/api/pantry",
-                new CreatePantryItemRequest(
-                    name, 1, "pcs", "pantry", null, DateOnly.FromDateTime(DateTime.Today.AddDays(3))));
+            using var create = await factory.CreateClient().PostAsJsonAsync("/api/cosmetics",
+                new CreateCosmeticItemRequest(
+                    name, 1, "pcs", "body", null, DateOnly.FromDateTime(DateTime.Today.AddDays(3))));
             create.EnsureSuccessStatusCode();
             // Capture here: the helper's cleanup deletes the row before returning.
             created = await FindByNameAsync(name);
         }, name);
 
-        Assert.Equal(PantryChangeKind.Created, change.ChangeKind);
+        Assert.Equal(CosmeticChangeKind.Created, change.ChangeKind);
         Assert.NotNull(created);
         Assert.Equal(created.Id, change.ItemId);
     }
 
     [Fact]
-    public async Task Delete_Broadcasts_PantryRemoved()
+    public async Task Delete_Broadcasts_CosmeticRemoved()
     {
         var name = $"test-hub-{Guid.CreateVersion7()}";
         string id;
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var item = new PantryItem
+            var item = new CosmeticItem
             {
                 Name = name,
                 Quantity = 1,
                 Unit = "pcs",
-                Location = "pantry",
-                ExpirationDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3))
+                Category = "body",
+                ExpiryDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3))
             };
             db.Items.Add(item);
             await db.SaveChangesAsync();
@@ -57,29 +57,29 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
 
         var change = await ActAndCaptureAsync(async () =>
         {
-            using var del = await factory.CreateClient().DeleteAsync($"/api/pantry/{id}");
+            using var del = await factory.CreateClient().DeleteAsync($"/api/cosmetics/{id}");
             del.EnsureSuccessStatusCode();
         }, name);
 
-        Assert.Equal(PantryChangeKind.Removed, change.ChangeKind);
+        Assert.Equal(CosmeticChangeKind.Removed, change.ChangeKind);
         Assert.Equal(id, change.ItemId);
     }
 
     [Fact]
-    public async Task Update_Broadcasts_PantryUpdated()
+    public async Task Update_Broadcasts_CosmeticUpdated()
     {
         var name = $"test-hub-{Guid.CreateVersion7()}";
         string id;
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var item = new PantryItem
+            var item = new CosmeticItem
             {
                 Name = name,
                 Quantity = 1,
                 Unit = "pcs",
-                Location = "pantry",
-                ExpirationDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3))
+                Category = "body",
+                ExpiryDate = DateOnly.FromDateTime(DateTime.Today.AddDays(3))
             };
             db.Items.Add(item);
             await db.SaveChangesAsync();
@@ -90,36 +90,36 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         {
             var change = await ActAndCaptureAsync(async () =>
             {
-                using var put = await factory.CreateClient().PutAsJsonAsync($"/api/pantry/{id}",
-                    new UpdatePantryItemRequest(
-                        name, 2, "pcs", "fridge", null,
+                using var put = await factory.CreateClient().PutAsJsonAsync($"/api/cosmetics/{id}",
+                    new UpdateCosmeticItemRequest(
+                        name, 2, "pcs", "face", null,
                         DateOnly.FromDateTime(DateTime.Today.AddDays(4))));
                 put.EnsureSuccessStatusCode();
             }, name);
 
-            Assert.Equal(PantryChangeKind.Updated, change.ChangeKind);
+            Assert.Equal(CosmeticChangeKind.Updated, change.ChangeKind);
             Assert.Equal(id, change.ItemId);
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemAsync(factory.Services, id);
+            await CosmeticTestHelpers.DeleteItemAsync(factory.Services, id);
         }
     }
 
-    private async Task<PantryChangedEvent> ActAndCaptureAsync(Func<Task> act, string name)
+    private async Task<CosmeticChangedEvent> ActAndCaptureAsync(Func<Task> act, string name)
     {
-        var tcs = new TaskCompletionSource<PantryChangedEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tcs = new TaskCompletionSource<CosmeticChangedEvent>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         await using var connection = new HubConnectionBuilder()
-            .WithUrl(new Uri(factory.Server.BaseAddress, "/hubs/pantry"), options =>
+            .WithUrl(new Uri(factory.Server.BaseAddress, "/hubs/cosmetics"), options =>
             {
                 options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
                 options.Transports = HttpTransportType.LongPolling;
             })
             .Build();
 
-        connection.On<PantryChangedEvent>(
-            nameof(IPantryHubClient.PantryChanged),
+        connection.On<CosmeticChangedEvent>(
+            nameof(ICosmeticHubClient.CosmeticChanged),
             change =>
             {
                 tcs.TrySetResult(change);
@@ -137,7 +137,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await PantryTestHelpers.DeleteItemsByNameAsync(factory.Services, name);
+            await CosmeticTestHelpers.DeleteItemsByNameAsync(factory.Services, name);
             await connection.StopAsync();
         }
     }
@@ -154,7 +154,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await PantryTestHelpers.DeleteMemberAsync(factory.Services, memberId);
+            await CosmeticTestHelpers.DeleteMemberAsync(factory.Services, memberId);
         }
     }
 
@@ -178,7 +178,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
             await using var memberConnection = await StartConnectionAsync(
                 $"?memberId={memberId}",
                 c => c.On<IReadOnlyList<string>>(
-                    nameof(IPantryHubClient.PresenceChanged),
+                    nameof(ICosmeticHubClient.PresenceChanged),
                     roster =>
                     {
                         memberTcs.TrySetResult(roster);
@@ -192,7 +192,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
             await using var observer = await StartConnectionAsync(
                 null,
                 c => c.On<IReadOnlyList<string>>(
-                    nameof(IPantryHubClient.PresenceChanged),
+                    nameof(ICosmeticHubClient.PresenceChanged),
                     roster =>
                     {
                         lock (rosters)
@@ -206,7 +206,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         }
         finally
         {
-            await PantryTestHelpers.DeleteMemberAsync(factory.Services, memberId);
+            await CosmeticTestHelpers.DeleteMemberAsync(factory.Services, memberId);
         }
     }
 
@@ -216,7 +216,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
         await using var connection = await StartConnectionAsync(
             query,
             c => c.On<IReadOnlyList<string>>(
-                nameof(IPantryHubClient.PresenceChanged),
+                nameof(ICosmeticHubClient.PresenceChanged),
                 roster =>
                 {
                     tcs.TrySetResult(roster);
@@ -237,7 +237,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
     private async Task<HubConnection> StartConnectionAsync(string? query, Action<HubConnection>? setup = null)
     {
         var connection = new HubConnectionBuilder()
-            .WithUrl(new Uri(factory.Server.BaseAddress, "/hubs/pantry" + query), options =>
+            .WithUrl(new Uri(factory.Server.BaseAddress, "/hubs/cosmetics" + query), options =>
             {
                 options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
                 options.Transports = HttpTransportType.LongPolling;
@@ -280,7 +280,7 @@ public class PantryHubTests(PantryApiFactory factory) : IClassFixture<PantryApiF
 
 
 
-    private async Task<PantryItem?> FindByNameAsync(string name)
+    private async Task<CosmeticItem?> FindByNameAsync(string name)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

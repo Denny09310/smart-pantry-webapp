@@ -22,7 +22,7 @@ internal static class ItemDeletion
         if (result.Cancelled)
             return;
 
-        if (result.GetData<PantryItemDto>() is not { } item)
+        if (result.GetData<CosmeticItemDto>() is not { } item)
             return;
 
         var confirmed = await dialogs.ConfirmAsync(
@@ -35,7 +35,7 @@ internal static class ItemDeletion
 
         try
         {
-            using var response = await api.Pantry.DeleteAsync(item.Id);
+            using var response = await api.Cosmetics.DeleteAsync(item.Id);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning("Item {ItemId} delete failed with {StatusCode}", item.Id, response.StatusCode);

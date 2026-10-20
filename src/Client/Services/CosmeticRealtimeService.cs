@@ -6,18 +6,18 @@ using Shared.Models;
 namespace Client.Services;
 
 /// <summary>
-/// Realtime pantry broadcasts over the typed SignalR hub, plus member presence.
+/// Realtime cosmetics broadcasts over the typed SignalR hub, plus member presence.
 /// Broadcasts are hints, never required: receivers re-query the endpoints,
 /// and a dead connection leaves manual reload fully working.
 /// The connection identifies as the current member (?memberId=); switching
 /// members reconnects so presence follows the user, not the device.
 /// </summary>
-internal sealed class PantryRealtimeService(
+internal sealed class CosmeticRealtimeService(
     NavigationManager nav,
     MemberService members,
-    ILogger<PantryRealtimeService> log) : IAsyncDisposable
+    ILogger<CosmeticRealtimeService> log) : IAsyncDisposable
 {
-    public event Func<PantryChangedEvent, Task>? Changed;
+    public event Func<CosmeticChangedEvent, Task>? Changed;
     public event Action? PresenceChanged;
 
     private HubConnection? _connection;
@@ -100,28 +100,28 @@ internal sealed class PantryRealtimeService(
     {
         _memberId = members.CurrentMemberId;
         var url = _memberId is null
-            ? "/hubs/pantry"
-            : $"/hubs/pantry?memberId={Uri.EscapeDataString(_memberId)}";
+            ? "/hubs/cosmetics"
+            : $"/hubs/cosmetics?memberId={Uri.EscapeDataString(_memberId)}";
 
         var connection = new HubConnectionBuilder()
             .WithUrl(nav.ToAbsoluteUri(url))
             .WithAutomaticReconnect()
             .Build();
 
-        connection.On<PantryChangedEvent>(
-            nameof(IPantryHubClient.PantryChanged),
+        connection.On<CosmeticChangedEvent>(
+            nameof(ICosmeticHubClient.CosmeticChanged),
             async change =>
             {
                 var handlers = Changed?.GetInvocationList();
                 if (handlers is null)
                     return;
 
-                foreach (Func<PantryChangedEvent, Task> handler in handlers)
+                foreach (Func<CosmeticChangedEvent, Task> handler in handlers)
                     await handler(change);
             });
 
         connection.On<IReadOnlyList<string>>(
-            nameof(IPantryHubClient.PresenceChanged),
+            nameof(ICosmeticHubClient.PresenceChanged),
             roster =>
             {
                 _onlineIds.Clear();

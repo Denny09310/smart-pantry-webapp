@@ -12,66 +12,66 @@ using Shared.Models;
 
 namespace Server.Endpoints;
 
-[Tags("Pantry")]
-[MapGroup("/api/pantry")]
-internal class PantryEndpoints(
+[Tags("Cosmetics")]
+[MapGroup("/api/cosmetics")]
+internal class CosmeticEndpoints(
     ApplicationDbContext db,
-    IHubContext<PantryHub, IPantryHubClient> hub,
-    ILogger<PantryEndpoints> log)
+    IHubContext<CosmeticHub, ICosmeticHubClient> hub,
+    ILogger<CosmeticEndpoints> log)
 {
     [MapGet("/")]
-    public async Task<Results<Ok<GetPantryItemsResponse>, ValidationProblem>> GetPantryItemsAsync(
-        [AsParameters] GetPantryItemsRequest request,
+    public async Task<Results<Ok<GetCosmeticItemsResponse>, ValidationProblem>> GetCosmeticItemsAsync(
+        [AsParameters] GetCosmeticItemsRequest request,
         CancellationToken ct)
     {
         // "all" is documented as unfiltered: normalize before validating.
-        var status = request.Status is PantryRules.StatusAll ? null : request.Status;
+        var status = request.Status is CosmeticRules.StatusAll ? null : request.Status;
 
-        if (status is not null && !PantryRules.Statuses.Contains(status))
+        if (status is not null && !CosmeticRules.Statuses.Contains(status))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                [nameof(request.Status)] = [$"Unknown status. Use one of: {string.Join(", ", PantryRules.Statuses)}."]
+                [nameof(request.Status)] = [$"Unknown status. Use one of: {string.Join(", ", CosmeticRules.Statuses)}."]
             });
         }
 
-        if (request.Sort is not null && !PantryRules.Sorts.Contains(request.Sort))
+        if (request.Sort is not null && !CosmeticRules.Sorts.Contains(request.Sort))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                [nameof(request.Sort)] = [$"Unknown sort. Use one of: {string.Join(", ", PantryRules.Sorts)}."]
+                [nameof(request.Sort)] = [$"Unknown sort. Use one of: {string.Join(", ", CosmeticRules.Sorts)}."]
             });
         }
 
         var skip = request.Skip ?? 0;
-        var take = request.Take ?? PantryRules.DefaultPageSize;
+        var take = request.Take ?? CosmeticRules.DefaultPageSize;
 
         // Server-local day, same rule as the reminder worker and the client helper.
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var horizon = today.AddDays(PantryRules.ExpirySoonDays);
+        var horizon = today.AddDays(CosmeticRules.ExpirySoonDays);
 
         var query = db.Items.AsNoTracking();
 
         // Closed location set: exact match, case-insensitive like Name.
-        if (!string.IsNullOrWhiteSpace(request.Location) && request.Location is not PantryRules.LocationAll)
-            query = query.Where(x => EF.Functions.ILike(x.Location, EscapeLike(request.Location), @"\"));
+        if (!string.IsNullOrWhiteSpace(request.Category) && request.Category is not CosmeticRules.CategoryAll)
+            query = query.Where(x => EF.Functions.ILike(x.Category, EscapeLike(request.Category), @"\"));
 
         if (!string.IsNullOrWhiteSpace(request.Name))
             query = query.Where(x => EF.Functions.ILike(x.Name, $"%{EscapeLike(request.Name)}%", @"\"));
 
         query = status switch
         {
-            PantryRules.StatusExpired => query.Where(x => x.ExpirationDate < today),
-            PantryRules.StatusSoon => query.Where(x => x.ExpirationDate >= today && x.ExpirationDate <= horizon),
-            PantryRules.StatusFresh => query.Where(x => x.ExpirationDate > horizon),
+            CosmeticRules.StatusExpired => query.Where(x => x.ExpiryDate < today),
+            CosmeticRules.StatusSoon => query.Where(x => x.ExpiryDate >= today && x.ExpiryDate <= horizon),
+            CosmeticRules.StatusGood => query.Where(x => x.ExpiryDate > horizon),
             _ => query
         };
 
         query = request.Sort switch
         {
-            PantryRules.SortExpiryDesc => query.OrderByDescending(x => x.ExpirationDate).ThenBy(x => x.Id),
-            PantryRules.SortName => query.OrderBy(x => x.Name).ThenBy(x => x.Id),
-            _ => query.OrderBy(x => x.ExpirationDate).ThenBy(x => x.Id)
+            CosmeticRules.SortExpiryDesc => query.OrderByDescending(x => x.ExpiryDate).ThenBy(x => x.Id),
+            CosmeticRules.SortName => query.OrderBy(x => x.Name).ThenBy(x => x.Id),
+            _ => query.OrderBy(x => x.ExpiryDate).ThenBy(x => x.Id)
         };
 
         var totalItems = await query.CountAsync(ct);
@@ -79,54 +79,50 @@ internal class PantryEndpoints(
         var items = await query
             .Skip(skip)
             .Take(take)
-            .Select(x => new PantryItemDto(
+            .Select(x => new CosmeticItemDto(
                 x.Id,
                 x.Name,
                 x.Quantity,
                 x.Unit,
-                x.Location,
+                x.Category,
                 x.Notes,
-                x.ExpirationDate,
+                x.ExpiryDate,
                 x.HouseholdMemberId,
-                x.Barcode,
-                x.NutriScore,
-                NutritionFactsExtensions.FromJson(x.NutritionJson)))
+                x.Barcode))
             .ToListAsync(ct);
 
-        return TypedResults.Ok(new GetPantryItemsResponse(
+        return TypedResults.Ok(new GetCosmeticItemsResponse(
             items,
             totalItems));
     }
 
     [MapPost("/")]
-    public async Task<Results<Created<PantryItemDto>, ValidationProblem>> CreatePantryItemAsync(
-        CreatePantryItemRequest request,
+    public async Task<Results<Created<CosmeticItemDto>, ValidationProblem>> CreateCosmeticItemAsync(
+        CreateCosmeticItemRequest request,
         [FromHeader(Name = "X-Member-Id")] string? memberId,
         CancellationToken ct)
     {
-        var entry = new PantryItem
+        var entry = new CosmeticItem
         {
             Name = request.Name,
             Quantity = request.Quantity,
             Unit = request.Unit,
-            Location = request.Location,
+            Category = request.Category,
             Notes = request.Notes,
-            ExpirationDate = request.ExpirationDate,
+            ExpiryDate = request.ExpiryDate,
             Barcode = request.Barcode,
-            NutriScore = request.NutriScore,
-            NutritionJson = request.Nutrition is not null ? request.Nutrition.ToJson() : null,
             HouseholdMemberId = await ResolveMemberIdAsync(memberId, ct)
         };
 
         db.Items.Add(entry);
         await db.SaveChangesAsync(ct);
-        await BroadcastAsync(new PantryChangedEvent(entry.Id, PantryChangeKind.Created), ct);
+        await BroadcastAsync(new CosmeticChangedEvent(entry.Id, CosmeticChangeKind.Created), ct);
 
-        return TypedResults.Created($"/api/pantry/{entry.Id}", ToDto(entry));
+        return TypedResults.Created($"/api/cosmetics/{entry.Id}", ToDto(entry));
     }
 
     [MapGet("/{id}")]
-    public async Task<Results<Ok<PantryItemDto>, ProblemHttpResult>> GetPantryItemAsync(
+    public async Task<Results<Ok<CosmeticItemDto>, ProblemHttpResult>> GetCosmeticItemAsync(
         string id,
         CancellationToken ct)
     {
@@ -139,9 +135,9 @@ internal class PantryEndpoints(
     }
 
     [MapPut("/{id}")]
-    public async Task<Results<Ok<PantryItemDto>, ProblemHttpResult, ValidationProblem>> UpdatePantryItemAsync(
+    public async Task<Results<Ok<CosmeticItemDto>, ProblemHttpResult, ValidationProblem>> UpdateCosmeticItemAsync(
         string id,
-        UpdatePantryItemRequest request,
+        UpdateCosmeticItemRequest request,
         CancellationToken ct)
     {
         var entry = await db.Items.FirstOrDefaultAsync(x => x.Id == id, ct);
@@ -152,22 +148,20 @@ internal class PantryEndpoints(
         entry.Name = request.Name;
         entry.Quantity = request.Quantity;
         entry.Unit = request.Unit;
-        entry.Location = request.Location;
+        entry.Category = request.Category;
         entry.Notes = request.Notes;
-        entry.ExpirationDate = request.ExpirationDate;
+        entry.ExpiryDate = request.ExpiryDate;
         entry.Barcode = request.Barcode;
-        entry.NutriScore = request.NutriScore;
-        entry.NutritionJson = request.Nutrition?.ToJson();
         entry.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);
-        await BroadcastAsync(new PantryChangedEvent(entry.Id, PantryChangeKind.Updated), ct);
+        await BroadcastAsync(new CosmeticChangedEvent(entry.Id, CosmeticChangeKind.Updated), ct);
 
         return TypedResults.Ok(ToDto(entry));
     }
 
     [MapDelete("/{id}")]
-    public async Task<Results<NoContent, ProblemHttpResult>> DeletePantryItemAsync(
+    public async Task<Results<NoContent, ProblemHttpResult>> DeleteCosmeticItemAsync(
         string id,
         CancellationToken ct)
     {
@@ -176,12 +170,12 @@ internal class PantryEndpoints(
         if (deleted == 0)
             return ItemNotFound(id);
 
-        await BroadcastAsync(new PantryChangedEvent(id, PantryChangeKind.Removed), ct);
+        await BroadcastAsync(new CosmeticChangedEvent(id, CosmeticChangeKind.Removed), ct);
         return TypedResults.NoContent();
     }
 
     private static ProblemHttpResult ItemNotFound(string id)
-        => EndpointProblems.NotFound("Pantry item", id);
+        => EndpointProblems.NotFound("Cosmetic item", id);
 
     /// <summary>Escapes ILIKE wildcards so user input matches literally.</summary>
     private static string EscapeLike(string value) => value
@@ -193,15 +187,15 @@ internal class PantryEndpoints(
     /// Realtime is a hint, never the write: a dead hub connection must not
     /// turn a committed change into a 500.
     /// </summary>
-    private async Task BroadcastAsync(PantryChangedEvent change, CancellationToken ct)
+    private async Task BroadcastAsync(CosmeticChangedEvent change, CancellationToken ct)
     {
         try
         {
-            await hub.Clients.All.PantryChanged(change, ct);
+            await hub.Clients.All.CosmeticChanged(change, ct);
         }
         catch (Exception ex)
         {
-            log.LogWarning(ex, "Pantry realtime broadcast for {ItemId} failed.", change.ItemId);
+            log.LogWarning(ex, "Cosmetics realtime broadcast for {ItemId} failed.", change.ItemId);
         }
     }
 
@@ -218,16 +212,14 @@ internal class PantryEndpoints(
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(ct);
 
-    private static PantryItemDto ToDto(PantryItem item) => new(
+    private static CosmeticItemDto ToDto(CosmeticItem item) => new(
         item.Id,
         item.Name,
         item.Quantity,
         item.Unit,
-        item.Location,
+        item.Category,
         item.Notes,
-        item.ExpirationDate,
+        item.ExpiryDate,
         item.HouseholdMemberId,
-        item.Barcode,
-        item.NutriScore,
-        NutritionFactsExtensions.FromJson(item.NutritionJson));
+        item.Barcode);
 }

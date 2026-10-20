@@ -10,13 +10,13 @@ using Shared.Models;
 namespace Server.Hubs;
 
 /// <summary>
-/// Typed pantry hub: one broadcast channel for the whole household.
+/// Typed cosmetics hub: one broadcast channel for the whole household.
 /// Clients patch their lists from single-item fetches on broadcast; the hub
 /// never carries item data.
 /// Member presence (one member id per connection via ?memberId=) is broadcast
 /// on every connect and disconnect; unknown ids stay anonymous.
 /// </summary>
-public sealed class PantryHub(PresenceTracker presence, IServiceScopeFactory scopes) : Hub<IPantryHubClient>
+public sealed class CosmeticHub(PresenceTracker presence, IServiceScopeFactory scopes) : Hub<ICosmeticHubClient>
 {
     public override async Task OnConnectedAsync()
     {
