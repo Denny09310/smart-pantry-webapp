@@ -142,10 +142,15 @@ else if (_state.Error is null && _state.Items.Count == 0)
     /// <summary>
     /// Inserts one item at its sorted position and bumps the total. Only call
     /// when <see cref="IsFullyLoaded"/> — otherwise the position is a guess
-    /// and the caller should <see cref="ReloadAsync"/> instead.
+    /// and the caller should <see cref="ReloadAsync"/> instead. Returns false
+    /// when the key is already loaded: a local save and the realtime broadcast
+    /// describe the same create, so the same row can arrive twice.
     /// </summary>
-    public async Task InsertSortedAsync(TItem item, Comparison<TItem> comparison)
+    public async Task<bool> InsertSortedAsync(TItem item, Comparison<TItem> comparison)
     {
+        if (FindIndex(KeySelector?.Invoke(item)) >= 0)
+            return false;
+
         var index = _state.Items.FindIndex(x => comparison(item, x) < 0);
         if (index < 0)
             _state.Items.Add(item);
@@ -159,6 +164,7 @@ else if (_state.Error is null && _state.Items.Count == 0)
 
         await TotalChanged.InvokeAsync(_state.Total);
         StateHasChanged();
+        return true;
     }
 
     /// <summary>True when every row is loaded with no error or pending load.</summary>

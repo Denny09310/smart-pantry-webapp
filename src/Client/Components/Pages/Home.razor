@@ -14,7 +14,9 @@
         <h1 class="truncate text-xl font-semibold">@Loc["AppTitle"]</h1>
         @if (_state.Total > 0)
         {
-            <p class="truncate text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</p>
+            <div class="flex min-w-0 items-center gap-2">
+                <p class="truncate text-sm text-muted-foreground">@Loc["ItemsCount", _state.Total]</p>
+            </div>
         }
     </div>
     <div class="flex flex-none items-center gap-2">
@@ -155,9 +157,24 @@
             return;
         }
 
+        await ApplyItemAsync(item);
+    }
+
+    /// <summary>
+    /// Places one known row into the list: drops it when it no longer matches
+    /// the active filters, replaces it when already loaded, otherwise inserts it
+    /// at its sorted position. Shared by the realtime handler and by a local
+    /// save, so a create arriving both ways converges on the same single row.
+    /// </summary>
+    private async Task ApplyItemAsync(CosmeticItemDto item)
+    {
+        var list = _state.List;
+        if (list is null)
+            return;
+
         if (!MatchesFilters(item))
         {
-            await list.RemoveByKeyAsync(id);
+            await list.RemoveByKeyAsync(item.Id);
             return;
         }
 
@@ -212,7 +229,15 @@
     private async Task OpenAddAsync()
     {
         var result = await Sheet.OpenAsync<ItemForm>();
-        if (!result.Cancelled)
+
+        if (result.Cancelled)
+            return;
+
+        // The form hands back the saved row, so one insert replaces the whole
+        // refetch this used to do on every add.
+        if (result.GetData<CosmeticItemDto>() is { } item)
+            await ApplyItemAsync(item);
+        else
             await ReloadListAsync();
     }
 
@@ -222,11 +247,14 @@
         {
             ["ItemId"] = id
         };
-        
+
         var result = await Sheet.OpenAsync<ItemDetailsBody>(parameters);
-        await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger, Loc);
-        if (!result.Cancelled)
-            await ReloadListAsync();
+
+        // Edits made in the sheet arrive over the hub, which patches the row in
+        // place; a delete this client performed needs its own removal.
+        _ = await ItemDeletion.HandleAsync(result, Api, Dialogs, Toasts, Logger, Loc)
+            && _state.List is not null
+            && await _state.List.RemoveByKeyAsync(id);
     }
 
     private async Task OpenFiltersAsync()
